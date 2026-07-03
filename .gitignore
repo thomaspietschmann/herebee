@@ -1,0 +1,12 @@
+node_modules/
+client/dist/
+server/assets/tiles/*.pmtiles
+server/assets/basemaps/
+*.log
+.DS_Store
+.idea/
+.env
+.env.*
+.bin/
+.playwright-mcp/
+localizer-*.png

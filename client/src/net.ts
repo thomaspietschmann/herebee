@@ -1,0 +1,84 @@
+/**
+ * WebSocket client with auto-reconnect. Encrypts every outbound update and
+ * decrypts inbound peer blobs. The socket carries only opaque ciphertext plus
+ * the routing roomId; the AES key stays in this process.
+ */
+import { decryptJson, encryptJson, type RoomKeys } from "./crypto.js";
+import type { ServerMessage } from "../../shared/messages.js";
+import type { PeerUpdate } from "./types.js";
+
+export interface NetHandlers {
+  onPeer: (id: string, update: PeerUpdate) => void;
+  onLeft: (id: string) => void;
+  onRequest: () => void; // a peer joined; re-broadcast our latest state
+  onStatus: (connected: boolean) => void;
+  onFatal: (reason: string) => void;
+}
+
+export class NetClient {
+  private ws: WebSocket | null = null;
+  private backoff = 500;
+  private closed = false;
+  private lastSent: string | null = null; // for latest-state re-broadcast on request
+
+  constructor(private readonly keys: RoomKeys, private readonly h: NetHandlers) {}
+
+  connect(): void {
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${proto}://${location.host}/ws`);
+    this.ws = ws;
+
+    ws.onopen = () => {
+      this.backoff = 500;
+      ws.send(JSON.stringify({ t: "join", roomId: this.keys.roomId }));
+      this.h.onStatus(true);
+      if (this.lastSent) ws.send(this.lastSent); // resume visibility after reconnect
+    };
+
+    ws.onmessage = async (ev) => {
+      let msg: ServerMessage;
+      try {
+        msg = JSON.parse(ev.data as string);
+      } catch {
+        return;
+      }
+      if (msg.t === "peer") {
+        const update = await decryptJson<PeerUpdate>(this.keys.key, msg.data);
+        if (update) this.h.onPeer(msg.id, update);
+      } else if (msg.t === "left") {
+        this.h.onLeft(msg.id);
+      } else if (msg.t === "request") {
+        this.h.onRequest();
+      } else if (msg.t === "error") {
+        this.closed = true;
+        this.h.onFatal(msg.reason);
+      }
+    };
+
+    ws.onclose = () => {
+      this.h.onStatus(false);
+      if (!this.closed) this.scheduleReconnect();
+    };
+    ws.onerror = () => ws.close();
+  }
+
+  private scheduleReconnect(): void {
+    const delay = Math.min(this.backoff, 15_000);
+    this.backoff = Math.min(this.backoff * 2, 15_000);
+    setTimeout(() => {
+      if (!this.closed) this.connect();
+    }, delay);
+  }
+
+  async broadcast(update: PeerUpdate): Promise<void> {
+    const data = await encryptJson(this.keys.key, update);
+    const frame = JSON.stringify({ t: "relay", data });
+    if (update.k === "loc") this.lastSent = frame;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(frame);
+  }
+
+  close(): void {
+    this.closed = true;
+    this.ws?.close();
+  }
+}

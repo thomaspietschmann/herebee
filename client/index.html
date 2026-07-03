@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="referrer" content="no-referrer" />
+    <title>localizer — flüchtig zusammenfinden</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="map" aria-label="Karte mit den Standorten der Raumteilnehmer"></div>
+
+      <header class="hud">
+        <div class="brand">
+          <span class="beacon" aria-hidden="true"></span>
+          <span class="wordmark">localizer</span>
+        </div>
+        <button id="conn" class="chip" type="button" aria-live="polite">
+          <span class="dot"></span><span class="chip-text">Verbindung…</span>
+        </button>
+      </header>
+
+      <button id="roster" class="roster" type="button" hidden>
+        <span class="roster-stack" aria-hidden="true"></span>
+        <span class="roster-count">0 hier</span>
+      </button>
+
+      <div class="dock">
+        <p id="hint" class="hint">
+          Nur aktive Teilnehmer sehen dich. Standorte werden Ende-zu-Ende
+          verschlüsselt und nicht gespeichert.
+        </p>
+        <div class="controls">
+          <button id="share-btn" class="btn btn-ghost" type="button">Link teilen</button>
+          <button id="geo-btn" class="btn btn-primary" type="button">
+            <span class="btn-label">Standort teilen</span>
+          </button>
+          <button id="info-btn" class="btn btn-icon" type="button" aria-label="Wie anonym ist das?">i</button>
+        </div>
+      </div>
+
+      <div id="sheet" class="sheet" hidden>
+        <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+          <button id="sheet-close" class="sheet-close" type="button" aria-label="Schließen">×</button>
+          <div id="sheet-body"></div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
