@@ -45,7 +45,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
  && mkdir -p /app/server/assets/tiles \
  && chown -R node:node /app/server/assets
 EXPOSE 3000
-# The tiles volume mounts at /app/server/assets/tiles.
-HEALTHCHECK --interval=30s --timeout=4s --start-period=15m \
+# The tiles volume mounts at /app/server/assets/tiles. The server starts within
+# seconds (any tile extract runs in the background), so a short start period is fine.
+HEALTHCHECK --interval=15s --timeout=4s --start-period=20s \
   CMD wget -qO- http://127.0.0.1:3000/healthz >/dev/null 2>&1 || exit 1
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
