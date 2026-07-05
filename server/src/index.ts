@@ -222,6 +222,7 @@ wss.on("connection", (ws: AliveWs) => {
     bucket: RATE_TOKENS,
     lastRefill: Date.now(),
     alive: true,
+    lastData: null,
   };
 
   ws.on("message", (raw) => {

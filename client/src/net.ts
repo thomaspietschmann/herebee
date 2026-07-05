@@ -19,6 +19,7 @@ export class NetClient {
   private ws: WebSocket | null = null;
   private backoff = 500;
   private closed = false;
+  private lastResync = 0;
   private lastSent: string | null = null; // for latest-state re-broadcast on request
 
   constructor(private readonly keys: RoomKeys, private readonly h: NetHandlers) {}
@@ -68,6 +69,34 @@ export class NetClient {
     setTimeout(() => {
       if (!this.closed) this.connect();
     }, delay);
+  }
+
+  /**
+   * Force a fresh connection. Call this when the page returns to the foreground:
+   * standby/tab-switch often leaves a "zombie" socket that still reports OPEN but
+   * carries nothing, so we can't rely on onclose. Reconnecting makes the server
+   * re-request peer broadcasts (so we see them) and re-sends our last position
+   * (so they see us).
+   */
+  resync(): void {
+    if (this.closed) return;
+    const now = Date.now();
+    if (now - this.lastResync < 2000) return; // debounce rapid focus/blur
+    this.lastResync = now;
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      this.ws.onmessage = null;
+      this.ws.onopen = null;
+      try {
+        this.ws.close();
+      } catch {
+        /* ignore */
+      }
+      this.ws = null;
+    }
+    this.backoff = 500;
+    this.connect();
   }
 
   async broadcast(update: PeerUpdate): Promise<void> {

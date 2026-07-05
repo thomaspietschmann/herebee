@@ -17,6 +17,10 @@ export interface Conn {
   bucket: number; // rate-limit tokens
   lastRefill: number;
   alive: boolean; // heartbeat
+  // Last encrypted blob this peer sent, kept in RAM only so a newcomer (or a
+  // client returning from standby) sees everyone's last position immediately.
+  // Still opaque ciphertext — the server never learns coordinates.
+  lastData: string | null;
 }
 
 const rooms = new Map<string, Set<Conn>>();
@@ -35,10 +39,13 @@ export function joinRoom(conn: Conn, roomId: string): void {
   }
   room.add(conn);
   send(conn, { t: "hello", selfId: conn.id });
-  // Ask existing members to re-broadcast their latest state so the newcomer
-  // sees everyone without the server ever caching a position.
   for (const other of room) {
-    if (other !== conn) send(other, { t: "request" });
+    if (other === conn) continue;
+    // Replay each peer's last position to the newcomer right away — even peers
+    // whose device is asleep and can't answer a live request.
+    if (other.lastData) send(conn, { t: "peer", id: other.id, data: other.lastData });
+    // Also nudge awake peers to send a fresh one.
+    send(other, { t: "request" });
   }
 }
 
@@ -47,6 +54,7 @@ export function relay(conn: Conn, data: string): void {
   if (!conn.roomId) return;
   const room = rooms.get(conn.roomId);
   if (!room) return;
+  conn.lastData = data; // remember last ciphertext (RAM only) for newcomers
   const msg: ServerMessage = { t: "peer", id: conn.id, data };
   const payload = JSON.stringify(msg);
   for (const other of room) {

@@ -131,6 +131,15 @@ async function main(): Promise<void> {
   });
   net.connect();
 
+  // Returning from standby / a tab switch can leave the socket frozen and pauses
+  // geolocation. Re-establish the connection so peers re-sync both directions.
+  const resume = () => {
+    if (document.visibilityState === "visible") net.resync();
+  };
+  document.addEventListener("visibilitychange", resume);
+  window.addEventListener("online", resume);
+  window.addEventListener("pageshow", resume);
+
   function locUpdate(pos: Position): PeerUpdate {
     return { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, at: Date.now() };
   }
