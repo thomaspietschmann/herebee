@@ -12,42 +12,40 @@ WORKDIR /app
 COPY . .
 RUN npm run build
 
-# ---- assets: cut the regional PMTiles + fetch fonts/sprites ----------------
+# ---- assets: fetch fonts + sprites (small; the big tiles live on a volume) -
 FROM alpine:3.20 AS assets
-ARG PMTILES_VERSION=1.30.3
-ARG BBOX=5.5,45.5,17.2,55.1
-ARG MAXZOOM=14
-RUN apk add --no-cache curl git jq tar ca-certificates
-WORKDIR /assets
-RUN curl -sSL "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" \
-    | tar -xz -C /usr/local/bin pmtiles \
- && pmtiles version
-RUN PLANET="https://build.protomaps.com/$(curl -s https://build-metadata.protomaps.dev/builds.json | jq -r 'sort_by(.uploaded)[-1].key')" \
- && echo "planet: $PLANET" \
- && mkdir -p tiles \
- && pmtiles extract "$PLANET" tiles/dach.pmtiles --bbox="$BBOX" --maxzoom="$MAXZOOM"
+RUN apk add --no-cache git ca-certificates
 RUN git clone --depth 1 https://github.com/protomaps/basemaps-assets.git /tmp/a \
- && mkdir -p basemaps \
- && cp -R /tmp/a/fonts basemaps/fonts \
- && cp -R /tmp/a/sprites basemaps/sprites \
+ && mkdir -p /assets/basemaps \
+ && cp -R /tmp/a/fonts /assets/basemaps/fonts \
+ && cp -R /tmp/a/sprites /assets/basemaps/sprites \
  && rm -rf /tmp/a
 
 # ---- runtime ---------------------------------------------------------------
 FROM node:22-alpine AS runtime
+ARG PMTILES_VERSION=1.30.3
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
     CLIENT_DIST=/app/client/dist \
     ASSETS_DIR=/app/server/assets
+# pmtiles CLI + tools for the one-time tile extract done by the entrypoint.
+RUN apk add --no-cache curl jq su-exec \
+ && curl -sSL "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" \
+    | tar -xz -C /usr/local/bin pmtiles \
+ && pmtiles version
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json tsconfig.json ./
 COPY shared ./shared
 COPY server ./server
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --from=build /app/client/dist ./client/dist
-COPY --from=assets /assets/tiles ./server/assets/tiles
 COPY --from=assets /assets/basemaps ./server/assets/basemaps
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+ && mkdir -p /app/server/assets/tiles \
+ && chown -R node:node /app/server/assets
 EXPOSE 3000
-USER node
-HEALTHCHECK --interval=30s --timeout=4s --start-period=10s \
+# The tiles volume mounts at /app/server/assets/tiles.
+HEALTHCHECK --interval=30s --timeout=4s --start-period=15m \
   CMD wget -qO- http://127.0.0.1:3000/healthz >/dev/null 2>&1 || exit 1
-CMD ["npm", "run", "start"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

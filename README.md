@@ -52,7 +52,14 @@ npm run start             # serves everything on :3000
 
 ## Deploy
 
-`docker build -t localizer .` produces a self-contained image: it cuts a DACH PMTiles
-extract (`--build-arg BBOX=… MAXZOOM=…`) and bundles fonts/sprites at build time. Runs
-as one container on one port behind an HTTPS proxy (Traefik/Coolify forward the
+`docker build -t localizer .` bundles the client, server and the small
+fonts/sprites. The large DACH **PMTiles archive is NOT baked into the image** — it
+lives on a persistent volume mounted at `/app/server/assets/tiles` and is fetched
+exactly once by the entrypoint on first boot (`BBOX` / `MAXZOOM` env, DACH defaults),
+so rebuilds and redeploys are fast and never re-download it. To refresh the basemap,
+delete `dach.pmtiles` on the volume and redeploy.
+
+Runs as one container on one port behind an HTTPS proxy (Traefik/Coolify forward the
 WebSocket upgrade transparently). Set `ALLOWED_ORIGINS=https://your.domain` in prod.
+Give the container a generous health-check start period — the first boot extracts the
+tiles before serving.
