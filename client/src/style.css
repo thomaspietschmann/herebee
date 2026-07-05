@@ -102,6 +102,10 @@ body {
   letter-spacing: -0.02em;
   font-size: 15px;
 }
+.wordmark b {
+  font-weight: 820;
+  color: var(--beacon);
+}
 .beacon {
   width: 11px;
   height: 11px;
@@ -412,7 +416,10 @@ body {
    ============================================================ */
 .mk {
   --c: var(--beacon);
-  position: relative;
+  /* MUST stay absolute: MapLibre positions every marker purely by transform
+     from a shared (0,0) origin. `position: relative` would drop markers into
+     normal flow, stacking each one ~46px lower than the last. */
+  position: absolute;
   width: 46px;
   height: 46px;
   display: flex;

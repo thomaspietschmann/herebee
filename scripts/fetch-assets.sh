@@ -16,7 +16,7 @@ PMTILES_VERSION="${PMTILES_VERSION:-1.30.3}"
 BBOX="${BBOX:-5.5,45.5,17.2,55.1}"
 MAXZOOM="${MAXZOOM:-14}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="${OUT:-$ROOT/server/assets/tiles/dach.pmtiles}"
+OUT="${OUT:-$ROOT/server/assets/tiles/basemap.pmtiles}"
 ASSETS="$ROOT/server/assets/basemaps"
 BIN_DIR="$ROOT/.bin"
 

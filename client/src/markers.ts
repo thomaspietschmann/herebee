@@ -3,9 +3,11 @@
  * purely visually from the last-fix timestamp:
  *   fresh (<15s): full colour + pulse · stale (15s–2min): fading + "vor X" ·
  *   ghost (>2min): greyed at last known spot.
- * A peer is only REMOVED when the connection ends (onLeft) or it stops sharing.
- * Stale positions never remove anyone — that is what survives a 30-min tunnel.
- * A 60-minute client-side fallback clears true zombies.
+ * A peer is only removed when it ACTIVELY stops sharing. If its signal is merely
+ * lost (tab closed, connection dropped, long tunnel), the ghost lingers at its
+ * last known spot for up to LINGER_MS (20 min) and then disappears on its own.
+ * Markers are keyed by identity seed, so a reconnect updates the same marker
+ * instead of spawning a duplicate.
  */
 import maplibregl, { type Map as MlMap, type Marker } from "maplibre-gl";
 import type { Identity } from "./avatar.js";
@@ -13,7 +15,7 @@ import type { Position } from "./types.js";
 
 const FRESH_MS = 15_000;
 const STALE_MS = 120_000;
-const ZOMBIE_MS = 60 * 60_000;
+const LINGER_MS = 20 * 60_000; // keep a silent peer this long after its last fix
 
 interface Entry {
   marker: Marker;
@@ -85,11 +87,11 @@ export class MarkerManager {
     e.label.textContent = tier === "fresh" ? e.identity.name : `${e.identity.name} · ${relTime(age)}`;
   }
 
-  /** Called ~1×/s to age markers and drop zombies. Returns removed peer ids. */
+  /** Called ~1×/s to age markers and drop peers silent longer than LINGER_MS. */
   tick(): string[] {
     const removed: string[] = [];
     for (const [id, e] of this.entries) {
-      if (!e.self && Date.now() - e.at > ZOMBIE_MS) {
+      if (!e.self && Date.now() - e.at > LINGER_MS) {
         this.remove(id);
         removed.push(id);
         continue;

@@ -111,10 +111,28 @@ export class UI {
     });
   }
 
+  /** Shown once when entering a room: how watching vs. sharing works. */
+  openWelcome(): void {
+    this.sheetBody.innerHTML = `
+      <h2>Willkommen bei HereBee 🐝</h2>
+      <p>Du bist in einem privaten Raum. Alle mit diesem Link finden sich hier live
+         auf der Karte.</p>
+      <ul class="facts">
+        <li><strong>Nur zuschauen ist okay.</strong> Du musst deinen Standort nicht teilen — dann siehst du nur die anderen.</li>
+        <li><strong>Standort teilen:</strong> Tippe unten auf <em>„Standort teilen“</em>. Danach sehen <strong>alle im Raum</strong> deinen Live-Standort — Ende-zu-Ende-verschlüsselt, nichts wird gespeichert.</li>
+        <li><strong>Jederzeit stoppen:</strong> Der Button wird zu <em>„Teilen stoppen“</em> — ein Tipp, und du bist wieder unsichtbar.</li>
+      </ul>
+      <div class="linkbox" style="margin-top:18px">
+        <button class="btn btn-primary" id="welcome-ok" style="flex:1">Los geht's</button>
+      </div>`;
+    this.openSheet();
+    document.getElementById("welcome-ok")!.addEventListener("click", () => this.closeSheet());
+  }
+
   private openInfo(): void {
     this.sheetBody.innerHTML = `
       <h2>Wie privat ist das?</h2>
-      <p>localizer teilt Standorte <strong>flüchtig und Ende-zu-Ende-verschlüsselt</strong>
+      <p>HereBee teilt Standorte <strong>flüchtig und Ende-zu-Ende-verschlüsselt</strong>
          zwischen aktiven Teilnehmern. Es ist bewusst datensparsam — aber nenne es nicht
          „vollständig anonym“.</p>
       <ul class="facts">

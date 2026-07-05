@@ -1,9 +1,9 @@
 {
-  "name": "localizer",
+  "name": "herebee",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Ephemeral, end-to-end-encrypted live location sharing. The server never sees coordinates or the key.",
+  "description": "HereBee — ephemeral, end-to-end-encrypted live location sharing. The server never sees coordinates or the key.",
   "scripts": {
     "dev": "concurrently -n client,server -c cyan,magenta \"vite --config client/vite.config.ts\" \"tsx watch server/src/index.ts\"",
     "build": "vite --config client/vite.config.ts build",
@@ -16,8 +16,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@dicebear/collection": "^9.2.2",
-    "@dicebear/core": "^9.2.2",
     "@protomaps/basemaps": "^5.0.0",
     "@types/node": "^22.10.0",
     "@types/ws": "^8.5.13",

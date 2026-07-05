@@ -1,8 +1,8 @@
-# localizer
+# HereBee 🐝
 
 Ephemeral, end-to-end-encrypted live location sharing. Open the app, share the
-link, and everyone who opens it sees each other move on a map — in real time,
-nothing stored.
+link, and everyone who opens it sees each other move on a map as a little fantasy
+critter — in real time, nothing stored.
 
 ## Honest privacy statement
 
@@ -26,9 +26,9 @@ It is deliberately private, but it is **not "anonymous"** — that word would be
 ## Stack
 
 Node + `ws` relay (no Socket.IO) · Vite + vanilla TypeScript · MapLibre GL JS with a
-self-hosted Protomaps **PMTiles** basemap · DiceBear `shapes` (CC0) building-block
-avatars generated offline. One process serves the client, the map assets and the
-WebSocket relay.
+self-hosted Protomaps **PMTiles** basemap · a hand-rolled composable **creature
+avatar** generator (SVG building blocks assembled from a seeded PRNG, fully offline).
+One process serves the client, the map assets and the WebSocket relay.
 
 ## Develop
 

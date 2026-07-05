@@ -19,7 +19,7 @@ function buildStyle(): StyleSpecification {
     sources: {
       protomaps: {
         type: "vector",
-        url: `pmtiles://${origin}/tiles/dach.pmtiles`,
+        url: `pmtiles://${origin}/tiles/basemap.pmtiles`,
         attribution:
           '<a href="https://protomaps.com">Protomaps</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       },

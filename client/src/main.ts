@@ -54,29 +54,36 @@ async function main(): Promise<void> {
 
   const ui = new UI({ onToggleShare: () => (watchId === null ? startSharing() : stopSharing()) });
 
+  // Explain watching vs. sharing once per session when entering the room.
+  if (!sessionStorage.getItem("herebee.welcomed")) {
+    ui.openWelcome();
+    sessionStorage.setItem("herebee.welcomed", "1");
+  }
+
   const net = new NetClient(keys, {
-    onPeer(id, update: PeerUpdate) {
+    // Markers are keyed by the peer's identity seed (stable across reconnects),
+    // NOT the ephemeral socket id — so a dropped-and-restored connection updates
+    // the same marker instead of spawning a duplicate.
+    onPeer(_id, update: PeerUpdate) {
       if (update.k === "stop") {
-        markers.remove(id);
-        roster.delete(id);
+        markers.remove(update.seed); // active stop -> disappear now
+        roster.delete(update.seed);
         refreshRoster();
         return;
       }
       const peer = identityFromSeed(update.seed, nameFromSeed(update.seed));
       markers.upsert(
-        id,
+        update.seed,
         peer,
         { lat: update.lat, lng: update.lng, acc: update.acc, hdg: update.hdg },
         update.at
       );
-      roster.set(id, { color: peer.color, name: peer.name });
+      roster.set(update.seed, { color: peer.color, name: peer.name });
       refreshRoster();
     },
-    onLeft(id) {
-      markers.remove(id);
-      roster.delete(id);
-      refreshRoster();
-    },
+    // Connection lost (tab closed / dropped): keep the ghost — MarkerManager
+    // lets it linger up to 20 min and then removes it on its own.
+    onLeft() {},
     onRequest() {
       if (lastPos) void net.broadcast(locUpdate(lastPos));
     },
@@ -108,8 +115,8 @@ async function main(): Promise<void> {
           hdg: Number.isFinite(p.coords.heading as number) ? (p.coords.heading as number) : null,
         };
         lastPos = pos;
-        markers.upsert("self", self, pos, Date.now(), true);
-        roster.set("self", { color: self.color, name: `${self.name} (du)` });
+        markers.upsert(seed, self, pos, Date.now(), true);
+        roster.set(seed, { color: self.color, name: `${self.name} (du)` });
         refreshRoster();
         if (!centeredOnSelf) {
           map.easeTo({ center: [pos.lng, pos.lat], zoom: 15, duration: 900 });
@@ -143,7 +150,7 @@ async function main(): Promise<void> {
     ui.setSharing(false);
   }
 
-  // Age markers once a second; keep the roster in sync when zombies drop off.
+  // Age markers once a second; keep the roster in sync when peers time out.
   setInterval(() => {
     for (const id of markers.tick()) {
       roster.delete(id);
@@ -151,9 +158,9 @@ async function main(): Promise<void> {
     refreshRoster();
   }, 1000);
 
-  window.addEventListener("pagehide", () => {
-    if (watchId !== null && lastPos) void net.broadcast({ k: "stop", seed });
-  });
+  // Deliberately no "stop" on pagehide: simply closing the tab or losing signal
+  // should let peers keep the ghost for a while, not remove it instantly. Only
+  // the explicit "Teilen stoppen" button broadcasts a stop.
 }
 
 void main();
