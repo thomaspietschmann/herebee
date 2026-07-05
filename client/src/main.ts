@@ -5,11 +5,11 @@
  * we mint one and put it in the hash, so opening "/" lands you in a fresh room
  * whose link you can share. The path is cosmetic; the hash is the capability.
  */
-import { deriveRoomKeys, generateSecret } from "./crypto.js";
+import { deriveRoomKeys, generateSecret, type RoomKeys } from "./crypto.js";
 import { NetClient } from "./net.js";
 import { initMap } from "./map.js";
 import { MarkerManager } from "./markers.js";
-import { identityFromSeed, type Identity } from "./avatar.js";
+import { identityFromSeed } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
 import { UI } from "./ui.js";
 import type { PeerUpdate, Position } from "./types.js";
@@ -26,7 +26,7 @@ function ensureSecret(): string {
 }
 
 function ownSeed(): string {
-  const KEY = "localizer.seed";
+  const KEY = "herebee.seed";
   let seed = sessionStorage.getItem(KEY);
   if (!seed) {
     seed = crypto.getRandomValues(new Uint8Array(9)).reduce((s, b) => s + b.toString(36), "");
@@ -36,15 +36,23 @@ function ownSeed(): string {
 }
 
 async function main(): Promise<void> {
-  const keys = await deriveRoomKeys(ensureSecret());
+  // The map always renders first, so an unusable link never leaves a blank page.
   const map = initMap(document.getElementById("map")!);
-  const markers = new MarkerManager(map);
+
+  // Local, client-only custom names (never sent anywhere).
+  const nameKey = (seed: string) => "herebee.name." + seed;
+  const customName = (seed: string): string | null => {
+    try {
+      return localStorage.getItem(nameKey(seed));
+    } catch {
+      return null;
+    }
+  };
+  const resolveName = (seed: string) => customName(seed) || nameFromSeed(seed);
 
   const seed = ownSeed();
-  const self: Identity = identityFromSeed(seed, nameFromSeed(seed));
-
-  // Roster: id -> minimal identity (self under the "self" id).
   const roster = new Map<string, { color: string; name: string }>();
+  const rosterName = (s: string) => (s === seed ? `${resolveName(s)} (du)` : resolveName(s));
   const refreshRoster = () =>
     ui.setRoster([...roster.values()].sort((a, b) => a.name.localeCompare(b.name)));
 
@@ -52,6 +60,7 @@ async function main(): Promise<void> {
   let lastPos: Position | null = null;
   let centeredOnSelf = false;
 
+  const markers = new MarkerManager(map, (s) => onRename(s));
   const ui = new UI({ onToggleShare: () => (watchId === null ? startSharing() : stopSharing()) });
 
   // Explain watching vs. sharing once per session when entering the room.
@@ -60,10 +69,36 @@ async function main(): Promise<void> {
     sessionStorage.setItem("herebee.welcomed", "1");
   }
 
+  // Derive the room keys from the fragment secret. A hand-edited / malformed
+  // secret can't decode — show a friendly notice instead of failing silently.
+  let keys: RoomKeys;
+  try {
+    keys = await deriveRoomKeys(ensureSecret());
+  } catch {
+    ui.openInvalidLink();
+    return;
+  }
+
+  function onRename(s: string): void {
+    ui.openRename(resolveName(s), !!customName(s), (name) => {
+      try {
+        if (name) localStorage.setItem(nameKey(s), name);
+        else localStorage.removeItem(nameKey(s));
+      } catch {
+        /* private mode: names just won't persist */
+      }
+      markers.rename(s, resolveName(s));
+      const entry = roster.get(s);
+      if (entry) {
+        entry.name = rosterName(s);
+        refreshRoster();
+      }
+    });
+  }
+
   const net = new NetClient(keys, {
-    // Markers are keyed by the peer's identity seed (stable across reconnects),
-    // NOT the ephemeral socket id — so a dropped-and-restored connection updates
-    // the same marker instead of spawning a duplicate.
+    // Markers are keyed by identity seed (stable across reconnects), so a dropped
+    // and restored connection updates the same marker instead of duplicating it.
     onPeer(_id, update: PeerUpdate) {
       if (update.k === "stop") {
         markers.remove(update.seed); // active stop -> disappear now
@@ -71,18 +106,17 @@ async function main(): Promise<void> {
         refreshRoster();
         return;
       }
-      const peer = identityFromSeed(update.seed, nameFromSeed(update.seed));
+      const peer = identityFromSeed(update.seed, resolveName(update.seed));
       markers.upsert(
         update.seed,
         peer,
         { lat: update.lat, lng: update.lng, acc: update.acc, hdg: update.hdg },
         update.at
       );
-      roster.set(update.seed, { color: peer.color, name: peer.name });
+      roster.set(update.seed, { color: peer.color, name: rosterName(update.seed) });
       refreshRoster();
     },
-    // Connection lost (tab closed / dropped): keep the ghost — MarkerManager
-    // lets it linger up to 20 min and then removes it on its own.
+    // Connection lost: keep the ghost — it lingers up to 20 min then self-removes.
     onLeft() {},
     onRequest() {
       if (lastPos) void net.broadcast(locUpdate(lastPos));
@@ -115,8 +149,9 @@ async function main(): Promise<void> {
           hdg: Number.isFinite(p.coords.heading as number) ? (p.coords.heading as number) : null,
         };
         lastPos = pos;
+        const self = identityFromSeed(seed, resolveName(seed));
         markers.upsert(seed, self, pos, Date.now(), true);
-        roster.set(seed, { color: self.color, name: `${self.name} (du)` });
+        roster.set(seed, { color: self.color, name: rosterName(seed) });
         refreshRoster();
         if (!centeredOnSelf) {
           map.easeTo({ center: [pos.lng, pos.lat], zoom: 15, duration: 900 });
@@ -144,8 +179,8 @@ async function main(): Promise<void> {
     }
     if (lastPos) void net.broadcast({ k: "stop", seed });
     lastPos = null;
-    markers.remove("self");
-    roster.delete("self");
+    markers.remove(seed);
+    roster.delete(seed);
     refreshRoster();
     ui.setSharing(false);
   }

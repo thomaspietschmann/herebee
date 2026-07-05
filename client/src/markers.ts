@@ -37,7 +37,10 @@ function relTime(ageMs: number): string {
 export class MarkerManager {
   private entries = new Map<string, Entry>();
 
-  constructor(private readonly map: MlMap) {}
+  constructor(
+    private readonly map: MlMap,
+    private readonly onSelect?: (seed: string) => void
+  ) {}
 
   private build(identity: Identity, self: boolean): Omit<Entry, "identity" | "pos" | "at" | "self" | "marker"> {
     const el = document.createElement("div");
@@ -58,6 +61,10 @@ export class MarkerManager {
     let e = this.entries.get(id);
     if (!e) {
       const parts = this.build(identity, self);
+      parts.el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this.onSelect?.(id); // id === identity seed
+      });
       const marker = new maplibregl.Marker({ element: parts.el, anchor: "center" })
         .setLngLat([pos.lng, pos.lat])
         .addTo(this.map);
@@ -103,6 +110,14 @@ export class MarkerManager {
 
   has(id: string): boolean {
     return this.entries.has(id);
+  }
+
+  /** Update a marker's displayed name (local rename), keeping it in sync now. */
+  rename(seed: string, name: string): void {
+    const e = this.entries.get(seed);
+    if (!e) return;
+    e.identity.name = name;
+    this.refresh(seed, e);
   }
 
   remove(id: string): void {

@@ -129,6 +129,51 @@ export class UI {
     document.getElementById("welcome-ok")!.addEventListener("click", () => this.closeSheet());
   }
 
+  /** Rename a marker locally. `onSave(null)` means "reset to the generated name". */
+  openRename(currentName: string, hasCustom: boolean, onSave: (name: string | null) => void): void {
+    this.sheetBody.innerHTML = `
+      <h2>Namen vergeben</h2>
+      <p>Nur für dich sichtbar, lokal auf diesem Gerät gespeichert.</p>
+      <div class="linkbox">
+        <input id="rename-input" maxlength="40" placeholder="z. B. Anna" value="${currentName.replace(/"/g, "&quot;")}" />
+        <button class="btn btn-primary" id="rename-save">Speichern</button>
+      </div>
+      ${hasCustom ? `<button class="btn btn-ghost" id="rename-reset" style="margin-top:10px">Auf Zufallsnamen zurücksetzen</button>` : ""}`;
+    this.openSheet();
+    const input = document.getElementById("rename-input") as HTMLInputElement;
+    input.focus();
+    input.select();
+    const save = () => {
+      const v = input.value.trim();
+      onSave(v.length ? v : null);
+      this.closeSheet();
+    };
+    document.getElementById("rename-save")!.addEventListener("click", save);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") save();
+    });
+    document.getElementById("rename-reset")?.addEventListener("click", () => {
+      onSave(null);
+      this.closeSheet();
+    });
+  }
+
+  /** Shown when the room link's secret is missing or malformed. */
+  openInvalidLink(): void {
+    this.sheetBody.innerHTML = `
+      <h2>Dieser Link führt nirgendwo hin</h2>
+      <p>Der Raum-Schlüssel im Link fehlt oder ist unvollständig. Raum-Links werden
+         automatisch erzeugt — man kann sie nicht von Hand eintippen.</p>
+      <div class="linkbox" style="margin-top:16px">
+        <button class="btn btn-primary" id="invalid-new" style="flex:1">Neuen Raum öffnen</button>
+      </div>`;
+    this.openSheet();
+    document.getElementById("sheet-close")!.style.display = "none";
+    document.getElementById("invalid-new")!.addEventListener("click", () => {
+      location.assign("/");
+    });
+  }
+
   private openInfo(): void {
     this.sheetBody.innerHTML = `
       <h2>Wie privat ist das?</h2>

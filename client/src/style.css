@@ -434,6 +434,7 @@ body {
   height: 42px;
   border-radius: 50%;
   overflow: hidden;
+  cursor: pointer;
   background: var(--ink-2);
   border: 2.5px solid var(--c);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.3);
