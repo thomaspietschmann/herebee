@@ -21,7 +21,7 @@ function buildStyle(): StyleSpecification {
         type: "vector",
         url: `pmtiles://${origin}/tiles/dach.pmtiles`,
         attribution:
-          '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
+          '<a href="https://protomaps.com">Protomaps</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       },
     },
     layers: layers("protomaps", namedFlavor("light"), { lang: "de" }),
