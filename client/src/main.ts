@@ -57,6 +57,7 @@ async function main(): Promise<void> {
     ui.setRoster([...roster.values()].sort((a, b) => a.name.localeCompare(b.name)));
 
   let watchId: number | null = null;
+  let heartbeatId: number | null = null;
   let lastPos: Position | null = null;
   let centeredOnSelf = false;
 
@@ -140,6 +141,22 @@ async function main(): Promise<void> {
   window.addEventListener("online", resume);
   window.addEventListener("pageshow", resume);
 
+  // Remember (per room) whether we were sharing, and restore it after a reload.
+  const shareKey = "herebee.sharing." + keys.roomId;
+  const rememberSharing = (on: boolean) => {
+    try {
+      if (on) localStorage.setItem(shareKey, "1");
+      else localStorage.removeItem(shareKey);
+    } catch {
+      /* private mode */
+    }
+  };
+  try {
+    if (localStorage.getItem(shareKey) === "1") startSharing();
+  } catch {
+    /* private mode */
+  }
+
   function locUpdate(pos: Position): PeerUpdate {
     return { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, at: Date.now() };
   }
@@ -178,7 +195,17 @@ async function main(): Promise<void> {
       },
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 12000 }
     );
+    // Desktop geolocation is static, so watchPosition may fire only once. Re-send
+    // the last position on a heartbeat so our marker stays fresh for peers (and
+    // the server's cached blob stays current for newcomers) even while stationary.
+    heartbeatId = window.setInterval(() => {
+      if (!lastPos) return;
+      const self = identityFromSeed(seed, resolveName(seed));
+      markers.upsert(seed, self, lastPos, Date.now(), true);
+      void net.broadcast(locUpdate(lastPos));
+    }, 10_000);
     ui.setSharing(true);
+    rememberSharing(true);
   }
 
   function stopSharing(): void {
@@ -186,12 +213,17 @@ async function main(): Promise<void> {
       navigator.geolocation.clearWatch(watchId);
       watchId = null;
     }
+    if (heartbeatId !== null) {
+      clearInterval(heartbeatId);
+      heartbeatId = null;
+    }
     if (lastPos) void net.broadcast({ k: "stop", seed });
     lastPos = null;
     markers.remove(seed);
     roster.delete(seed);
     refreshRoster();
     ui.setSharing(false);
+    rememberSharing(false);
   }
 
   // Age markers once a second; keep the roster in sync when peers time out.
