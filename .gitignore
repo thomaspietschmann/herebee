@@ -10,3 +10,4 @@ server/assets/basemaps/
 .bin/
 .playwright-mcp/
 localizer-*.png
+/*.png
