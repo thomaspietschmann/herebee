@@ -25,6 +25,11 @@ export class NetClient {
   constructor(private readonly keys: RoomKeys, private readonly h: NetHandlers) {}
 
   connect(): void {
+    // Always start from a clean slate. A previous socket may be dead-but-OPEN
+    // (mobile standby zombie) or wedged in CONNECTING (network handover on wake);
+    // tearing it down first means a reconnect attempt never stacks a second socket
+    // on top of a live one, nor gets blocked waiting on a hung one.
+    this.teardown();
     const proto = location.protocol === "https:" ? "wss" : "ws";
     const ws = new WebSocket(`${proto}://${location.host}/ws`);
     this.ws = ws;
@@ -63,16 +68,27 @@ export class NetClient {
     ws.onerror = () => ws.close();
   }
 
+  /** Detach and close the current socket without triggering its handlers. */
+  private teardown(): void {
+    const ws = this.ws;
+    if (!ws) return;
+    ws.onopen = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onclose = null;
+    try {
+      ws.close();
+    } catch {
+      /* ignore */
+    }
+    this.ws = null;
+  }
+
   private scheduleReconnect(): void {
     const delay = Math.min(this.backoff, 15_000);
     this.backoff = Math.min(this.backoff * 2, 15_000);
     setTimeout(() => {
-      if (this.closed) return;
-      // A foreground resync() may already have opened a fresh socket in the meantime;
-      // don't stack a second connection on top of it.
-      const rs = this.ws?.readyState;
-      if (rs === WebSocket.CONNECTING || rs === WebSocket.OPEN) return;
-      this.connect();
+      if (!this.closed) this.connect();
     }, delay);
   }
 
@@ -88,20 +104,8 @@ export class NetClient {
     const now = Date.now();
     if (now - this.lastResync < 2000) return; // debounce rapid focus/blur
     this.lastResync = now;
-    if (this.ws) {
-      this.ws.onclose = null;
-      this.ws.onerror = null;
-      this.ws.onmessage = null;
-      this.ws.onopen = null;
-      try {
-        this.ws.close();
-      } catch {
-        /* ignore */
-      }
-      this.ws = null;
-    }
     this.backoff = 500;
-    this.connect();
+    this.connect(); // connect() tears down any existing socket first
   }
 
   async broadcast(update: PeerUpdate): Promise<void> {
