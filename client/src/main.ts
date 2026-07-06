@@ -27,12 +27,21 @@ function ensureSecret(): string {
 
 function ownSeed(): string {
   const KEY = "herebee.seed";
-  let seed = sessionStorage.getItem(KEY);
-  if (!seed) {
-    seed = crypto.getRandomValues(new Uint8Array(9)).reduce((s, b) => s + b.toString(36), "");
-    sessionStorage.setItem(KEY, seed);
+  const mint = () => crypto.getRandomValues(new Uint8Array(9)).reduce((s, b) => s + b.toString(36), "");
+  // localStorage (not sessionStorage): identity must be stable across reloads AND
+  // shared between tabs of the same browser. Otherwise every new tab is a different
+  // person (spawning phantom duplicates via the server's last-blob replay) and the
+  // per-seed custom names persisted in localStorage would never survive a session.
+  try {
+    let seed = localStorage.getItem(KEY);
+    if (!seed) {
+      seed = mint();
+      localStorage.setItem(KEY, seed);
+    }
+    return seed;
+  } catch {
+    return mint(); // private mode: fall back to an ephemeral identity
   }
-  return seed;
 }
 
 async function main(): Promise<void> {
@@ -101,6 +110,11 @@ async function main(): Promise<void> {
     // Markers are keyed by identity seed (stable across reconnects), so a dropped
     // and restored connection updates the same marker instead of duplicating it.
     onPeer(_id, update: PeerUpdate) {
+      // Ignore anything about our own identity. The server replays each peer's last
+      // cached blob on join, so a lingering old socket (reload / second tab) would
+      // otherwise feed us our own stale "stop" (wiping our fresh self marker) or a
+      // duplicate non-self ghost of ourselves. Our own marker is owned by sharing.
+      if (update.seed === seed) return;
       if (update.k === "stop") {
         markers.remove(update.seed); // active stop -> disappear now
         roster.delete(update.seed);

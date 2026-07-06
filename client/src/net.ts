@@ -67,7 +67,12 @@ export class NetClient {
     const delay = Math.min(this.backoff, 15_000);
     this.backoff = Math.min(this.backoff * 2, 15_000);
     setTimeout(() => {
-      if (!this.closed) this.connect();
+      if (this.closed) return;
+      // A foreground resync() may already have opened a fresh socket in the meantime;
+      // don't stack a second connection on top of it.
+      const rs = this.ws?.readyState;
+      if (rs === WebSocket.CONNECTING || rs === WebSocket.OPEN) return;
+      this.connect();
     }, delay);
   }
 
@@ -102,7 +107,11 @@ export class NetClient {
   async broadcast(update: PeerUpdate): Promise<void> {
     const data = await encryptJson(this.keys.key, update);
     const frame = JSON.stringify({ t: "relay", data });
+    // lastSent is replayed on every reconnect (see onopen). Keep it only while we are
+    // actively sharing a position; a "stop" must clear it, or a later reconnect would
+    // resurrect our old position and make us reappear to peers after we stopped.
     if (update.k === "loc") this.lastSent = frame;
+    else if (update.k === "stop") this.lastSent = null;
     if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(frame);
   }
 
