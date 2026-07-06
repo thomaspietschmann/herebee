@@ -12,6 +12,7 @@ import { MarkerManager } from "./markers.js";
 import { identityFromSeed } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
 import { UI } from "./ui.js";
+import { t, applyStaticI18n } from "./i18n.js";
 import type { PeerUpdate, Position } from "./types.js";
 
 function ensureSecret(): string {
@@ -45,6 +46,9 @@ function ownSeed(): string {
 }
 
 async function main(): Promise<void> {
+  // Localize the static HUD (title, <html lang>, button labels, aria) up front.
+  applyStaticI18n();
+
   // The map always renders first, so an unusable link never leaves a blank page.
   const map = initMap(document.getElementById("map")!);
 
@@ -61,7 +65,7 @@ async function main(): Promise<void> {
 
   const seed = ownSeed();
   const roster = new Map<string, { color: string; name: string }>();
-  const rosterName = (s: string) => (s === seed ? `${resolveName(s)} (du)` : resolveName(s));
+  const rosterName = (s: string) => (s === seed ? `${resolveName(s)} ${t("youSuffix")}` : resolveName(s));
   const refreshRoster = () =>
     ui.setRoster([...roster.values()].sort((a, b) => a.name.localeCompare(b.name)));
 
@@ -141,7 +145,7 @@ async function main(): Promise<void> {
     },
     onFatal(reason) {
       ui.setConnection("off");
-      ui.toast(reason === "invalid-room" ? "Ungültiger Raum-Link" : "Verbindung abgelehnt");
+      ui.toast(t(reason === "invalid-room" ? "fatalInvalidRoom" : "fatalRejected"));
     },
   });
   net.connect();
@@ -177,7 +181,7 @@ async function main(): Promise<void> {
 
   function startSharing(): void {
     if (!("geolocation" in navigator)) {
-      ui.toast("Dieses Gerät kann keinen Standort teilen");
+      ui.toast(t("noGeo"));
       return;
     }
     watchId = navigator.geolocation.watchPosition(
@@ -201,11 +205,7 @@ async function main(): Promise<void> {
       },
       (err) => {
         stopSharing();
-        ui.toast(
-          err.code === err.PERMISSION_DENIED
-            ? "Standortfreigabe wurde abgelehnt"
-            : "Standort nicht verfügbar"
-        );
+        ui.toast(t(err.code === err.PERMISSION_DENIED ? "geoDenied" : "geoUnavailable"));
       },
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 12000 }
     );

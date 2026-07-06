@@ -32,26 +32,26 @@
 
       <button id="roster" class="roster" type="button" hidden>
         <span class="roster-stack" aria-hidden="true"></span>
-        <span class="roster-count">0 hier</span>
+        <span class="roster-count"></span>
       </button>
 
       <div class="dock">
-        <p id="hint" class="hint">
+        <p id="hint" class="hint" data-i18n="hint">
           Nur aktive Teilnehmer sehen dich. Standorte werden Ende-zu-Ende
           verschlüsselt und nicht gespeichert.
         </p>
         <div class="controls">
-          <button id="share-btn" class="btn btn-ghost" type="button">Link teilen</button>
+          <button id="share-btn" class="btn btn-ghost" type="button" data-i18n="shareLink">Link teilen</button>
           <button id="geo-btn" class="btn btn-primary" type="button">
-            <span class="btn-label">Standort teilen</span>
+            <span class="btn-label" data-i18n="shareLocation">Standort teilen</span>
           </button>
-          <button id="info-btn" class="btn btn-icon" type="button" aria-label="Wie anonym ist das?">i</button>
+          <button id="info-btn" class="btn btn-icon" type="button" data-i18n-aria="infoAria" aria-label="Wie anonym ist das?">i</button>
         </div>
       </div>
 
       <div id="sheet" class="sheet" hidden>
         <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-          <button id="sheet-close" class="sheet-close" type="button" aria-label="Schließen">×</button>
+          <button id="sheet-close" class="sheet-close" type="button" data-i18n-aria="close" aria-label="Schließen">×</button>
           <div id="sheet-body"></div>
         </div>
       </div>

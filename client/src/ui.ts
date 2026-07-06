@@ -2,6 +2,7 @@
  * View layer: HUD chrome, dock controls, share/info sheets, toasts.
  * Holds no app state beyond the DOM — main.ts drives it.
  */
+import { t } from "./i18n.js";
 
 export interface UIHandlers {
   onToggleShare: () => void;
@@ -43,7 +44,7 @@ export class UI {
   setConnection(state: Conn): void {
     this.connChip.classList.toggle("is-on", state === "on");
     this.connChip.classList.toggle("is-off", state === "off");
-    const label = state === "on" ? "Verbunden" : state === "off" ? "Getrennt" : "Verbindung…";
+    const label = t(state === "on" ? "connOn" : state === "off" ? "connOff" : "connConnecting");
     this.connText.textContent = label;
     this.connChip.title = label;
   }
@@ -51,7 +52,7 @@ export class UI {
   setSharing(on: boolean): void {
     this.sharing = on;
     this.geoBtn.classList.toggle("is-sharing", on);
-    this.geoLabel.textContent = on ? "Teilen stoppen" : "Standort teilen";
+    this.geoLabel.textContent = t(on ? "stopSharing" : "shareLocation");
     if (on) this.hideHint();
   }
 
@@ -62,7 +63,7 @@ export class UI {
   setRoster(members: { color: string; name: string }[]): void {
     const n = members.length;
     this.roster.hidden = n === 0;
-    this.rosterCount.textContent = n === 1 ? "1 hier" : `${n} hier`;
+    this.rosterCount.textContent = t("here", { n });
     this.rosterStack.innerHTML = members
       .slice(0, 5)
       .map((m) => `<span class="pip" style="background:${m.color}" title="${m.name}"></span>`)
@@ -88,7 +89,7 @@ export class UI {
     const url = location.href;
     try {
       await navigator.clipboard.writeText(url);
-      this.toast("Link kopiert");
+      this.toast(t("linkCopied"));
     } catch {
       this.openShare(url);
     }
@@ -96,19 +97,18 @@ export class UI {
 
   private openShare(url: string): void {
     this.sheetBody.innerHTML = `
-      <h2>Raum teilen</h2>
-      <p>Wer diesen Link öffnet, tritt dem Raum bei und sieht die Live-Standorte.
-         Der Link <strong>ist</strong> der Schlüssel — teile ihn bewusst.</p>
+      <h2>${t("shareTitle")}</h2>
+      <p>${t("shareBody")}</p>
       <div class="linkbox">
         <input id="link-input" readonly value="${url.replace(/"/g, "&quot;")}" />
-        <button class="btn btn-ghost" id="link-copy">Kopieren</button>
+        <button class="btn btn-ghost" id="link-copy">${t("copy")}</button>
       </div>`;
     this.openSheet();
     const input = document.getElementById("link-input") as HTMLInputElement;
     document.getElementById("link-copy")!.addEventListener("click", () => {
       input.select();
       document.execCommand?.("copy");
-      this.toast("Link kopiert");
+      this.toast(t("linkCopied"));
     });
   }
 
@@ -116,16 +116,15 @@ export class UI {
   openWelcome(): void {
     this.sheetBody.innerHTML = `
       <img class="splash-logo" src="/brand/herebee-logo.png" alt="" aria-hidden="true" />
-      <h2>Willkommen bei HereBee</h2>
-      <p>Du bist in einem privaten Raum. Alle mit diesem Link finden sich hier live
-         auf der Karte.</p>
+      <h2>${t("welcomeTitle")}</h2>
+      <p>${t("welcomeIntro")}</p>
       <ul class="facts">
-        <li><strong>Nur zuschauen ist okay.</strong> Du musst deinen Standort nicht teilen — dann siehst du nur die anderen.</li>
-        <li><strong>Standort teilen:</strong> Tippe unten auf <em>„Standort teilen“</em>. Danach sehen <strong>alle im Raum</strong> deinen Live-Standort — Ende-zu-Ende-verschlüsselt, nichts wird gespeichert.</li>
-        <li><strong>Jederzeit stoppen:</strong> Der Button wird zu <em>„Teilen stoppen“</em> — ein Tipp, und du bist wieder unsichtbar.</li>
+        <li>${t("welcomeFact1")}</li>
+        <li>${t("welcomeFact2")}</li>
+        <li>${t("welcomeFact3")}</li>
       </ul>
       <div class="linkbox" style="margin-top:18px">
-        <button class="btn btn-primary" id="welcome-ok" style="flex:1">Los geht's</button>
+        <button class="btn btn-primary" id="welcome-ok" style="flex:1">${t("welcomeCta")}</button>
       </div>`;
     this.openSheet("splash");
     document.getElementById("welcome-ok")!.addEventListener("click", () => this.closeSheet());
@@ -134,13 +133,13 @@ export class UI {
   /** Rename a marker locally. `onSave(null)` means "reset to the generated name". */
   openRename(currentName: string, hasCustom: boolean, onSave: (name: string | null) => void): void {
     this.sheetBody.innerHTML = `
-      <h2>Namen vergeben</h2>
-      <p>Nur für dich sichtbar, lokal auf diesem Gerät gespeichert.</p>
+      <h2>${t("renameTitle")}</h2>
+      <p>${t("renameBody")}</p>
       <div class="linkbox">
-        <input id="rename-input" maxlength="40" placeholder="z. B. Anna" value="${currentName.replace(/"/g, "&quot;")}" />
-        <button class="btn btn-primary" id="rename-save">Speichern</button>
+        <input id="rename-input" maxlength="40" placeholder="${t("renamePlaceholder")}" value="${currentName.replace(/"/g, "&quot;")}" />
+        <button class="btn btn-primary" id="rename-save">${t("save")}</button>
       </div>
-      ${hasCustom ? `<button class="btn btn-ghost" id="rename-reset" style="margin-top:10px">Auf Zufallsnamen zurücksetzen</button>` : ""}`;
+      ${hasCustom ? `<button class="btn btn-ghost" id="rename-reset" style="margin-top:10px">${t("renameReset")}</button>` : ""}`;
     this.openSheet();
     const input = document.getElementById("rename-input") as HTMLInputElement;
     input.focus();
@@ -163,11 +162,10 @@ export class UI {
   /** Shown when the room link's secret is missing or malformed. */
   openInvalidLink(): void {
     this.sheetBody.innerHTML = `
-      <h2>Dieser Link führt nirgendwo hin</h2>
-      <p>Der Raum-Schlüssel im Link fehlt oder ist unvollständig. Raum-Links werden
-         automatisch erzeugt — man kann sie nicht von Hand eintippen.</p>
+      <h2>${t("invalidTitle")}</h2>
+      <p>${t("invalidBody")}</p>
       <div class="linkbox" style="margin-top:16px">
-        <button class="btn btn-primary" id="invalid-new" style="flex:1">Neuen Raum öffnen</button>
+        <button class="btn btn-primary" id="invalid-new" style="flex:1">${t("invalidCta")}</button>
       </div>`;
     this.openSheet();
     document.getElementById("sheet-close")!.style.display = "none";
@@ -178,20 +176,19 @@ export class UI {
 
   private openInfo(): void {
     this.sheetBody.innerHTML = `
-      <h2>Wie privat ist das?</h2>
-      <p>HereBee teilt Standorte <strong>flüchtig und Ende-zu-Ende-verschlüsselt</strong>
-         zwischen aktiven Teilnehmern. Es ist bewusst datensparsam — aber nenne es nicht
-         „vollständig anonym“.</p>
+      <h2>${t("infoTitle")}</h2>
+      <p>${t("infoIntro")}</p>
       <ul class="facts">
-        <li>Der Server sieht <strong>weder Koordinaten noch Namen noch den Schlüssel</strong> — nur verschlüsselte Datenpakete.</li>
-        <li>Der Schlüssel steckt im Link hinter <code>#</code> und wird nie an den Server gesendet.</li>
-        <li>Es gibt <strong>keine Datenbank und keine Logs</strong>; Räume leben nur, solange jemand da ist.</li>
-        <li class="warn">Relay und Karten-Server sehen deine <strong>IP</strong> für die Dauer der Verbindung (nicht gespeichert). Das lässt sich im Browser nicht wegzaubern.</li>
-        <li class="warn">Wer den vollständigen Link hat, sieht den Raum. Teile ihn nur mit Vertrauten.</li>
+        <li>${t("infoFact1")}</li>
+        <li>${t("infoFact2")}</li>
+        <li>${t("infoFact3")}</li>
+        <li class="warn">${t("infoFact4")}</li>
+        <li class="warn">${t("infoFact5")}</li>
       </ul>
-      <p class="attrib-note">Karte:
-        <a href="https://protomaps.com" target="_blank" rel="noreferrer">Protomaps</a>
-        © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>-Mitwirkende</p>`;
+      <p class="attrib-note">${t("mapCredits", {
+        pm: '<a href="https://protomaps.com" target="_blank" rel="noreferrer">Protomaps</a>',
+        osm: '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>',
+      })}</p>`;
     this.openSheet();
   }
 

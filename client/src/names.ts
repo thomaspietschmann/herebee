@@ -6,19 +6,7 @@
  * device, so a peer's displayed name never flickers between renders.
  */
 import { pick, rngFromSeed } from "./rng.js";
-
-/** German device? Default to German (the app is DACH-first) when unsure. */
-function prefersGerman(): boolean {
-  try {
-    const langs =
-      navigator.languages && navigator.languages.length
-        ? navigator.languages
-        : [navigator.language];
-    return (langs[0] || "de").toLowerCase().startsWith("de");
-  } catch {
-    return true;
-  }
-}
+import { lang } from "./i18n.js";
 
 // ---- German ---------------------------------------------------------------
 // Adjective stems that cleanly take -er/-e/-es endings.
@@ -79,5 +67,6 @@ function englishName(seed: string): string {
 }
 
 export function nameFromSeed(seed: string): string {
-  return prefersGerman() ? germanName(seed) : englishName(seed);
+  // Persona sets exist for German and English; other locales use the English set.
+  return lang === "de" ? germanName(seed) : englishName(seed);
 }
