@@ -263,7 +263,7 @@ const heartbeat = setInterval(() => {
     ws.isAlive = false;
     ws.ping();
   }
-}, 30_000);
+}, 20_000);
 
 httpServer.on("close", () => clearInterval(heartbeat));
 

@@ -182,14 +182,11 @@ async function main(): Promise<void> {
   // Entry gate: nothing touches the network (or geolocation) until the user
   // actively enters via the splash. Opening the socket is what makes us "present"
   // to others, so it must be a deliberate act — see the splash copy.
+  // Always gate behind the splash — every load, every room. Nothing touches the
+  // network (or geolocation) until the user actively confirms entering the room.
   const enterRoom = () => {
     if (entered) return;
     entered = true;
-    try {
-      sessionStorage.setItem("herebee.entered", "1");
-    } catch {
-      /* private mode */
-    }
     net.connect();
     // Resume sharing from a previous visit to this room (only now, post-entry).
     try {
@@ -198,15 +195,7 @@ async function main(): Promise<void> {
       /* private mode */
     }
   };
-
-  let alreadyEntered = false;
-  try {
-    alreadyEntered = sessionStorage.getItem("herebee.entered") === "1";
-  } catch {
-    /* private mode */
-  }
-  if (alreadyEntered) enterRoom(); // reload within the same session: skip the splash
-  else ui.openWelcome(enterRoom); // first time this session: confirm to connect
+  ui.openWelcome(enterRoom);
 
   // Returning from standby / a tab switch can leave the socket frozen and pauses
   // geolocation. Re-establish the connection so peers re-sync both directions —
