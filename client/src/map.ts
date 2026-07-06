@@ -37,11 +37,12 @@ export function initMap(container: HTMLElement): MlMap {
     style: buildStyle(),
     center: DACH_CENTER,
     zoom: 5.2,
-    attributionControl: { compact: true },
+    // No on-map attribution badge — it's shown in the "i" info sheet instead
+    // (see ui.ts). No zoom buttons either: touch pinch / double-tap covers zoom.
+    attributionControl: false,
     // Location comes from us via markers; keep the canvas gesture-friendly.
     dragRotate: false,
     pitchWithRotate: false,
   });
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
   return map;
 }

@@ -11,7 +11,7 @@ type Conn = "connecting" | "on" | "off";
 
 export class UI {
   private connChip = document.getElementById("conn")!;
-  private connDot = this.connChip.querySelector<HTMLElement>(".chip-text")!;
+  private connText = document.getElementById("conn-text")!;
   private geoBtn = document.getElementById("geo-btn")!;
   private geoLabel = this.geoBtn.querySelector<HTMLElement>(".btn-label")!;
   private shareBtn = document.getElementById("share-btn")!;
@@ -43,8 +43,9 @@ export class UI {
   setConnection(state: Conn): void {
     this.connChip.classList.toggle("is-on", state === "on");
     this.connChip.classList.toggle("is-off", state === "off");
-    this.connDot.textContent =
-      state === "on" ? "Verbunden" : state === "off" ? "Getrennt" : "Verbindung…";
+    const label = state === "on" ? "Verbunden" : state === "off" ? "Getrennt" : "Verbindung…";
+    this.connText.textContent = label;
+    this.connChip.title = label;
   }
 
   setSharing(on: boolean): void {
@@ -114,7 +115,8 @@ export class UI {
   /** Shown once when entering a room: how watching vs. sharing works. */
   openWelcome(): void {
     this.sheetBody.innerHTML = `
-      <h2>Willkommen bei HereBee 🐝</h2>
+      <img class="splash-logo" src="/brand/herebee-logo.png" alt="" aria-hidden="true" />
+      <h2>Willkommen bei HereBee</h2>
       <p>Du bist in einem privaten Raum. Alle mit diesem Link finden sich hier live
          auf der Karte.</p>
       <ul class="facts">
@@ -125,7 +127,7 @@ export class UI {
       <div class="linkbox" style="margin-top:18px">
         <button class="btn btn-primary" id="welcome-ok" style="flex:1">Los geht's</button>
       </div>`;
-    this.openSheet();
+    this.openSheet("splash");
     document.getElementById("welcome-ok")!.addEventListener("click", () => this.closeSheet());
   }
 
@@ -186,14 +188,19 @@ export class UI {
         <li>Es gibt <strong>keine Datenbank und keine Logs</strong>; Räume leben nur, solange jemand da ist.</li>
         <li class="warn">Relay und Karten-Server sehen deine <strong>IP</strong> für die Dauer der Verbindung (nicht gespeichert). Das lässt sich im Browser nicht wegzaubern.</li>
         <li class="warn">Wer den vollständigen Link hat, sieht den Raum. Teile ihn nur mit Vertrauten.</li>
-      </ul>`;
+      </ul>
+      <p class="attrib-note">Karte:
+        <a href="https://protomaps.com" target="_blank" rel="noreferrer">Protomaps</a>
+        © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>-Mitwirkende</p>`;
     this.openSheet();
   }
 
-  private openSheet(): void {
+  private openSheet(kind?: "splash"): void {
+    this.sheet.classList.toggle("is-splash", kind === "splash");
     this.sheet.hidden = false;
   }
   private closeSheet(): void {
     this.sheet.hidden = true;
+    this.sheet.classList.remove("is-splash");
   }
 }

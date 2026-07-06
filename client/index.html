@@ -10,6 +10,9 @@
     <meta name="referrer" content="no-referrer" />
     <title>HereBee — flüchtig zusammenfinden</title>
     <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
@@ -17,13 +20,14 @@
       <div id="map" aria-label="Karte mit den Standorten der Raumteilnehmer"></div>
 
       <header class="hud">
-        <div class="brand">
-          <span class="beacon" aria-hidden="true"></span>
+        <div id="conn" class="brand" aria-live="polite">
+          <span class="brand-mark-wrap">
+            <img class="brand-mark" src="/brand/herebee-logo.png" alt="" aria-hidden="true" />
+            <span class="brand-status" aria-hidden="true"></span>
+          </span>
           <span class="wordmark">Here<b>Bee</b></span>
+          <span id="conn-text" class="visually-hidden">Verbindung…</span>
         </div>
-        <button id="conn" class="chip" type="button" aria-live="polite">
-          <span class="dot"></span><span class="chip-text">Verbindung…</span>
-        </button>
       </header>
 
       <button id="roster" class="roster" type="button" hidden>

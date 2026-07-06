@@ -1,13 +1,28 @@
 /**
- * Deterministic German nickname generator: adjective + animal, seeded.
- * The attributive adjective takes the strong-declension nominative ending that
- * agrees with the animal's grammatical gender (der -> -er, die -> -e, das -> -es):
- *   der Fuchs -> "Flinker Fuchs" · die Katze -> "Flinke Katze" · das Reh -> "Flinkes Reh"
+ * Deterministic bee-persona nickname generator, seeded so every device derives
+ * the same name for a given seed — within one language. The generator honours
+ * the device locale: German devices get German personas (with correct strong
+ * adjective declension), everyone else gets an English set. Locale is stable per
+ * device, so a peer's displayed name never flickers between renders.
  */
 import { pick, rngFromSeed } from "./rng.js";
 
+/** German device? Default to German (the app is DACH-first) when unsure. */
+function prefersGerman(): boolean {
+  try {
+    const langs =
+      navigator.languages && navigator.languages.length
+        ? navigator.languages
+        : [navigator.language];
+    return (langs[0] || "de").toLowerCase().startsWith("de");
+  } catch {
+    return true;
+  }
+}
+
+// ---- German ---------------------------------------------------------------
 // Adjective stems that cleanly take -er/-e/-es endings.
-const ADJECTIVES = [
+const ADJECTIVES_DE = [
   "flink", "mutig", "wild", "ruhig", "schlau", "sanft", "frech", "flott",
   "klug", "munter", "tapfer", "heiter", "keck", "hurtig", "listig", "drollig",
   "putzig", "wach", "froh", "kühn", "leis", "emsig", "wendig", "verwegen",
@@ -15,34 +30,54 @@ const ADJECTIVES = [
 ] as const;
 
 type Gender = "m" | "f" | "n";
-interface Animal {
+interface Persona {
   noun: string;
   g: Gender;
 }
 
-const ANIMALS: readonly Animal[] = [
-  { noun: "Fuchs", g: "m" }, { noun: "Dachs", g: "m" }, { noun: "Falke", g: "m" },
-  { noun: "Igel", g: "m" }, { noun: "Hirsch", g: "m" }, { noun: "Biber", g: "m" },
-  { noun: "Marder", g: "m" }, { noun: "Luchs", g: "m" }, { noun: "Waschbär", g: "m" },
-  { noun: "Kranich", g: "m" }, { noun: "Specht", g: "m" }, { noun: "Uhu", g: "m" },
-  { noun: "Adler", g: "m" }, { noun: "Wolf", g: "m" }, { noun: "Hase", g: "m" },
-  { noun: "Rabe", g: "m" }, { noun: "Storch", g: "m" }, { noun: "Pinguin", g: "m" },
-  { noun: "Katze", g: "f" }, { noun: "Eule", g: "f" }, { noun: "Robbe", g: "f" },
-  { noun: "Möwe", g: "f" }, { noun: "Ente", g: "f" }, { noun: "Biene", g: "f" },
-  { noun: "Libelle", g: "f" }, { noun: "Schnecke", g: "f" }, { noun: "Elster", g: "f" },
-  { noun: "Amsel", g: "f" }, { noun: "Krähe", g: "f" }, { noun: "Fledermaus", g: "f" },
-  { noun: "Schildkröte", g: "f" }, { noun: "Meise", g: "f" }, { noun: "Lerche", g: "f" },
-  { noun: "Reh", g: "n" }, { noun: "Wiesel", g: "n" }, { noun: "Eichhörnchen", g: "n" },
-  { noun: "Murmeltier", g: "n" }, { noun: "Faultier", g: "n" }, { noun: "Nashorn", g: "n" },
-  { noun: "Erdmännchen", g: "n" }, { noun: "Rentier", g: "n" }, { noun: "Kaninchen", g: "n" },
-  { noun: "Frettchen", g: "n" },
+const PERSONAS_DE: readonly Persona[] = [
+  { noun: "Brummer", g: "m" }, { noun: "Wabenwart", g: "m" }, { noun: "Schwarmfreund", g: "m" },
+  { noun: "Nektarprofi", g: "m" }, { noun: "Pollenpilot", g: "m" }, { noun: "Summbote", g: "m" },
+  { noun: "Wiesenflitzer", g: "m" }, { noun: "Honigfinder", g: "m" }, { noun: "Blütenkundler", g: "m" },
+  { noun: "Biene", g: "f" }, { noun: "Honigbiene", g: "f" }, { noun: "Spurbiene", g: "f" },
+  { noun: "Tanzbiene", g: "f" }, { noun: "Wabenwache", g: "f" }, { noun: "Sammlerin", g: "f" },
+  { noun: "Kundschafterin", g: "f" }, { noun: "Nektarjägerin", g: "f" }, { noun: "Pollenbotin", g: "f" },
+  { noun: "Blütenfreundin", g: "f" }, { noun: "Schwarmlotsin", g: "f" },
+  { noun: "Summtier", g: "n" }, { noun: "Wabenkind", g: "n" }, { noun: "Honigherz", g: "n" },
+  { noun: "Nektarlicht", g: "n" },
 ] as const;
 
 const ENDING: Record<Gender, string> = { m: "er", f: "e", n: "es" };
 
-export function nameFromSeed(seed: string): string {
+function germanName(seed: string): string {
   const rng = rngFromSeed(seed + ":name");
-  const adj = pick(rng, ADJECTIVES);
-  const animal = pick(rng, ANIMALS);
-  return `${adj}${ENDING[animal.g]} ${animal.noun}`;
+  const adj = pick(rng, ADJECTIVES_DE);
+  const persona = pick(rng, PERSONAS_DE);
+  return `${adj}${ENDING[persona.g]} ${persona.noun}`;
+}
+
+// ---- English --------------------------------------------------------------
+const ADJECTIVES_EN = [
+  "swift", "brave", "wild", "calm", "clever", "gentle", "cheeky", "nimble",
+  "bright", "merry", "bold", "keen", "sly", "cute", "curious", "playful",
+  "fuzzy", "plucky", "breezy", "sunny", "dapper", "jolly", "snug", "zesty",
+  "perky", "chirpy", "cosy", "spry", "witty", "fluffy",
+] as const;
+
+const PERSONAS_EN = [
+  "Buzzer", "Forager", "Scout", "Drifter", "Bumbler", "Honeybee", "Dancer",
+  "Wanderer", "Nectar Pilot", "Pollen Pilot", "Hive Guard", "Comb Keeper",
+  "Waggle Scout", "Bloom Seeker", "Meadow Racer", "Nectar Hunter",
+  "Pollen Bearer", "Swarm Guide", "Honey Finder", "Bloom Friend",
+] as const;
+
+function englishName(seed: string): string {
+  const rng = rngFromSeed(seed + ":name");
+  const adj = pick(rng, ADJECTIVES_EN);
+  const persona = pick(rng, PERSONAS_EN);
+  return `${adj.charAt(0).toUpperCase()}${adj.slice(1)} ${persona}`;
+}
+
+export function nameFromSeed(seed: string): string {
+  return prefersGerman() ? germanName(seed) : englishName(seed);
 }
