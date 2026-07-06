@@ -1,12 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#0E1116"/>
-  <!-- wings -->
-  <ellipse cx="12" cy="12" rx="5" ry="7" fill="#34E1B4" opacity="0.6" transform="rotate(-20 12 12)"/>
-  <ellipse cx="20" cy="12" rx="5" ry="7" fill="#34E1B4" opacity="0.6" transform="rotate(20 20 12)"/>
-  <!-- body -->
-  <ellipse cx="16" cy="18" rx="8" ry="9" fill="#FFC63B"/>
-  <path d="M8.5 15.5h15M9 20h14" stroke="#0E1116" stroke-width="2.4" stroke-linecap="round"/>
-  <!-- antennae -->
-  <path d="M13 9.5 Q11 5 9 4M19 9.5 Q21 5 23 4" stroke="#0E1116" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <circle cx="16" cy="26" r="3" fill="#FF5A4D"/>
+  <rect width="32" height="32" rx="8" fill="#0e1116"/>
+  <g fill="#fff7df" opacity=".88">
+    <ellipse cx="8" cy="16" rx="5" ry="7" transform="rotate(-27 8 16)"/>
+    <ellipse cx="24" cy="16" rx="5" ry="7" transform="rotate(27 24 16)"/>
+  </g>
+  <ellipse cx="16" cy="17" rx="9" ry="10.5" fill="#ffc63b"/>
+  <path d="M8.5 18.2q7.5 3.5 15 0M10 23q6 3 12 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="16" cy="12" r="8" fill="#ffd43b"/>
+  <path d="M13 7.2q-1.5-3-5-4M19 7.2q1.5-3 5-4" fill="none" stroke="#17120d" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="7.5" cy="3" r="2" fill="#34e1b4"/>
+  <circle cx="24.5" cy="3" r="2" fill="#34e1b4"/>
+  <circle cx="13" cy="12" r="2.4" fill="#fff8ed" stroke="#17120d" stroke-width=".9"/>
+  <circle cx="19" cy="12" r="2.4" fill="#fff8ed" stroke="#17120d" stroke-width=".9"/>
+  <circle cx="13.4" cy="12.2" r="1.1" fill="#17120d"/>
+  <circle cx="18.6" cy="12.2" r="1.1" fill="#17120d"/>
+  <path d="M14.3 15q1.7 1.8 3.4 0" fill="none" stroke="#17120d" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M16 14.8c4 0 7 3 7 6.5 0 5.4-7 10.5-7 10.5s-7-5.1-7-10.5c0-3.5 3-6.5 7-6.5Z" fill="#ff5a4d"/>
+  <circle cx="16" cy="21" r="3" fill="#0e1116"/>
 </svg>
