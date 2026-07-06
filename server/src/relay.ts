@@ -30,6 +30,12 @@ export function send(conn: Conn, msg: ServerMessage): void {
   conn.ws.send(JSON.stringify(msg));
 }
 
+/** Tell every member of a room the current occupancy (a bare count, no identity). */
+function broadcastPresence(room: Set<Conn>): void {
+  const msg: ServerMessage = { t: "presence", n: room.size };
+  for (const c of room) send(c, msg);
+}
+
 export function joinRoom(conn: Conn, roomId: string): void {
   conn.roomId = roomId;
   let room = rooms.get(roomId);
@@ -47,6 +53,9 @@ export function joinRoom(conn: Conn, roomId: string): void {
     // Also nudge awake peers to send a fresh one.
     send(other, { t: "request" });
   }
+  // Everyone (incl. the newcomer) learns the new occupancy, so watchers show up
+  // as a count even though they never broadcast a position.
+  broadcastPresence(room);
 }
 
 /** Fan out an opaque encrypted blob to every other member of the sender's room. */
@@ -78,6 +87,7 @@ export function leaveRoom(conn: Conn): void {
     return;
   }
   for (const other of room) send(other, { t: "left", id: conn.id });
+  broadcastPresence(room); // occupancy dropped by one
 }
 
 export function stats(): { rooms: number; connections: number } {

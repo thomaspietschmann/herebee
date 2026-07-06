@@ -6,6 +6,14 @@ import { t } from "./i18n.js";
 
 export interface UIHandlers {
   onToggleShare: () => void;
+  onFitAll: () => void; // zoom the map so every shared marker fits on screen
+  onGoTo: (seed: string) => void; // fly the map to one participant's marker
+}
+
+interface Sharer {
+  seed: string;
+  color: string;
+  name: string;
 }
 
 type Conn = "connecting" | "on" | "off";
@@ -26,19 +34,26 @@ export class UI {
   private toastEl = document.getElementById("toast")!;
   private sharing = false;
   private toastTimer = 0;
+  private gated = false; // a mandatory sheet (entry gate / invalid link) is open
+  private lastSharers: Sharer[] = [];
+  private lastWatchers = 0;
 
-  constructor(h: UIHandlers) {
+  constructor(private readonly h: UIHandlers) {
     this.geoBtn.addEventListener("click", () => h.onToggleShare());
     this.shareBtn.addEventListener("click", () => this.copyLink());
     this.infoBtn.addEventListener("click", () => this.openInfo());
-    this.roster.addEventListener("click", () => this.openInfo());
+    this.roster.addEventListener("click", () => this.openParticipants());
     document.getElementById("sheet-close")!.addEventListener("click", () => this.closeSheet());
     this.sheet.addEventListener("click", (e) => {
-      if (e.target === this.sheet) this.closeSheet();
+      if (e.target === this.sheet && !this.gated) this.closeSheet();
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") this.closeSheet();
+      if (e.key === "Escape" && !this.gated) this.closeSheet();
     });
+  }
+
+  private esc(s: string): string {
+    return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
   }
 
   setConnection(state: Conn): void {
@@ -60,14 +75,59 @@ export class UI {
     return this.sharing;
   }
 
-  setRoster(members: { color: string; name: string }[]): void {
-    const n = members.length;
-    this.roster.hidden = n === 0;
-    this.rosterCount.textContent = t("here", { n });
-    this.rosterStack.innerHTML = members
+  /**
+   * @param sharers  peers currently broadcasting a location (colored pips)
+   * @param watchers present-but-not-sharing count (anonymous, hollow pips)
+   * @param total    total present incl. self (the "N here" number)
+   */
+  setRoster(sharers: Sharer[], watchers: number, total: number): void {
+    this.lastSharers = sharers;
+    this.lastWatchers = watchers;
+    // Hide when it's only us alone watching; show once someone shares or others arrive.
+    this.roster.hidden = total < 2 && sharers.length < 1;
+    this.rosterCount.textContent = t("here", { n: total });
+    const colored = sharers
       .slice(0, 5)
-      .map((m) => `<span class="pip" style="background:${m.color}" title="${m.name}"></span>`)
-      .join("");
+      .map((m) => `<span class="pip" style="background:${m.color}" title="${this.esc(m.name)}"></span>`);
+    const hollowN = Math.min(watchers, Math.max(0, 5 - colored.length));
+    const hollow = Array.from(
+      { length: hollowN },
+      () => `<span class="pip pip-watcher" title="${t("watcher")}"></span>`
+    );
+    this.rosterStack.innerHTML = [...colored, ...hollow].join("");
+  }
+
+  /** Participant list (opened by tapping the roster pill), with a "fit all" action. */
+  private openParticipants(): void {
+    const list = this.lastSharers.length
+      ? `<ul class="party-list">${this.lastSharers
+          .map(
+            (m) =>
+              `<li><button type="button" class="party" data-seed="${this.esc(m.seed)}"><span class="pip" style="background:${m.color}"></span>${this.esc(m.name)}</button></li>`
+          )
+          .join("")}</ul>`
+      : `<p>${t("noSharers")}</p>`;
+    const watching =
+      this.lastWatchers > 0 ? `<p class="watching-note">${t("watchingLine", { n: this.lastWatchers })}</p>` : "";
+    this.sheetBody.innerHTML = `
+      <h2>${t("participantsTitle")}</h2>
+      ${list}
+      ${watching}
+      <div class="linkbox" style="margin-top:18px">
+        <button class="btn btn-primary" id="fit-all" style="flex:1">${t("fitAll")}</button>
+      </div>`;
+    this.openSheet();
+    document.getElementById("fit-all")?.addEventListener("click", () => {
+      this.closeSheet();
+      this.h.onFitAll();
+    });
+    // Tap a participant to fly the map to their marker.
+    this.sheetBody.querySelectorAll<HTMLElement>(".party[data-seed]").forEach((el) => {
+      el.addEventListener("click", () => {
+        this.closeSheet();
+        this.h.onGoTo(el.dataset.seed!);
+      });
+    });
   }
 
   hideHint(): void {
@@ -112,8 +172,12 @@ export class UI {
     });
   }
 
-  /** Shown once when entering a room: how watching vs. sharing works. */
-  openWelcome(): void {
+  /**
+   * Entry gate: explains watching vs. sharing and presence, then connects only
+   * when the user confirms. Mandatory — no × and no backdrop dismiss — so no data
+   * flows until they actively enter. `onEnter` opens the WebSocket.
+   */
+  openWelcome(onEnter: () => void): void {
     this.sheetBody.innerHTML = `
       <img class="splash-logo" src="/brand/herebee-logo.png" alt="" aria-hidden="true" />
       <h2>${t("welcomeTitle")}</h2>
@@ -126,8 +190,13 @@ export class UI {
       <div class="linkbox" style="margin-top:18px">
         <button class="btn btn-primary" id="welcome-ok" style="flex:1">${t("welcomeCta")}</button>
       </div>`;
+    this.gated = true;
     this.openSheet("splash");
-    document.getElementById("welcome-ok")!.addEventListener("click", () => this.closeSheet());
+    document.getElementById("sheet-close")!.style.display = "none";
+    document.getElementById("welcome-ok")!.addEventListener("click", () => {
+      this.closeSheet();
+      onEnter();
+    });
   }
 
   /** Rename a marker locally. `onSave(null)` means "reset to the generated name". */
@@ -167,6 +236,7 @@ export class UI {
       <div class="linkbox" style="margin-top:16px">
         <button class="btn btn-primary" id="invalid-new" style="flex:1">${t("invalidCta")}</button>
       </div>`;
+    this.gated = true;
     this.openSheet();
     document.getElementById("sheet-close")!.style.display = "none";
     document.getElementById("invalid-new")!.addEventListener("click", () => {
@@ -199,5 +269,7 @@ export class UI {
   private closeSheet(): void {
     this.sheet.hidden = true;
     this.sheet.classList.remove("is-splash");
+    this.gated = false;
+    document.getElementById("sheet-close")!.style.display = "";
   }
 }

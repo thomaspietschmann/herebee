@@ -112,6 +112,22 @@ export class MarkerManager {
     return this.entries.has(id);
   }
 
+  /** A marker's [lng, lat], or null if that peer isn't on the map. */
+  positionOf(id: string): [number, number] | null {
+    const e = this.entries.get(id);
+    return e ? [e.pos.lng, e.pos.lat] : null;
+  }
+
+  /** Bounds covering every marker, or null if there are none (nothing shared). */
+  bounds(): maplibregl.LngLatBounds | null {
+    let b: maplibregl.LngLatBounds | null = null;
+    for (const e of this.entries.values()) {
+      const ll: [number, number] = [e.pos.lng, e.pos.lat];
+      b = b ? b.extend(ll) : new maplibregl.LngLatBounds(ll, ll);
+    }
+    return b;
+  }
+
   /** Update a marker's displayed name (local rename), keeping it in sync now. */
   rename(seed: string, name: string): void {
     const e = this.entries.get(seed);

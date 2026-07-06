@@ -66,22 +66,37 @@ async function main(): Promise<void> {
   const seed = ownSeed();
   const roster = new Map<string, { color: string; name: string }>();
   const rosterName = (s: string) => (s === seed ? `${resolveName(s)} ${t("youSuffix")}` : resolveName(s));
-  const refreshRoster = () =>
-    ui.setRoster([...roster.values()].sort((a, b) => a.name.localeCompare(b.name)));
+  // presence = total connections in the room (from the server, a count only).
+  // watchers = present but not sharing a location; shown anonymously.
+  let presence = 0;
+  const refreshRoster = () => {
+    const sharers = [...roster.entries()]
+      .map(([s, v]) => ({ seed: s, color: v.color, name: v.name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const watchers = Math.max(0, presence - sharers.length);
+    ui.setRoster(sharers, watchers, presence);
+  };
 
   let watchId: number | null = null;
   let heartbeatId: number | null = null;
   let lastPos: Position | null = null;
   let centeredOnSelf = false;
+  let entered = false; // true once the user confirmed the entry gate (WS live)
 
   const markers = new MarkerManager(map, (s) => onRename(s));
-  const ui = new UI({ onToggleShare: () => (watchId === null ? startSharing() : stopSharing()) });
-
-  // Explain watching vs. sharing once per session when entering the room.
-  if (!sessionStorage.getItem("herebee.welcomed")) {
-    ui.openWelcome();
-    sessionStorage.setItem("herebee.welcomed", "1");
-  }
+  const fitAll = () => {
+    const b = markers.bounds();
+    if (b) map.fitBounds(b, { padding: 80, maxZoom: 16, duration: 700 });
+  };
+  const goTo = (s: string) => {
+    const p = markers.positionOf(s);
+    if (p) map.easeTo({ center: p, zoom: Math.max(map.getZoom(), 15), duration: 700 });
+  };
+  const ui = new UI({
+    onToggleShare: () => (watchId === null ? startSharing() : stopSharing()),
+    onFitAll: fitAll,
+    onGoTo: goTo,
+  });
 
   // Derive the room keys from the fragment secret. A hand-edited / malformed
   // secret can't decode — show a friendly notice instead of failing silently.
@@ -143,21 +158,15 @@ async function main(): Promise<void> {
     onStatus(connected) {
       ui.setConnection(connected ? "on" : "off");
     },
+    onPresence(n) {
+      presence = n;
+      refreshRoster();
+    },
     onFatal(reason) {
       ui.setConnection("off");
       ui.toast(t(reason === "invalid-room" ? "fatalInvalidRoom" : "fatalRejected"));
     },
   });
-  net.connect();
-
-  // Returning from standby / a tab switch can leave the socket frozen and pauses
-  // geolocation. Re-establish the connection so peers re-sync both directions.
-  const resume = () => {
-    if (document.visibilityState === "visible") net.resync();
-  };
-  document.addEventListener("visibilitychange", resume);
-  window.addEventListener("online", resume);
-  window.addEventListener("pageshow", resume);
 
   // Remember (per room) whether we were sharing, and restore it after a reload.
   const shareKey = "herebee.sharing." + keys.roomId;
@@ -169,11 +178,45 @@ async function main(): Promise<void> {
       /* private mode */
     }
   };
+
+  // Entry gate: nothing touches the network (or geolocation) until the user
+  // actively enters via the splash. Opening the socket is what makes us "present"
+  // to others, so it must be a deliberate act — see the splash copy.
+  const enterRoom = () => {
+    if (entered) return;
+    entered = true;
+    try {
+      sessionStorage.setItem("herebee.entered", "1");
+    } catch {
+      /* private mode */
+    }
+    net.connect();
+    // Resume sharing from a previous visit to this room (only now, post-entry).
+    try {
+      if (localStorage.getItem(shareKey) === "1") startSharing();
+    } catch {
+      /* private mode */
+    }
+  };
+
+  let alreadyEntered = false;
   try {
-    if (localStorage.getItem(shareKey) === "1") startSharing();
+    alreadyEntered = sessionStorage.getItem("herebee.entered") === "1";
   } catch {
     /* private mode */
   }
+  if (alreadyEntered) enterRoom(); // reload within the same session: skip the splash
+  else ui.openWelcome(enterRoom); // first time this session: confirm to connect
+
+  // Returning from standby / a tab switch can leave the socket frozen and pauses
+  // geolocation. Re-establish the connection so peers re-sync both directions —
+  // but only once we've actually entered (never before the gate is confirmed).
+  const resume = () => {
+    if (entered && document.visibilityState === "visible") net.resync();
+  };
+  document.addEventListener("visibilitychange", resume);
+  window.addEventListener("online", resume);
+  window.addEventListener("pageshow", resume);
 
   function locUpdate(pos: Position): PeerUpdate {
     return { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, at: Date.now() };

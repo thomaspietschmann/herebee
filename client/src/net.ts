@@ -12,6 +12,7 @@ export interface NetHandlers {
   onLeft: (id: string) => void;
   onRequest: () => void; // a peer joined; re-broadcast our latest state
   onStatus: (connected: boolean) => void;
+  onPresence: (n: number) => void; // room occupancy (count only, no identity)
   onFatal: (reason: string) => void;
 }
 
@@ -55,6 +56,8 @@ export class NetClient {
         this.h.onLeft(msg.id);
       } else if (msg.t === "request") {
         this.h.onRequest();
+      } else if (msg.t === "presence") {
+        this.h.onPresence(msg.n);
       } else if (msg.t === "error") {
         this.closed = true;
         this.h.onFatal(msg.reason);

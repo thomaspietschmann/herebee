@@ -29,4 +29,7 @@ export type ServerMessage =
   | { t: "peer"; id: string; data: string }
   | { t: "request" } // a peer joined; please re-broadcast your latest state
   | { t: "left"; id: string }
+  // Aggregate room occupancy so clients can show that watchers (present but not
+  // sharing) exist — a plain count, never an identity or location.
+  | { t: "presence"; n: number }
   | { t: "error"; reason: string };

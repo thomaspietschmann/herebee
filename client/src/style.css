@@ -191,6 +191,49 @@ body {
 .roster-stack .pip:first-child {
   margin-left: 0;
 }
+/* watchers: hollow, anonymous — present but not sharing a location */
+.pip.pip-watcher {
+  background: var(--ink-2);
+  border-color: var(--muted);
+  border-style: dashed;
+}
+
+/* ---------- participant list (in the sheet) ---------- */
+.party-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.party-list li {
+  border-top: 1px solid var(--hair);
+}
+.party {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 2px;
+  background: none;
+  border: 0;
+  color: var(--mist);
+  font: 600 14px/1 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+.party .pip {
+  margin: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+.party:hover {
+  color: #fff;
+}
+.watching-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
 
 /* ---------- dock (bottom, thumb zone) ---------- */
 .dock {
