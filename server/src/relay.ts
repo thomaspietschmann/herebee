@@ -14,6 +14,10 @@ export interface Conn {
   readonly id: string; // ephemeral, per-connection, not linkable
   readonly ws: WebSocket;
   roomId: string | null;
+  // Ephemeral per-tab token (from the client's sessionStorage), used ONLY to
+  // recognise a reconnecting tab so we can drop its own stale socket. Never an
+  // identity, never logged, gone when the tab closes.
+  cid: string | null;
   bucket: number; // rate-limit tokens
   lastRefill: number;
   alive: boolean; // heartbeat
@@ -36,12 +40,29 @@ function broadcastPresence(room: Set<Conn>): void {
   for (const c of room) send(c, msg);
 }
 
-export function joinRoom(conn: Conn, roomId: string): void {
+export function joinRoom(conn: Conn, roomId: string, cid?: string): void {
   conn.roomId = roomId;
+  conn.cid = cid ?? null;
   let room = rooms.get(roomId);
   if (!room) {
     room = new Set();
     rooms.set(roomId, room); // lazy creation
+  }
+  // Evict a previous socket from the SAME browser tab (identified by cid): a
+  // reload or standby-wake reconnect can leave the old socket lingering as a
+  // "zombie" until the 20s heartbeat reaps it. Dropping it here keeps occupancy
+  // honest and stops its stale cached blob from being replayed to newcomers.
+  if (cid) {
+    for (const other of room) {
+      if (other === conn || other.cid !== cid) continue;
+      room.delete(other);
+      for (const c of room) send(c, { t: "left", id: other.id });
+      try {
+        other.ws.close();
+      } catch {
+        /* already gone */
+      }
+    }
   }
   room.add(conn);
   send(conn, { t: "hello", selfId: conn.id });

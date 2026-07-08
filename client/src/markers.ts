@@ -146,4 +146,10 @@ export class MarkerManager {
   count(): number {
     return this.entries.size;
   }
+
+  /** Snapshot of every marker (id, position, last-fix time, self flag) for
+   *  handing a freshly-opened follower tab the current state in one shot. */
+  dump(): Array<{ id: string; pos: Position; at: number; self: boolean }> {
+    return [...this.entries].map(([id, e]) => ({ id, pos: e.pos, at: e.at, self: e.self }));
+  }
 }

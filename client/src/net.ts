@@ -23,7 +23,11 @@ export class NetClient {
   private lastResync = 0;
   private lastSent: string | null = null; // for latest-state re-broadcast on request
 
-  constructor(private readonly keys: RoomKeys, private readonly h: NetHandlers) {}
+  constructor(
+    private readonly keys: RoomKeys,
+    private readonly cid: string,
+    private readonly h: NetHandlers
+  ) {}
 
   connect(): void {
     // Always start from a clean slate. A previous socket may be dead-but-OPEN
@@ -37,7 +41,7 @@ export class NetClient {
 
     ws.onopen = () => {
       this.backoff = 500;
-      ws.send(JSON.stringify({ t: "join", roomId: this.keys.roomId }));
+      ws.send(JSON.stringify({ t: "join", roomId: this.keys.roomId, cid: this.cid }));
       this.h.onStatus(true);
       if (this.lastSent) ws.send(this.lastSent); // resume visibility after reconnect
     };

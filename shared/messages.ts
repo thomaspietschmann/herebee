@@ -17,7 +17,10 @@ export const roomIdSchema = z
 
 /** Client -> server. */
 export const clientMessageSchema = z.discriminatedUnion("t", [
-  z.object({ t: z.literal("join"), roomId: roomIdSchema }),
+  // `cid` is an optional, ephemeral per-tab connection token (never an identity).
+  // It lets the relay evict this tab's own stale socket when it reconnects (see
+  // relay.joinRoom), so a standby/reload zombie can't double-count or replay.
+  z.object({ t: z.literal("join"), roomId: roomIdSchema, cid: z.string().max(64).optional() }),
   // `data` is opaque ciphertext (base64url). Capped in size by the server.
   z.object({ t: z.literal("relay"), data: z.string().max(8192) }),
 ]);

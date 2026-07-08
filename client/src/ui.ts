@@ -199,6 +199,19 @@ export class UI {
     });
   }
 
+  /**
+   * Programmatically close the entry gate — used when another tab of the same
+   * browser has already entered the room (consent was given for the browser, so
+   * we don't force a second confirmation). No-op unless the splash gate is open.
+   */
+  dismissWelcome(): void {
+    if (!this.sheet.classList.contains("is-splash")) return;
+    this.sheet.hidden = true;
+    this.sheet.classList.remove("is-splash");
+    this.gated = false;
+    document.getElementById("sheet-close")!.style.display = "";
+  }
+
   /** Rename a marker locally. `onSave(null)` means "reset to the generated name". */
   openRename(currentName: string, hasCustom: boolean, onSave: (name: string | null) => void): void {
     this.sheetBody.innerHTML = `

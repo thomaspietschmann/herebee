@@ -219,6 +219,7 @@ wss.on("connection", (ws: AliveWs) => {
     id: randomBytes(9).toString("base64url"),
     ws,
     roomId: null,
+    cid: null,
     bucket: RATE_TOKENS,
     lastRefill: Date.now(),
     alive: true,
@@ -242,7 +243,7 @@ wss.on("connection", (ws: AliveWs) => {
         ws.close(1008, "invalid-room");
         return;
       }
-      joinRoom(conn, msg.roomId);
+      joinRoom(conn, msg.roomId, msg.cid);
     } else if (msg.t === "relay") {
       if (!conn.roomId) return;
       relay(conn, msg.data);
