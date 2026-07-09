@@ -231,6 +231,14 @@ async function main(): Promise<void> {
   let browserEntered = false; // has ANY tab of this browser entered the room?
   let engineLive = false; // has the leader's socket been opened?
 
+  // Single source of truth for the connection badge: update this tab and, if we're
+  // the leader (the tab that owns the socket), mirror it to the follower tabs.
+  function setConnected(c: boolean): void {
+    connected = c;
+    ui.setConnection(c ? "on" : "off");
+    if (coord.isLeader()) coord.post({ t: "status", connected: c } satisfies Bus);
+  }
+
   function locUpdate(pos: Position): PeerUpdate {
     return { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, at: Date.now() };
   }
@@ -340,9 +348,7 @@ async function main(): Promise<void> {
         if (lastPos) void net?.broadcast(locUpdate(lastPos));
       },
       onStatus(c) {
-        connected = c;
-        ui.setConnection(c ? "on" : "off");
-        coord.post({ t: "status", connected: c } satisfies Bus);
+        setConnected(c);
       },
       onPresence(n) {
         presence = n;
@@ -405,10 +411,7 @@ async function main(): Promise<void> {
         }
         break;
       case "status":
-        if (!coord.isLeader()) {
-          connected = m.connected;
-          ui.setConnection(m.connected ? "on" : "off");
-        }
+        if (!coord.isLeader()) setConnected(m.connected);
         break;
       case "fatal":
         if (!coord.isLeader()) {
@@ -456,6 +459,12 @@ async function main(): Promise<void> {
   document.addEventListener("visibilitychange", resume);
   window.addEventListener("online", resume);
   window.addEventListener("pageshow", resume);
+
+  // A dropped network (e.g. Wi-Fi off) rarely fires the socket's `onclose`, so the
+  // badge would otherwise wrongly stay green. The browser's offline event is
+  // immediate and reliable — reflect it at once. Coming back online, `resume`
+  // above reconnects the leader, which flips the badge green again.
+  window.addEventListener("offline", () => setConnected(false));
 
   // Age markers once a second; keep the roster in sync when peers time out. Runs
   // in every tab, since every tab renders its own markers.

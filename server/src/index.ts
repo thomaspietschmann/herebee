@@ -247,6 +247,8 @@ wss.on("connection", (ws: AliveWs) => {
     } else if (msg.t === "relay") {
       if (!conn.roomId) return;
       relay(conn, msg.data);
+    } else if (msg.t === "ping") {
+      send(conn, { t: "pong" }); // liveness reply so the client can detect a dead link
     }
   });
 

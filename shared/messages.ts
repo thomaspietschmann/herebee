@@ -23,6 +23,9 @@ export const clientMessageSchema = z.discriminatedUnion("t", [
   z.object({ t: z.literal("join"), roomId: roomIdSchema, cid: z.string().max(64).optional() }),
   // `data` is opaque ciphertext (base64url). Capped in size by the server.
   z.object({ t: z.literal("relay"), data: z.string().max(8192) }),
+  // Client liveness probe. The server echoes a `pong`; the client uses the reply
+  // (or its absence) to detect a silently dropped link that never fired `onclose`.
+  z.object({ t: z.literal("ping") }),
 ]);
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
 
@@ -35,4 +38,5 @@ export type ServerMessage =
   // Aggregate room occupancy so clients can show that watchers (present but not
   // sharing) exist — a plain count, never an identity or location.
   | { t: "presence"; n: number }
+  | { t: "pong" } // liveness reply to a client `ping`
   | { t: "error"; reason: string };

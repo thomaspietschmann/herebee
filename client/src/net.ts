@@ -7,6 +7,14 @@ import { decryptJson, encryptJson, type RoomKeys } from "./crypto.js";
 import type { ServerMessage } from "../../shared/messages.js";
 import type { PeerUpdate } from "./types.js";
 
+// Liveness: send a ping this often; consider the link dead if nothing at all has
+// arrived from the server within STALE_LIMIT (covers a silently dropped network
+// that never fires `onclose` — the socket lingers OPEN as a zombie). The check
+// runs on WATCHDOG_INTERVAL.
+const PING_INTERVAL = 15_000;
+const STALE_LIMIT = 35_000;
+const WATCHDOG_INTERVAL = 5_000;
+
 export interface NetHandlers {
   onPeer: (id: string, update: PeerUpdate) => void;
   onLeft: (id: string) => void;
@@ -22,6 +30,9 @@ export class NetClient {
   private closed = false;
   private lastResync = 0;
   private lastSent: string | null = null; // for latest-state re-broadcast on request
+  private lastActivity = 0; // ms of the last inbound frame (any message counts)
+  private pingTimer: number | null = null;
+  private watchdog: number | null = null;
 
   constructor(
     private readonly keys: RoomKeys,
@@ -44,16 +55,20 @@ export class NetClient {
       ws.send(JSON.stringify({ t: "join", roomId: this.keys.roomId, cid: this.cid }));
       this.h.onStatus(true);
       if (this.lastSent) ws.send(this.lastSent); // resume visibility after reconnect
+      this.startHeartbeat();
     };
 
     ws.onmessage = async (ev) => {
+      this.lastActivity = Date.now(); // any inbound frame proves the link is alive
       let msg: ServerMessage;
       try {
         msg = JSON.parse(ev.data as string);
       } catch {
         return;
       }
-      if (msg.t === "peer") {
+      if (msg.t === "pong") {
+        return; // liveness only — already recorded above
+      } else if (msg.t === "peer") {
         const update = await decryptJson<PeerUpdate>(this.keys.key, msg.data);
         if (update) this.h.onPeer(msg.id, update);
       } else if (msg.t === "left") {
@@ -69,6 +84,7 @@ export class NetClient {
     };
 
     ws.onclose = () => {
+      this.stopHeartbeat();
       this.h.onStatus(false);
       if (!this.closed) this.scheduleReconnect();
     };
@@ -77,6 +93,7 @@ export class NetClient {
 
   /** Detach and close the current socket without triggering its handlers. */
   private teardown(): void {
+    this.stopHeartbeat();
     const ws = this.ws;
     if (!ws) return;
     ws.onopen = null;
@@ -89,6 +106,38 @@ export class NetClient {
       /* ignore */
     }
     this.ws = null;
+  }
+
+  /**
+   * Application-level liveness. Browsers don't surface WS ping/pong to JS and a
+   * dropped network can leave the socket wedged OPEN, so `onclose` may never come.
+   * We ping periodically and, if nothing arrives back within STALE_LIMIT, force a
+   * fresh connection (which flips the badge red and starts the reconnect backoff).
+   */
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.lastActivity = Date.now();
+    this.pingTimer = window.setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ t: "ping" }));
+    }, PING_INTERVAL);
+    this.watchdog = window.setInterval(() => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+      if (Date.now() - this.lastActivity <= STALE_LIMIT) return;
+      // Silent death: report disconnected now, then rebuild the socket.
+      this.h.onStatus(false);
+      this.connect(); // tears down the zombie (stopping these timers) and reconnects
+    }, WATCHDOG_INTERVAL);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.pingTimer !== null) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
+    }
+    if (this.watchdog !== null) {
+      clearInterval(this.watchdog);
+      this.watchdog = null;
+    }
   }
 
   private scheduleReconnect(): void {
@@ -128,6 +177,7 @@ export class NetClient {
 
   close(): void {
     this.closed = true;
+    this.stopHeartbeat();
     this.ws?.close();
   }
 }
