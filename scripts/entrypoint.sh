@@ -10,7 +10,7 @@ TILES_DIR="${ASSETS_DIR:-/app/server/assets}/tiles"
 TILE_FILE="$TILES_DIR/basemap.pmtiles"
 PARAMS_FILE="$TILES_DIR/.params"
 BBOX="${BBOX:-5.5,45.5,17.2,55.1}"
-MAXZOOM="${MAXZOOM:-14}"
+MAXZOOM="${MAXZOOM:-15}"
 WANT="$BBOX@$MAXZOOM"
 
 mkdir -p "$TILES_DIR"
