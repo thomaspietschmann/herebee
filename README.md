@@ -66,6 +66,17 @@ so rebuilds and redeploys are fast and never re-download it. To refresh the base
 delete `dach.pmtiles` on the volume and redeploy.
 
 Runs as one container on one port behind an HTTPS proxy (Traefik/Coolify forward the
-WebSocket upgrade transparently). Set `ALLOWED_ORIGINS=https://your.domain` in prod.
-Give the container a generous health-check start period — the first boot extracts the
-tiles before serving.
+WebSocket upgrade transparently). Give the container a generous health-check start
+period — the first boot extracts the tiles before serving.
+
+Production env:
+
+- `ALLOWED_ORIGINS=https://your.domain` — restricts the WebSocket to your origin
+  (and, when set, requires a browser `Origin` on the upgrade).
+- `TRUSTED_PROXY_HOPS=1` — **set this behind a single reverse proxy.** It makes the
+  per-IP connection cap key on the real client IP (the entry your proxy appends)
+  instead of a spoofable `X-Forwarded-For` value. Default `0` = trust none, use the
+  socket IP (correct for direct/dev; wrong behind a proxy, where all clients would
+  otherwise share the proxy IP). Set it to the number of trusted proxy hops.
+- Resource ceilings (sensible defaults): `MAX_CONNS` (global sockets, 10000),
+  `MAX_ROOMS` (5000), `MAX_CONNS_PER_ROOM` (100).

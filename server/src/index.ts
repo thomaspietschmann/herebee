@@ -8,13 +8,13 @@
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
-import { extname, join, normalize, resolve } from "node:path";
+import { extname, join, normalize, resolve, sep } from "node:path";
 import { randomBytes } from "node:crypto";
 import { WebSocketServer, type WebSocket } from "ws";
 import { clientMessageSchema, ROOM_ID_LENGTH } from "../../shared/messages.js";
 import { negotiate, OG } from "../../shared/og.js";
 import { isValidRoomId } from "./roomId.js";
-import { type Conn, joinRoom, leaveRoom, relay, send, stats } from "./relay.js";
+import { type Conn, joinRoom, leaveRoom, relay, send } from "./relay.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const ROOT = resolve(process.cwd());
@@ -30,7 +30,14 @@ const RATE_TOKENS = 10; // burst
 const RATE_PER_SEC = 10; // sustained messages / second
 const MAX_PAYLOAD = 16 * 1024; // bytes per WS frame
 const MAX_CONNS_PER_IP = 40;
+const MAX_TOTAL_CONNS = Number(process.env.MAX_CONNS ?? 10_000); // global socket ceiling
 const connsPerIp = new Map<string, number>();
+
+// Number of trusted reverse-proxy hops in front of this process. 0 (default,
+// safe for dev/direct) means "ignore X-Forwarded-For and use the socket IP".
+// Behind exactly one proxy (Traefik/Coolify) set TRUSTED_PROXY_HOPS=1 so the
+// per-IP cap keys on the real client IP instead of a spoofable XFF entry.
+const TRUSTED_PROXY_HOPS = Math.max(0, Number(process.env.TRUSTED_PROXY_HOPS ?? 0));
 
 function takeToken(conn: Conn): boolean {
   const now = Date.now();
@@ -66,7 +73,10 @@ function securityHeaders(res: ServerResponse): void {
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
       "worker-src 'self' blob:",
-      "connect-src 'self' ws: wss:",
+      // Same-origin only — includes the same-host wss:// upgrade for /ws. Kept
+      // tight so a compromised dependency can't exfiltrate the fragment secret
+      // to a foreign WebSocket host despite script-src 'self'.
+      "connect-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
@@ -81,9 +91,20 @@ function securityHeaders(res: ServerResponse): void {
 
 /** Resolve a request path inside a base dir, refusing traversal. */
 function safeJoin(base: string, urlPath: string): string | null {
-  const clean = normalize(decodeURIComponent(urlPath)).replace(/^(\.\.[/\\])+/, "");
+  // A malformed percent-escape (e.g. "/%", "/%zz") makes decodeURIComponent throw
+  // a URIError. Guard it here: without this the throw propagates out of the HTTP
+  // request handler as an uncaught exception and takes the whole process down.
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(urlPath);
+  } catch {
+    return null;
+  }
+  const clean = normalize(decoded).replace(/^(\.\.[/\\])+/, "");
   const full = resolve(base, "." + (clean.startsWith("/") ? clean : "/" + clean));
-  return full.startsWith(base) ? full : null;
+  // Require a real path-separator boundary so "/base" can't match a sibling like
+  // "/base-evil"; the resolved base itself is also valid (a request for "/").
+  return full === base || full.startsWith(base + sep) ? full : null;
 }
 
 function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, immutable = false): void {
@@ -177,9 +198,10 @@ const httpServer = createServer((req, res) => {
   const path = url.pathname;
 
   if (path === "/healthz") {
-    const s = stats();
+    // Liveness only — deliberately no room/connection counts, so occupancy of the
+    // service isn't exposed to anonymous pollers.
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true, ...s }));
+    res.end(JSON.stringify({ ok: true }));
     return;
   }
 
@@ -213,7 +235,9 @@ const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD });
 
 function originAllowed(req: IncomingMessage): boolean {
   const origin = req.headers.origin;
-  if (!origin) return true; // non-browser clients / same-origin fetches without Origin
+  // In production (ALLOWED_ORIGINS set) require a browser Origin so a headless
+  // client can't skip the check by omitting the header. In dev (no list) allow it.
+  if (!origin) return ALLOWED_ORIGINS.length === 0;
   if (ALLOWED_ORIGINS.length === 0) {
     // Dev/default: accept same-host and localhost.
     try {
@@ -228,15 +252,28 @@ function originAllowed(req: IncomingMessage): boolean {
 }
 
 function clientIp(req: IncomingMessage): string {
-  // Used ONLY for a per-IP connection cap, never logged or stored.
-  const fwd = req.headers["x-forwarded-for"];
-  if (typeof fwd === "string" && fwd.length) return fwd.split(",")[0].trim();
+  // Used ONLY for a per-IP connection cap, never logged or stored. The leftmost
+  // X-Forwarded-For entry is client-controlled and spoofable, so we only trust
+  // XFF when a proxy hop count is configured and then take the entry our own
+  // trusted proxy appended (the Nth from the right), not the client's claim.
+  if (TRUSTED_PROXY_HOPS > 0) {
+    const fwd = req.headers["x-forwarded-for"];
+    if (typeof fwd === "string" && fwd.length) {
+      const parts = fwd.split(",").map((s) => s.trim()).filter(Boolean);
+      const idx = parts.length - TRUSTED_PROXY_HOPS;
+      if (idx >= 0 && idx < parts.length) return parts[idx];
+    }
+  }
   return req.socket.remoteAddress ?? "unknown";
 }
 
 httpServer.on("upgrade", (req, socket, head) => {
   if (new URL(req.url ?? "/", "http://localhost").pathname !== "/ws" || !originAllowed(req)) {
     socket.destroy();
+    return;
+  }
+  if (wss.clients.size >= MAX_TOTAL_CONNS) {
+    socket.destroy(); // global ceiling — protects against overall socket exhaustion
     return;
   }
   const ip = clientIp(req);
@@ -320,6 +357,16 @@ const heartbeat = setInterval(() => {
 }, 20_000);
 
 httpServer.on("close", () => clearInterval(heartbeat));
+
+// Last-resort safety net: a single malformed request must never take the relay
+// down and drop every live room. We log only the error itself (no request data,
+// no IPs) and keep serving.
+process.on("uncaughtException", (err) => {
+  console.error("uncaughtException:", err?.message ?? err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("unhandledRejection:", reason instanceof Error ? reason.message : reason);
+});
 
 httpServer.listen(PORT, () => {
   // Intentionally minimal, no request/IP logging.

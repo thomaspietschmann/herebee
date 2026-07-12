@@ -29,6 +29,11 @@ export interface Conn {
 
 const rooms = new Map<string, Set<Conn>>();
 
+// Resource ceilings so a single client that mints unlimited valid roomIds (or
+// fans many sockets into one room) can't exhaust memory. Generous for real use.
+const MAX_ROOMS = Number(process.env.MAX_ROOMS ?? 5_000);
+const MAX_CONNS_PER_ROOM = Number(process.env.MAX_CONNS_PER_ROOM ?? 100);
+
 export function send(conn: Conn, msg: ServerMessage): void {
   if (conn.ws.readyState !== conn.ws.OPEN) return;
   conn.ws.send(JSON.stringify(msg));
@@ -41,9 +46,28 @@ function broadcastPresence(room: Set<Conn>): void {
 }
 
 export function joinRoom(conn: Conn, roomId: string, cid?: string): void {
+  let room = rooms.get(roomId);
+  // Capacity guards run before we commit the connection to the room.
+  if (!room && rooms.size >= MAX_ROOMS) {
+    send(conn, { t: "error", reason: "capacity" });
+    try {
+      conn.ws.close(1013, "capacity");
+    } catch {
+      /* already gone */
+    }
+    return;
+  }
+  if (room && room.size >= MAX_CONNS_PER_ROOM) {
+    send(conn, { t: "error", reason: "room-full" });
+    try {
+      conn.ws.close(1013, "room-full");
+    } catch {
+      /* already gone */
+    }
+    return;
+  }
   conn.roomId = roomId;
   conn.cid = cid ?? null;
-  let room = rooms.get(roomId);
   if (!room) {
     room = new Set();
     rooms.set(roomId, room); // lazy creation

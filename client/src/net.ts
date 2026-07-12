@@ -15,6 +15,30 @@ const PING_INTERVAL = 15_000;
 const STALE_LIMIT = 35_000;
 const WATCHDOG_INTERVAL = 5_000;
 
+const SEED_MAX = 128;
+
+/**
+ * A room member is a trusted party, but a *malicious* member can send arbitrary
+ * plaintext inside a valid ciphertext (same shared key). Validate the decrypted
+ * shape before it reaches the map: `seed` feeds Map keys / avatar / follow logic,
+ * and lat/lng must be real, in-range numbers. Anything malformed is dropped.
+ */
+function validPeerUpdate(u: unknown): PeerUpdate | null {
+  if (!u || typeof u !== "object") return null;
+  const o = u as Record<string, unknown>;
+  if (typeof o.seed !== "string" || o.seed.length === 0 || o.seed.length > SEED_MAX) return null;
+  if (o.k === "stop") return { k: "stop", seed: o.seed };
+  if (o.k !== "loc") return null;
+  const inRange = (v: unknown, lo: number, hi: number): v is number =>
+    typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi;
+  const optNum = (v: unknown): v is number | null =>
+    v === null || (typeof v === "number" && Number.isFinite(v));
+  if (!inRange(o.lat, -90, 90) || !inRange(o.lng, -180, 180)) return null;
+  if (!optNum(o.acc) || !optNum(o.hdg) || !optNum(o.spd)) return null;
+  if (typeof o.at !== "number" || !Number.isFinite(o.at)) return null;
+  return { k: "loc", seed: o.seed, lat: o.lat, lng: o.lng, acc: o.acc, hdg: o.hdg, spd: o.spd, at: o.at };
+}
+
 export interface NetHandlers {
   onPeer: (id: string, update: PeerUpdate) => void;
   onLeft: (id: string) => void;
@@ -69,7 +93,8 @@ export class NetClient {
       if (msg.t === "pong") {
         return; // liveness only — already recorded above
       } else if (msg.t === "peer") {
-        const update = await decryptJson<PeerUpdate>(this.keys.key, msg.data);
+        const raw = await decryptJson<unknown>(this.keys.key, msg.data);
+        const update = validPeerUpdate(raw);
         if (update) this.h.onPeer(msg.id, update);
       } else if (msg.t === "left") {
         this.h.onLeft(msg.id);
