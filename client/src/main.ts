@@ -9,12 +9,26 @@ import { deriveRoomKeys, generateSecret, type RoomKeys } from "./crypto.js";
 import { NetClient } from "./net.js";
 import { createCoordinator } from "./coord.js";
 import { initMap } from "./map.js";
-import { MarkerManager } from "./markers.js";
-import { identityFromSeed } from "./avatar.js";
+import { MarkerManager, type MenuActions } from "./markers.js";
+import { identityFromSeed, hueFromIndex } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
 import { UI } from "./ui.js";
 import { t, applyStaticI18n } from "./i18n.js";
 import type { PeerUpdate, Position } from "./types.js";
+
+/** Great-circle distance in metres between two [lng, lat] points. */
+function distanceMeters(a: [number, number], b: [number, number]): number {
+  const R = 6_371_000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[1] - a[1]);
+  const dLng = toRad(b[0] - a[0]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function formatDistance(m: number): string {
+  return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
+}
 
 function ensureSecret(): string {
   let secret = location.hash.replace(/^#/, "");
@@ -83,7 +97,15 @@ function ownCid(): string {
  * The leader tab owns the socket + GPS and mirrors state to follower tabs; the
  * followers render it and send their button intents back.
  */
-type PeerSnap = { seed: string; lat: number; lng: number; acc: number | null; hdg: number | null; at: number };
+type PeerSnap = {
+  seed: string;
+  lat: number;
+  lng: number;
+  acc: number | null;
+  hdg: number | null;
+  spd: number | null;
+  at: number;
+};
 type Bus =
   | { t: "hello" } // a tab just opened: leader, please send a snapshot
   | { t: "enter" } // a tab entered the room: the browser is now present
@@ -95,6 +117,7 @@ type Bus =
   | { t: "status"; connected: boolean }
   | { t: "fatal"; reason: string }
   | { t: "rename"; seed: string } // any tab: a local custom name changed
+  | { t: "offline"; seed: string; off: boolean } // leader -> followers: a peer's link dropped/returned
   | { t: "toggle-share" }; // follower -> leader: please flip sharing
 
 async function main(): Promise<void> {
@@ -119,6 +142,19 @@ async function main(): Promise<void> {
   const cid = ownCid();
   const roster = new Map<string, { color: string; name: string }>();
   const rosterName = (s: string) => (s === seed ? `${resolveName(s)} ${t("youSuffix")}` : resolveName(s));
+  // Hardcoded palette (avatar.ts HUE_PALETTE) assigned by first-seen order, not
+  // a seed hash — so whoever is present concurrently gets maximally distinct
+  // colours; it only repeats once more people are present than the palette
+  // has entries. Session-local: each browser assigns indices independently.
+  const colorIndex = new Map<string, number>();
+  const colorIndexFor = (s: string): number => {
+    let i = colorIndex.get(s);
+    if (i === undefined) {
+      i = colorIndex.size;
+      colorIndex.set(s, i);
+    }
+    return i;
+  };
   // presence = total participants in the room (a count from the server). Because
   // one browser now holds exactly one socket, this counts people, not tabs.
   // watchers = present but not sharing a location; shown anonymously.
@@ -131,7 +167,7 @@ async function main(): Promise<void> {
     ui.setRoster(sharers, watchers, presence);
   };
 
-  const markers = new MarkerManager(map, (s) => onRename(s));
+  const markers = new MarkerManager(map, (s) => onSelect(s));
   const fitAll = () => {
     const b = markers.bounds();
     if (b) map.fitBounds(b, { padding: 80, maxZoom: 16, duration: 700 });
@@ -178,23 +214,31 @@ async function main(): Promise<void> {
     if (update.k === "stop") {
       markers.remove(update.seed); // active stop -> disappear now
       roster.delete(update.seed);
+      if (followSeed === update.seed) followSeed = null;
       refreshRoster();
       return;
     }
-    const peer = identityFromSeed(update.seed, resolveName(update.seed));
-    markers.upsert(update.seed, peer, { lat: update.lat, lng: update.lng, acc: update.acc, hdg: update.hdg }, update.at);
+    const peer = identityFromSeed(update.seed, resolveName(update.seed), hueFromIndex(colorIndexFor(update.seed)));
+    markers.upsert(
+      update.seed,
+      peer,
+      { lat: update.lat, lng: update.lng, acc: update.acc, hdg: update.hdg, spd: update.spd },
+      update.at
+    );
     roster.set(update.seed, { color: peer.color, name: rosterName(update.seed) });
     refreshRoster();
+    maybeFollow(update.seed);
   }
 
   function renderSelf(pos: Position | null): void {
     if (!pos) {
       markers.remove(seed);
       roster.delete(seed);
+      if (followSeed === seed) followSeed = null;
       refreshRoster();
       return;
     }
-    const self = identityFromSeed(seed, resolveName(seed));
+    const self = identityFromSeed(seed, resolveName(seed), hueFromIndex(colorIndexFor(seed)));
     markers.upsert(seed, self, pos, Date.now(), true);
     roster.set(seed, { color: self.color, name: rosterName(seed) });
     refreshRoster();
@@ -202,6 +246,7 @@ async function main(): Promise<void> {
       map.easeTo({ center: [pos.lng, pos.lat], zoom: 15, duration: 900 });
       centeredOnSelf = true;
     }
+    maybeFollow(seed);
   }
 
   function onRename(s: string): void {
@@ -222,6 +267,80 @@ async function main(): Promise<void> {
     });
   }
 
+  // ---- avatar action menu (bubbles + info box) and follow mode ----------
+  // Clicking a bee no longer jumps straight to rename; it opens two bubbles
+  // (rename / follow) plus a small info box. Only one menu is open at a time.
+  let followSeed: string | null = null; // seed the map keeps centered on, or null
+
+  function onSelect(s: string): void {
+    if (markers.openSeed() === s) {
+      markers.closeMenu(); // clicking the already-open bee again dismisses it
+      return;
+    }
+    markers.openMenu(s, buildMenuActions(s));
+  }
+
+  function toggleFollow(s: string): void {
+    followSeed = followSeed === s ? null : s;
+    if (followSeed) goTo(s); // snap to it immediately; subsequent updates just pan
+    refreshOpenMenu();
+  }
+
+  /** Pan (don't re-zoom) to keep the followed marker centered as it moves. */
+  function maybeFollow(s: string): void {
+    if (followSeed !== s) return;
+    const p = markers.positionOf(s);
+    if (p) map.panTo(p, { duration: 500 });
+  }
+
+  function buildInfoHtml(s: string): string {
+    const st = markers.status(s);
+    if (!st) return "";
+    const lines = [t("infoLastSeen", { t: st.lastSeen })];
+    if (s === seed) {
+      lines.push(t(connected ? "connOn" : "connOff"));
+    } else {
+      const selfPos = markers.positionOf(seed);
+      const peerPos = markers.positionOf(s);
+      if (selfPos && peerPos) {
+        lines.push(t("infoDistance", { d: formatDistance(distanceMeters(selfPos, peerPos)) }));
+      }
+      lines.push(st.offline ? t("offlineStatus") : st.tier === "fresh" ? t("statusOnline") : t("statusNoSignal"));
+    }
+    return lines.map((l) => `<div>${l}</div>`).join("");
+  }
+
+  function buildMenuActions(s: string): MenuActions {
+    return {
+      following: followSeed === s,
+      infoHtml: buildInfoHtml(s),
+      onRename: () => {
+        markers.closeMenu();
+        onRename(s);
+      },
+      onToggleFollow: () => toggleFollow(s),
+    };
+  }
+
+  /** Keep the open menu's info box / follow state current — called from the
+   *  1s aging tick and right after actions that change it instantly. */
+  function refreshOpenMenu(): void {
+    const s = markers.openSeed();
+    if (s) markers.updateMenu(s, buildMenuActions(s));
+  }
+
+  map.on("click", () => markers.closeMenu()); // tap empty map to dismiss
+  map.on("dragstart", () => {
+    // Only fires for a user-initiated drag/pan gesture, never our own
+    // programmatic panTo/easeTo — so this is exactly "the user took over".
+    if (!followSeed) return;
+    followSeed = null;
+    refreshOpenMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") markers.closeMenu();
+  });
+
   // ---- engine (runs in the LEADER tab only) ------------------------------
   let net: NetClient | null = null;
   let watchId: number | null = null;
@@ -230,6 +349,11 @@ async function main(): Promise<void> {
   let connected = false;
   let browserEntered = false; // has ANY tab of this browser entered the room?
   let engineLive = false; // has the leader's socket been opened?
+  // The relay's ephemeral per-socket `id` (see net.ts onPeer/onLeft) -> identity
+  // seed, so a `left` event (this peer's link actually dropped) can be resolved
+  // back to which marker to mark offline. A reconnect gets a new `id`, so this
+  // is repopulated from the next "loc" update rather than persisted.
+  const connSeed = new Map<string, string>();
 
   // Single source of truth for the connection badge: update this tab and, if we're
   // the leader (the tab that owns the socket), mirror it to the follower tabs.
@@ -240,7 +364,36 @@ async function main(): Promise<void> {
   }
 
   function locUpdate(pos: Position): PeerUpdate {
-    return { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, at: Date.now() };
+    return { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, spd: pos.spd, at: Date.now() };
+  }
+
+  // Cap outbound position updates (bus + network) at ~1/s. GPS can fire far
+  // more often than that; our own marker still renders every fix (see
+  // renderSelf below), only what leaves this tab is throttled. Leading edge
+  // sends immediately if we're due; otherwise a single trailing timer catches
+  // up with whatever `lastPos` is by the time it fires.
+  const MIN_SEND_MS = 1000;
+  let lastSendAt = 0;
+  let sendPending = false;
+
+  function flushSend(): void {
+    if (!lastPos) return;
+    lastSendAt = Date.now();
+    coord.post({ t: "self", pos: lastPos } satisfies Bus);
+    void net?.broadcast(locUpdate(lastPos));
+  }
+
+  function scheduleSend(): void {
+    const elapsed = Date.now() - lastSendAt;
+    if (elapsed >= MIN_SEND_MS) {
+      flushSend();
+    } else if (!sendPending) {
+      sendPending = true;
+      window.setTimeout(() => {
+        sendPending = false;
+        flushSend();
+      }, MIN_SEND_MS - elapsed);
+    }
   }
 
   function leaderStartShare(): void {
@@ -256,11 +409,11 @@ async function main(): Promise<void> {
           lng: p.coords.longitude,
           acc: Number.isFinite(p.coords.accuracy) ? p.coords.accuracy : null,
           hdg: Number.isFinite(p.coords.heading as number) ? (p.coords.heading as number) : null,
+          spd: Number.isFinite(p.coords.speed as number) ? (p.coords.speed as number) : null,
         };
         lastPos = pos;
-        renderSelf(pos);
-        coord.post({ t: "self", pos } satisfies Bus);
-        void net?.broadcast(locUpdate(pos));
+        renderSelf(pos); // our own marker stays fully smooth regardless of the send throttle
+        scheduleSend();
       },
       (err) => {
         leaderStopShare();
@@ -274,8 +427,7 @@ async function main(): Promise<void> {
     heartbeatId = window.setInterval(() => {
       if (!lastPos) return;
       renderSelf(lastPos);
-      coord.post({ t: "self", pos: lastPos } satisfies Bus);
-      void net?.broadcast(locUpdate(lastPos));
+      flushSend();
     }, 10_000);
     ui.setSharing(true);
     coord.post({ t: "sharing", on: true } satisfies Bus);
@@ -311,7 +463,15 @@ async function main(): Promise<void> {
     const peers = markers
       .dump()
       .filter((e) => !e.self)
-      .map((e) => ({ seed: e.id, lat: e.pos.lat, lng: e.pos.lng, acc: e.pos.acc, hdg: e.pos.hdg, at: e.at }));
+      .map((e) => ({
+        seed: e.id,
+        lat: e.pos.lat,
+        lng: e.pos.lng,
+        acc: e.pos.acc,
+        hdg: e.pos.hdg,
+        spd: e.pos.spd,
+        at: e.at,
+      }));
     coord.post({ t: "snapshot", peers, self: lastPos, sharing: watchId !== null, presence, connected } satisfies Bus);
   }
 
@@ -334,16 +494,25 @@ async function main(): Promise<void> {
     net = new NetClient(keys, cid, {
       // Markers are keyed by identity seed (stable across reconnects), so a dropped
       // and restored connection updates the same marker instead of duplicating it.
-      onPeer(_id, update: PeerUpdate) {
+      onPeer(id, update: PeerUpdate) {
         // Ignore replays of our own identity. The server replays each peer's last
         // cached blob on join, so a lingering old socket would otherwise feed us
         // our own stale "stop"/ghost. Our own marker is owned by sharing.
         if (update.seed === seed) return;
+        connSeed.set(id, update.seed); // so a later "left" for this id resolves to a marker
+        markers.setOffline(update.seed, false); // fresh data => the link is fine again
         renderPeer(update);
         coord.post({ t: "peer", u: update } satisfies Bus);
       },
-      // Connection lost: keep the ghost — it lingers up to 20 min then self-removes.
-      onLeft() {},
+      // The relay connection for this peer dropped. Don't remove the marker —
+      // it lingers up to LINGER_MS then self-removes (see markers.ts) — but do
+      // surface that the link, not just the position, is stale.
+      onLeft(id) {
+        const s = connSeed.get(id);
+        if (!s) return;
+        markers.setOffline(s, true);
+        coord.post({ t: "offline", seed: s, off: true } satisfies Bus);
+      },
       onRequest() {
         if (lastPos) void net?.broadcast(locUpdate(lastPos));
       },
@@ -386,7 +555,7 @@ async function main(): Promise<void> {
         browserEntered = true;
         ui.dismissWelcome();
         for (const p of m.peers) {
-          renderPeer({ k: "loc", seed: p.seed, lat: p.lat, lng: p.lng, acc: p.acc, hdg: p.hdg, at: p.at });
+          renderPeer({ k: "loc", seed: p.seed, lat: p.lat, lng: p.lng, acc: p.acc, hdg: p.hdg, spd: p.spd, at: p.at });
         }
         renderSelf(m.self);
         ui.setSharing(m.sharing);
@@ -432,6 +601,9 @@ async function main(): Promise<void> {
       case "toggle-share":
         if (coord.isLeader()) toggleShare();
         break;
+      case "offline":
+        if (!coord.isLeader()) markers.setOffline(m.seed, m.off);
+        break;
     }
   });
 
@@ -471,8 +643,10 @@ async function main(): Promise<void> {
   setInterval(() => {
     for (const id of markers.tick()) {
       roster.delete(id);
+      if (followSeed === id) followSeed = null;
     }
     refreshRoster();
+    refreshOpenMenu(); // keep "last seen" / distance live while a menu is open
   }, 1000);
 
   // Deliberately no "stop" on pagehide: simply closing the tab or losing signal

@@ -26,6 +26,20 @@ export function hueFromSeed(seed: string): number {
   return Math.round(((h % 100000) / 100000) * 360 * 1.618) % 360;
 }
 
+/**
+ * Hardcoded hues, hand-ordered so any run of consecutive entries stays far
+ * apart on the colour wheel (roughly 90°+ between neighbours). Used instead of
+ * a per-seed hash so people present around the same time don't land on
+ * similar-looking colours; see `hueFromIndex` / main.ts's join-order
+ * assignment. Repeats only once more participants are present than entries.
+ */
+export const HUE_PALETTE: readonly number[] = [210, 25, 145, 335, 55, 265, 185, 5, 100, 300, 40, 230];
+
+/** Palette hue for the Nth participant seen (by first-seen order), wrapping. */
+export function hueFromIndex(i: number): number {
+  return HUE_PALETTE[i % HUE_PALETTE.length]!;
+}
+
 // --- bee building blocks ----------------------------------------------------
 
 interface BeePalette {
@@ -143,10 +157,11 @@ function accent(kind: string, p: BeePalette): string {
   return "";
 }
 
-/** Deterministic bee-face SVG for a seed. */
-export function creatureSvg(seed: string): string {
+/** Deterministic bee-face SVG for a seed. `hue` overrides the seed-derived hue
+ *  (identity colour) while the shape/pattern stay driven by the seed. */
+export function creatureSvg(seed: string, hue?: number): string {
   const rng = mulberry32(cyrb53(seed, 0x1234));
-  const p = palette(hueFromSeed(seed), rng);
+  const p = palette(hue ?? hueFromSeed(seed), rng);
   const shape = pick(rng, BODY_SHAPES);
   const wingK = pick(rng, ["classic", "classic", "wide", "slim"]);
   const stripeK = pick(rng, ["straight", "straight", "triple", "tilt", "tilt2", "wave"]);
@@ -174,14 +189,17 @@ export function creatureSvg(seed: string): string {
   );
 }
 
-/** Build the full identity for a seed (used for self and every peer). */
-export function identityFromSeed(seed: string, name: string): Identity {
-  const hue = hueFromSeed(seed);
+/** Build the full identity for a seed (used for self and every peer).
+ *  `hue` overrides the seed-derived hue — see `hueFromIndex` in main.ts, which
+ *  assigns hues from the hardcoded HUE_PALETTE by first-seen order so
+ *  concurrent participants stay visually distinct. */
+export function identityFromSeed(seed: string, name: string, hue?: number): Identity {
+  const h = hue ?? hueFromSeed(seed);
   return {
     seed,
     name,
-    hue,
-    color: hslToCss(hue, 72, 56),
-    svg: creatureSvg(seed),
+    hue: h,
+    color: hslToCss(h, 72, 56),
+    svg: creatureSvg(seed, h),
   };
 }

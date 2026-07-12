@@ -43,7 +43,16 @@ async function main() {
   b.send(JSON.stringify({ t: "join", roomId }));
   await wait(300);
 
-  const loc: PeerUpdate = { k: "loc", seed: "peerA", lat: 52.52, lng: 13.405, acc: 12, hdg: null, at: Date.now() };
+  const loc: PeerUpdate = {
+    k: "loc",
+    seed: "peerA",
+    lat: 52.52,
+    lng: 13.405,
+    acc: 12,
+    hdg: null,
+    spd: null,
+    at: Date.now(),
+  };
   a.send(JSON.stringify({ t: "relay", data: await encryptJson(key, loc) }));
   await wait(300);
 

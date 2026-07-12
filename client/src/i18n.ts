@@ -84,6 +84,19 @@ const de = {
   geoUnavailable: "Standort nicht verfügbar",
   fatalInvalidRoom: "Ungültiger Raum-Link",
   fatalRejected: "Verbindung abgelehnt",
+  justNow: "gerade eben",
+  secsAgo: "vor {n} s",
+  minsAgo: "vor {n} min",
+  noSignal: "kein Signal ({t})",
+  noSignalLong: "lange kein Signal ({t})",
+  offlineStatus: "offline",
+  menuRenameAria: "Namen ändern",
+  menuFollow: "Folgen",
+  menuUnfollow: "Folgen beenden",
+  infoLastSeen: "Zuletzt gesehen: {t}",
+  infoDistance: "{d} entfernt",
+  statusOnline: "Online",
+  statusNoSignal: "Kein Signal",
 } as const;
 
 export type Key = keyof typeof de;
@@ -144,6 +157,19 @@ const en: Record<Key, string> = {
   geoUnavailable: "Location unavailable",
   fatalInvalidRoom: "Invalid room link",
   fatalRejected: "Connection rejected",
+  justNow: "just now",
+  secsAgo: "{n}s ago",
+  minsAgo: "{n}m ago",
+  noSignal: "no signal ({t})",
+  noSignalLong: "no signal for a while ({t})",
+  offlineStatus: "offline",
+  menuRenameAria: "Change name",
+  menuFollow: "Follow",
+  menuUnfollow: "Stop following",
+  infoLastSeen: "Last seen: {t}",
+  infoDistance: "{d} away",
+  statusOnline: "Online",
+  statusNoSignal: "No signal",
 };
 
 const es: Record<Key, string> = {
@@ -202,6 +228,19 @@ const es: Record<Key, string> = {
   geoUnavailable: "Ubicación no disponible",
   fatalInvalidRoom: "Enlace de sala no válido",
   fatalRejected: "Conexión rechazada",
+  justNow: "ahora mismo",
+  secsAgo: "hace {n} s",
+  minsAgo: "hace {n} min",
+  noSignal: "sin señal ({t})",
+  noSignalLong: "sin señal desde hace rato ({t})",
+  offlineStatus: "sin conexión",
+  menuRenameAria: "Cambiar nombre",
+  menuFollow: "Seguir",
+  menuUnfollow: "Dejar de seguir",
+  infoLastSeen: "Visto por última vez: {t}",
+  infoDistance: "A {d}",
+  statusOnline: "En línea",
+  statusNoSignal: "Sin señal",
 };
 
 const it: Record<Key, string> = {
@@ -260,6 +299,19 @@ const it: Record<Key, string> = {
   geoUnavailable: "Posizione non disponibile",
   fatalInvalidRoom: "Link della stanza non valido",
   fatalRejected: "Connessione rifiutata",
+  justNow: "proprio ora",
+  secsAgo: "{n} s fa",
+  minsAgo: "{n} min fa",
+  noSignal: "nessun segnale ({t})",
+  noSignalLong: "nessun segnale da un po' ({t})",
+  offlineStatus: "offline",
+  menuRenameAria: "Cambia nome",
+  menuFollow: "Segui",
+  menuUnfollow: "Smetti di seguire",
+  infoLastSeen: "Visto l'ultima volta: {t}",
+  infoDistance: "A {d} di distanza",
+  statusOnline: "Online",
+  statusNoSignal: "Nessun segnale",
 };
 
 const fr: Record<Key, string> = {
@@ -320,6 +372,19 @@ const fr: Record<Key, string> = {
   geoUnavailable: "Position indisponible",
   fatalInvalidRoom: "Lien de salon invalide",
   fatalRejected: "Connexion refusée",
+  justNow: "à l'instant",
+  secsAgo: "il y a {n} s",
+  minsAgo: "il y a {n} min",
+  noSignal: "aucun signal ({t})",
+  noSignalLong: "aucun signal depuis un moment ({t})",
+  offlineStatus: "hors ligne",
+  menuRenameAria: "Changer de nom",
+  menuFollow: "Suivre",
+  menuUnfollow: "Arrêter de suivre",
+  infoLastSeen: "Vu pour la dernière fois : {t}",
+  infoDistance: "À {d}",
+  statusOnline: "En ligne",
+  statusNoSignal: "Aucun signal",
 };
 
 const pt: Record<Key, string> = {
@@ -378,6 +443,19 @@ const pt: Record<Key, string> = {
   geoUnavailable: "Localização indisponível",
   fatalInvalidRoom: "Link de sala inválido",
   fatalRejected: "Ligação recusada",
+  justNow: "agora mesmo",
+  secsAgo: "há {n} s",
+  minsAgo: "há {n} min",
+  noSignal: "sem sinal ({t})",
+  noSignalLong: "sem sinal há um tempo ({t})",
+  offlineStatus: "offline",
+  menuRenameAria: "Mudar nome",
+  menuFollow: "Seguir",
+  menuUnfollow: "Parar de seguir",
+  infoLastSeen: "Visto pela última vez: {t}",
+  infoDistance: "A {d} de distância",
+  statusOnline: "Online",
+  statusNoSignal: "Sem sinal",
 };
 
 const DICTS: Record<Lang, Record<Key, string>> = { de, en, es, it, fr, pt };

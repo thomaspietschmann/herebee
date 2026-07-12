@@ -569,6 +569,80 @@ body {
   background: var(--mist);
 }
 
+/* ---------- marker action menu (click a bee: rename / follow / info) ------
+   Purely a DOM grouping node — `display: contents` means its children are
+   positioned straight against `.mk` (the nearest positioned ancestor), same
+   as `.mk-label`. Every child starts collapsed on the avatar's center
+   (opacity 0, scale 0.2) and animates outward on `.is-open`, and reverses on
+   close — "emerging from behind the avatar". */
+.mk-menu {
+  display: contents;
+}
+.mk-bubble {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--hair);
+  background: var(--ink-glass);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.2);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease;
+}
+.mk-bubble-follow.is-following {
+  color: var(--beacon);
+  border-color: var(--beacon);
+}
+.mk-infobox {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 50%;
+  min-width: 130px;
+  max-width: 220px;
+  padding: 7px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--hair);
+  background: var(--ink-glass);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  font: 500 11.5px/1.5 var(--sans);
+  color: var(--mist);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.2);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease;
+}
+.mk-menu.is-open .mk-bubble {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mk-menu.is-open .mk-bubble-rename {
+  transform: translate(calc(-50% - 50px), -50%) scale(1);
+}
+.mk-menu.is-open .mk-bubble-follow {
+  transform: translate(calc(-50% + 50px), -50%) scale(1);
+}
+.mk-menu.is-open .mk-infobox {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 40px) scale(1);
+}
+
 /* freshness tiers */
 .mk.is-fresh .mk-pulse {
   animation: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
@@ -582,6 +656,16 @@ body {
 .mk.is-ghost {
   opacity: 0.5;
   filter: grayscale(0.9);
+}
+/* Link actually dropped (not just a stale fix) — greyed like a ghost at
+   minimum, plus a rose ring so it reads as "offline", not just "quiet". */
+.mk.is-offline {
+  opacity: 0.5;
+  filter: grayscale(0.85);
+}
+.mk.is-offline .mk-disc {
+  border-color: var(--signal);
+  border-style: dashed;
 }
 @keyframes ping {
   0% {
@@ -602,6 +686,8 @@ body {
     animation: none;
   }
   .mk-arrow,
+  .mk-bubble,
+  .mk-infobox,
   .btn,
   .hint,
   .toast {

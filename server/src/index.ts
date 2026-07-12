@@ -7,11 +7,12 @@
  * inspects, logs, or stores their contents, coordinates, names, or client IPs.
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
 import { randomBytes } from "node:crypto";
 import { WebSocketServer, type WebSocket } from "ws";
 import { clientMessageSchema, ROOM_ID_LENGTH } from "../../shared/messages.js";
+import { negotiate, OG } from "../../shared/og.js";
 import { isValidRoomId } from "./roomId.js";
 import { type Conn, joinRoom, leaveRoom, relay, send, stats } from "./relay.js";
 
@@ -123,6 +124,53 @@ function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, 
   createReadStream(filePath).pipe(res);
 }
 
+// --- OG/Twitter meta localization -----------------------------------------
+// Social crawlers don't run JS, so the client's runtime i18n never reaches
+// them — only what this server sends on the initial HTML response does. The
+// German strings baked into index.html (see shared/og.ts's `OG.de`) are the
+// source of truth; for any other negotiated language we substitute the exact
+// matching substrings. `de` (and anything unmatched, per `negotiate`'s
+// fallback) is served byte-for-byte unchanged.
+let indexHtmlCache: string | null = null;
+
+function localizeHtml(html: string, lang: keyof typeof OG): string {
+  if (lang === "de") return html;
+  const src = OG.de;
+  const dst = OG[lang];
+  return html
+    .split(src.title)
+    .join(dst.title)
+    .split(src.description)
+    .join(dst.description)
+    .split(src.ogDescription)
+    .join(dst.ogDescription)
+    .split(src.imageAlt)
+    .join(dst.imageAlt)
+    .split(`content="${src.ogLocale}"`)
+    .join(`content="${dst.ogLocale}"`)
+    .split(`lang="${src.htmlLang}"`)
+    .join(`lang="${dst.htmlLang}"`);
+}
+
+function serveIndexHtml(req: IncomingMessage, res: ServerResponse, filePath: string): void {
+  let html = indexHtmlCache;
+  if (html === null) {
+    try {
+      html = readFileSync(filePath, "utf8");
+    } catch {
+      res.writeHead(404).end("Not found");
+      return;
+    }
+    indexHtmlCache = html;
+  }
+  const lang = negotiate(req.headers["accept-language"]);
+  const body = Buffer.from(localizeHtml(html, lang), "utf8");
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Vary", "Accept-Language");
+  res.setHeader("Content-Length", body.length);
+  res.end(body);
+}
+
 const httpServer = createServer((req, res) => {
   securityHeaders(res);
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -144,14 +192,17 @@ const httpServer = createServer((req, res) => {
   }
 
   // Static client. SPA-style: unknown non-file paths fall back to index.html.
+  // index.html is special-cased to localize its OG/Twitter meta (see above);
+  // every other file is served as-is.
   const candidate = safeJoin(CLIENT_DIST, path === "/" ? "/index.html" : path);
   if (candidate && existsSync(candidate) && statSync(candidate).isFile()) {
-    serveFile(req, res, candidate, extname(candidate) !== ".html");
+    if (extname(candidate) === ".html") serveIndexHtml(req, res, candidate);
+    else serveFile(req, res, candidate, true);
     return;
   }
   const indexHtml = join(CLIENT_DIST, "index.html");
   if (existsSync(indexHtml)) {
-    serveFile(req, res, indexHtml, false);
+    serveIndexHtml(req, res, indexHtml);
     return;
   }
   res.writeHead(404).end("Not found");
