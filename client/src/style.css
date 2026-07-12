@@ -414,6 +414,8 @@ body {
   border-radius: var(--r-panel);
   box-shadow: var(--shadow);
   animation: rise 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
 }
 .sheet.is-splash .sheet-panel {
   width: min(480px, calc(100% - 28px));
@@ -513,6 +515,52 @@ body {
   color: var(--muted);
 }
 .attrib-note a {
+  color: var(--muted);
+}
+
+/* ---------- legal (Impressum / Datenschutz) ---------- */
+.sheet-foot {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--hair);
+}
+.linklike {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--mist);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.linklike:hover {
+  color: var(--beacon);
+}
+.legal-back {
+  display: inline-block;
+  margin: 0 0 14px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.legal-dev {
+  padding: 10px 12px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.ph {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 200, 80, 0.14);
+  color: var(--signal, #f0b429);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.legal-updated {
+  font-size: 11px;
   color: var(--muted);
 }
 

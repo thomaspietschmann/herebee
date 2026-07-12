@@ -277,8 +277,86 @@ export class UI {
       <p class="attrib-note">${t("mapCredits", {
         pm: '<a href="https://protomaps.com" target="_blank" rel="noreferrer">Protomaps</a>',
         osm: '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>',
-      })}</p>`;
+      })}</p>
+      <p class="sheet-foot"><button type="button" class="linklike" id="open-legal">${t("legalLink")}</button></p>`;
     this.openSheet();
+    document.getElementById("open-legal")!.addEventListener("click", () => this.openLegal());
+  }
+
+  /**
+   * Impressum (§5 DDG) + Datenschutzerklärung (Art. 13 DSGVO), German-only as is
+   * conventional for a German-operated service. Deliberately kept in sync with the
+   * app's real data handling. While the app is not publicly operated, the Impressum
+   * carries a development notice instead of an address; the `.ph` placeholders mark
+   * exactly what must be filled in before any public launch (name, ladungsfähige
+   * Anschrift, contact e-mail, hosting provider). "In Entwicklung" is NOT a legal
+   * exemption once the service is publicly reachable — the address must go in then.
+   */
+  private openLegal(): void {
+    const ph = (s: string) => `<span class="ph">${this.esc(s)}</span>`;
+    this.sheetBody.innerHTML = `
+      <button type="button" class="linklike legal-back" id="legal-back">‹ ${t("infoTitle")}</button>
+
+      <h2>Impressum</h2>
+      <p>Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz).</p>
+      <p class="legal-dev"><strong>Hinweis:</strong> HereBee befindet sich in aktiver Entwicklung und
+      wird derzeit nicht öffentlich betrieben. Solange der Dienst nicht öffentlich erreichbar ist,
+      besteht keine Impressumspflicht. Vor der öffentlichen Bereitstellung wird hier die vollständige
+      Anbieterkennzeichnung mit ladungsfähiger Anschrift ergänzt.</p>
+      <p><strong>Diensteanbieter:</strong><br />
+      ${ph("[Name – wird vor Veröffentlichung ergänzt]")}<br />
+      ${ph("[Ladungsfähige Anschrift – wird vor Veröffentlichung ergänzt]")}</p>
+      <p><strong>Kontakt:</strong><br />
+      ${ph("[E-Mail – wird vor Veröffentlichung ergänzt]")}</p>
+
+      <h2 style="margin-top:22px">Datenschutzerklärung</h2>
+      <p><strong>Verantwortlicher</strong> im Sinne der DSGVO ist der im Impressum genannte
+      Diensteanbieter.</p>
+      <p><strong>Grundprinzip.</strong> HereBee ist bewusst datensparsam gebaut. Ein 256-Bit-Schlüssel
+      steckt ausschließlich im Link hinter <code>#</code> und wird nie an den Server übertragen. Der
+      Browser leitet daraus die Raum-Kennung und einen AES-256-GCM-Schlüssel ab; alle Koordinaten und
+      Anzeigenamen werden im Browser verschlüsselt. Der Server (Relay) leitet nur undurchsichtige,
+      verschlüsselte Datenpakete weiter und kann sie nicht entschlüsseln.</p>
+      <p><strong>Welche Daten verarbeitet werden:</strong></p>
+      <ul class="facts">
+        <li><strong>IP-Adresse</strong> – vorübergehend, um die WebSocket-Verbindung aufzubauen und die
+        Zahl gleichzeitiger Verbindungen pro IP zu begrenzen (Missbrauchsschutz). Rechtsgrundlage:
+        Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Betrieb und Schutz des Dienstes). Die
+        Anwendung selbst speichert die IP nicht.</li>
+        <li><strong>Verschlüsselte Standort- und Namensdaten</strong> – werden nur weitergeleitet,
+        nicht gespeichert und sind für den Betreiber nicht lesbar.</li>
+        <li><strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, sobald der
+        letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine Historie, keine Speicherung von
+        Koordinaten oder Namen.</li>
+      </ul>
+      <p style="margin-top:12px"><strong>Standortfreigabe.</strong> Die App nutzt die
+      Geolocation-Funktion des Browsers. Der Zugriff erfolgt nur nach ausdrücklicher Erlaubnis über die
+      Abfrage des Browsers (Einwilligung, Art. 6 Abs. 1 lit. a DSGVO) und ist jederzeit in den
+      Browser-Einstellungen widerrufbar. Die Koordinaten sind Ende-zu-Ende-verschlüsselt und für den
+      Server nie sichtbar.</p>
+      <p><strong>Anzeigename.</strong> Frei wählbar (Pseudonym oder echter Name – deine Entscheidung),
+      im Browser verschlüsselt, für den Betreiber nie sichtbar.</p>
+      <p><strong>Hosting.</strong> Die App wird auf einem Server in Deutschland betrieben. Der
+      Hosting-Anbieter ${ph("[Anbieter, Anschrift – wird vor Veröffentlichung ergänzt]")} kann im
+      Rahmen des Serverbetriebs Infrastruktur-/Server-Logs (einschließlich IP-Adresse) im Auftrag des
+      Verantwortlichen verarbeiten; hierzu besteht ein Auftragsverarbeitungsvertrag nach Art. 28 DSGVO.
+      Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</p>
+      <p><strong>Keine Cookies, kein Tracking.</strong> HereBee setzt keine Cookies, nutzt keine
+      Analyse- oder Tracking-Dienste und bindet keine fremden CDNs ein. Karten, Schriften und Symbole
+      werden selbst gehostet.</p>
+      <p><strong>Speicherdauer.</strong> Über die aktive Sitzung hinaus speichert die Anwendung nichts.
+      Für etwaige Infrastruktur-Logs gilt die Aufbewahrungsfrist des Hosting-Anbieters.</p>
+      <p><strong>Deine Rechte.</strong> Du hast das Recht auf Auskunft, Berichtigung, Löschung,
+      Einschränkung, Datenübertragbarkeit und Widerspruch (Art. 15–22 DSGVO). Da über die Sitzung
+      hinaus keine personenbezogenen Daten gespeichert werden, ergibt eine Auskunft in der Regel, dass
+      keine gespeicherten Daten vorliegen. Außerdem besteht ein Beschwerderecht bei einer
+      Aufsichtsbehörde (Art. 77 DSGVO).</p>
+      <p><strong>Empfänger.</strong> Eine Weitergabe an Dritte erfolgt nicht, außer an den
+      Hosting-Anbieter als Auftragsverarbeiter. Es findet keine Datenübermittlung in Drittländer statt.</p>
+      <p class="legal-updated">Stand: ${ph("[Datum – bei Veröffentlichung ergänzen]")}</p>`;
+    this.openSheet();
+    this.sheetBody.scrollTop = 0;
+    document.getElementById("legal-back")!.addEventListener("click", () => this.openInfo());
   }
 
   private openSheet(kind?: "splash"): void {
