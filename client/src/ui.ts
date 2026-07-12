@@ -25,9 +25,11 @@ export class UI {
   private geoLabel = this.geoBtn.querySelector<HTMLElement>(".btn-label")!;
   private shareBtn = document.getElementById("share-btn")!;
   private infoBtn = document.getElementById("info-btn")!;
+  private rosterGroup = document.getElementById("roster-group")!;
   private roster = document.getElementById("roster") as HTMLButtonElement;
   private rosterStack = this.roster.querySelector<HTMLElement>(".roster-stack")!;
   private rosterCount = this.roster.querySelector<HTMLElement>(".roster-count")!;
+  private fitAllBtn = document.getElementById("fit-all-btn")!;
   private hint = document.getElementById("hint")!;
   private sheet = document.getElementById("sheet")!;
   private sheetBody = document.getElementById("sheet-body")!;
@@ -43,6 +45,7 @@ export class UI {
     this.shareBtn.addEventListener("click", () => this.copyLink());
     this.infoBtn.addEventListener("click", () => this.openInfo());
     this.roster.addEventListener("click", () => this.openParticipants());
+    this.fitAllBtn.addEventListener("click", () => this.h.onFitAll());
     document.getElementById("sheet-close")!.addEventListener("click", () => this.closeSheet());
     this.sheet.addEventListener("click", (e) => {
       if (e.target === this.sheet && !this.gated) this.closeSheet();
@@ -84,7 +87,7 @@ export class UI {
     this.lastSharers = sharers;
     this.lastWatchers = watchers;
     // Hide when it's only us alone watching; show once someone shares or others arrive.
-    this.roster.hidden = total < 2 && sharers.length < 1;
+    this.rosterGroup.hidden = total < 2 && sharers.length < 1;
     this.rosterCount.textContent = t("here", { n: total });
     const colored = sharers
       .slice(0, 5)
@@ -97,7 +100,9 @@ export class UI {
     this.rosterStack.innerHTML = [...colored, ...hollow].join("");
   }
 
-  /** Participant list (opened by tapping the roster pill), with a "fit all" action. */
+  /** Participant list, opened by tapping the roster pill. "Fit everyone on
+   *  screen" lives as its own icon button next to the pill (see fitAllBtn),
+   *  not in here, so it doesn't require opening this sheet first. */
   private openParticipants(): void {
     const list = this.lastSharers.length
       ? `<ul class="party-list">${this.lastSharers
@@ -112,15 +117,8 @@ export class UI {
     this.sheetBody.innerHTML = `
       <h2>${t("participantsTitle")}</h2>
       ${list}
-      ${watching}
-      <div class="linkbox" style="margin-top:18px">
-        <button class="btn btn-primary" id="fit-all" style="flex:1">${t("fitAll")}</button>
-      </div>`;
+      ${watching}`;
     this.openSheet();
-    document.getElementById("fit-all")?.addEventListener("click", () => {
-      this.closeSheet();
-      this.h.onFitAll();
-    });
     // Tap a participant to fly the map to their marker.
     this.sheetBody.querySelectorAll<HTMLElement>(".party[data-seed]").forEach((el) => {
       el.addEventListener("click", () => {

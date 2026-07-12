@@ -127,15 +127,15 @@ function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, 
 // --- OG/Twitter meta localization -----------------------------------------
 // Social crawlers don't run JS, so the client's runtime i18n never reaches
 // them — only what this server sends on the initial HTML response does. The
-// German strings baked into index.html (see shared/og.ts's `OG.de`) are the
+// English strings baked into index.html (see shared/og.ts's `OG.en`) are the
 // source of truth; for any other negotiated language we substitute the exact
-// matching substrings. `de` (and anything unmatched, per `negotiate`'s
+// matching substrings. `en` (and anything unmatched, per `negotiate`'s
 // fallback) is served byte-for-byte unchanged.
 let indexHtmlCache: string | null = null;
 
 function localizeHtml(html: string, lang: keyof typeof OG): string {
-  if (lang === "de") return html;
-  const src = OG.de;
+  if (lang === "en") return html;
+  const src = OG.en;
   const dst = OG[lang];
   return html
     .split(src.title)

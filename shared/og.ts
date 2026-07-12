@@ -3,7 +3,7 @@
  *
  * Social crawlers (Twitter, Facebook, WhatsApp, …) don't execute JavaScript, so
  * the client's runtime i18n (see client/src/i18n.ts) never reaches them — only
- * whatever the server sends on the initial HTML response counts. `OG.de` is
+ * whatever the server sends on the initial HTML response counts. `OG.en` is
  * the literal source of truth: its strings must match `client/index.html`
  * verbatim, since the server (see server/src/index.ts) localizes by replacing
  * those exact substrings with the negotiated language's version.
@@ -38,10 +38,11 @@ export const OG: Record<OgLang, OgStrings> = {
     htmlLang: "de",
   },
   en: {
-    title: "HereBee — meet up, fleetingly",
-    description: "HereBee shares live locations fleetingly via a link — private, no account, end-to-end encrypted.",
-    ogDescription: "Share a private room, see live locations, nothing stored. End-to-end encrypted.",
-    imageAlt: "HereBee logo over a dark map view with glowing location dots",
+    title: "HereBee — meet up in the moment",
+    description:
+      "HereBee shares live locations by private link, with no account, ephemeral rooms, and end-to-end encryption.",
+    ogDescription: "Share a private room, see live locations, and leave nothing behind. End-to-end encrypted.",
+    imageAlt: "HereBee logo on a dark map with glowing location markers",
     ogLocale: "en_US",
     htmlLang: "en",
   },

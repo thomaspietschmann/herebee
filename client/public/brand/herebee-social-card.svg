@@ -38,9 +38,9 @@
 
   <g font-family="Arial, Helvetica, sans-serif">
     <text x="92" y="132" fill="#fff7dd" font-size="84" font-weight="700">HereBee</text>
-    <text x="96" y="224" fill="#f2ead7" font-size="42">Flüchtig zusammenfinden.</text>
-    <text x="98" y="296" fill="#d6e0dc" font-size="30">Privater Live-Standort per Link.</text>
-    <text x="98" y="338" fill="#9ef0dc" font-size="30">Ende-zu-Ende-verschlüsselt.</text>
+    <text x="96" y="224" fill="#f2ead7" font-size="42">Meet up in the moment.</text>
+    <text x="98" y="296" fill="#d6e0dc" font-size="30">Private live location by link.</text>
+    <text x="98" y="338" fill="#9ef0dc" font-size="30">End-to-end encrypted.</text>
 
     <g transform="translate(96 426)">
       <rect

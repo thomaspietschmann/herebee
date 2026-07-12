@@ -159,11 +159,16 @@ body {
 }
 
 /* ---------- roster (top-right) ---------- */
-.roster {
+.roster-group {
   position: absolute;
   top: max(14px, env(safe-area-inset-top));
   right: 14px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.roster {
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -176,6 +181,33 @@ body {
   color: var(--mist);
   font: 600 12.5px/1 var(--sans);
   cursor: pointer;
+}
+/* "Fit everyone on screen" — a neutral (non-red) icon button right next to
+   the roster pill, so it's reachable without opening the participant sheet. */
+.roster-fit {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink-glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--hair);
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+  color: var(--mist);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.2s;
+}
+.roster-fit:active {
+  transform: scale(0.92);
+}
+.roster-fit:hover {
+  color: #fff;
 }
 .roster-stack {
   display: inline-flex;
@@ -600,11 +632,16 @@ body {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0.2);
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease, background 0.18s ease,
+    box-shadow 0.18s ease;
 }
+/* Active state needs to read clearly at a glance, not just a 1px tinted
+   border — filled with the beacon colour plus a soft glow ring. */
 .mk-bubble-follow.is-following {
-  color: var(--beacon);
+  color: var(--ink);
+  background: var(--beacon);
   border-color: var(--beacon);
+  box-shadow: 0 0 0 4px rgba(52, 225, 180, 0.35), var(--shadow);
 }
 .mk-infobox {
   position: absolute;

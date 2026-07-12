@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -11,15 +11,15 @@
     <meta name="theme-color" content="#0e1116" />
     <meta
       name="description"
-      content="HereBee teilt Live-Standorte flüchtig per Link – privat, ohne Account und Ende-zu-Ende-verschlüsselt."
+      content="HereBee shares live locations by private link, with no account, ephemeral rooms, and end-to-end encryption."
     />
     <link rel="canonical" href="https://herebee.app/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="HereBee" />
-    <meta property="og:title" content="HereBee — flüchtig zusammenfinden" />
+    <meta property="og:title" content="HereBee — meet up in the moment" />
     <meta
       property="og:description"
-      content="Privaten Raum teilen, Live-Standorte sehen, nichts speichern. Ende-zu-Ende-verschlüsselt."
+      content="Share a private room, see live locations, and leave nothing behind. End-to-end encrypted."
     />
     <meta property="og:url" content="https://herebee.app/" />
     <meta property="og:image" content="https://herebee.app/brand/herebee-social-card.png" />
@@ -29,21 +29,21 @@
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="HereBee Logo auf einer dunklen Kartenansicht mit leuchtenden Standortpunkten"
+      content="HereBee logo on a dark map with glowing location markers"
     />
-    <meta property="og:locale" content="de_DE" />
+    <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="HereBee — flüchtig zusammenfinden" />
+    <meta name="twitter:title" content="HereBee — meet up in the moment" />
     <meta
       name="twitter:description"
-      content="Privaten Raum teilen, Live-Standorte sehen, nichts speichern. Ende-zu-Ende-verschlüsselt."
+      content="Share a private room, see live locations, and leave nothing behind. End-to-end encrypted."
     />
     <meta name="twitter:image" content="https://herebee.app/brand/herebee-social-card.png" />
     <meta
       name="twitter:image:alt"
-      content="HereBee Logo auf einer dunklen Kartenansicht mit leuchtenden Standortpunkten"
+      content="HereBee logo on a dark map with glowing location markers"
     />
-    <title>HereBee — flüchtig zusammenfinden</title>
+    <title>HereBee — meet up in the moment</title>
     <link rel="icon" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -65,10 +65,13 @@
         </div>
       </header>
 
-      <button id="roster" class="roster" type="button" hidden>
-        <span class="roster-stack" aria-hidden="true"></span>
-        <span class="roster-count"></span>
-      </button>
+      <div id="roster-group" class="roster-group" hidden>
+        <button id="roster" class="roster" type="button">
+          <span class="roster-stack" aria-hidden="true"></span>
+          <span class="roster-count"></span>
+        </button>
+        <button id="fit-all-btn" class="roster-fit" type="button" data-i18n-aria="fitAll" aria-label="Alle auf einen Blick">⛶</button>
+      </div>
 
       <div class="dock">
         <p id="hint" class="hint" data-i18n="hint">
