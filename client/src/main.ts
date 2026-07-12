@@ -226,7 +226,7 @@ async function main(): Promise<void> {
       refreshRoster();
       return;
     }
-    const peer = identityFromSeed(update.seed, resolveName(update.seed), hueFromIndex(colorIndexFor(update.seed)));
+    const peer = identityFromSeed(update.seed, rosterName(update.seed), hueFromIndex(colorIndexFor(update.seed)));
     markers.upsert(
       update.seed,
       peer,
@@ -246,7 +246,9 @@ async function main(): Promise<void> {
       refreshRoster();
       return;
     }
-    const self = identityFromSeed(seed, resolveName(seed), hueFromIndex(colorIndexFor(seed)));
+    // Own marker label carries the localized "(du)/(you)" suffix (via rosterName)
+    // so you can immediately tell which bee is you.
+    const self = identityFromSeed(seed, rosterName(seed), hueFromIndex(colorIndexFor(seed)));
     markers.upsert(seed, self, pos, Date.now(), true);
     roster.set(seed, { color: self.color, name: rosterName(seed) });
     refreshRoster();
@@ -265,7 +267,7 @@ async function main(): Promise<void> {
       } catch {
         /* private mode: names just won't persist */
       }
-      markers.rename(s, resolveName(s));
+      markers.rename(s, rosterName(s));
       const entry = roster.get(s);
       if (entry) {
         entry.name = rosterName(s);
@@ -598,7 +600,7 @@ async function main(): Promise<void> {
         break;
       case "rename": {
         // A custom name changed in some tab. Re-resolve it everywhere.
-        markers.rename(m.seed, resolveName(m.seed));
+        markers.rename(m.seed, rosterName(m.seed));
         const e = roster.get(m.seed);
         if (e) {
           e.name = rosterName(m.seed);
