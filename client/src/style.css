@@ -91,12 +91,11 @@ body {
   flex: none;
 }
 .brand-mark {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: block;
-  border-radius: 9px;
-  object-fit: cover;
-  box-shadow: 0 0 0 1px rgba(232, 237, 242, 0.1), 0 3px 12px rgba(0, 0, 0, 0.35);
+  object-fit: contain;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.45));
 }
 /* Connection status folded into the brand mark as a presence dot. */
 .brand-status {
