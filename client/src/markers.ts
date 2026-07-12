@@ -80,6 +80,11 @@ export class MarkerManager {
   // map for free; we just track a reference to remove/animate it.
   private menuEl: HTMLElement | null = null;
   private menuSeed: string | null = null;
+  // MapLibre stacks marker elements by DOM order; without an explicit z-index a
+  // bee (and its fanned-out menu) can sit behind an overlapping neighbour. We
+  // bump the active one with a monotonically increasing z-index so the most
+  // recently raised marker is always on top.
+  private zTop = 1;
 
   constructor(
     private readonly map: MlMap,
@@ -205,7 +210,16 @@ export class MarkerManager {
     e.el.appendChild(div);
     this.menuEl = div;
     this.menuSeed = seed;
+    this.raise(seed); // an active bee + its fanned-out menu must sit above neighbours
     requestAnimationFrame(() => div.classList.add("is-open"));
+  }
+
+  /** Lift a marker above any overlapping ones so it (and its menu) are on top
+   *  and clickable. Monotonic, so the latest raise always wins. */
+  raise(seed: string): void {
+    const e = this.entries.get(seed);
+    if (!e) return;
+    e.el.style.zIndex = String(++this.zTop);
   }
 
   /** Refresh the open menu's info box and follow state in place (no re-animation).

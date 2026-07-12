@@ -14,6 +14,7 @@ interface Sharer {
   seed: string;
   color: string;
   name: string;
+  offline: boolean; // was sharing but its link dropped — still a ghost on the map
 }
 
 type Conn = "connecting" | "on" | "off";
@@ -79,25 +80,32 @@ export class UI {
   }
 
   /**
-   * @param sharers  peers currently broadcasting a location (colored pips)
+   * @param sharers  everyone with a marker on the map (online + offline ghosts),
+   *                 online first; colored pips, offline ones dimmed.
    * @param watchers present-but-not-sharing count (anonymous, hollow pips)
-   * @param total    total present incl. self (the "N here" number)
+   * @param present  connected participants right now (online sharers + watchers)
+   * @param offline  sharers whose link dropped but whose ghost still lingers
    */
-  setRoster(sharers: Sharer[], watchers: number, total: number): void {
+  setRoster(sharers: Sharer[], watchers: number, present: number, offline: number): void {
     this.lastSharers = sharers;
     this.lastWatchers = watchers;
-    // Hide when it's only us alone watching; show once someone shares or others arrive.
-    this.rosterGroup.hidden = total < 2 && sharers.length < 1;
-    this.rosterCount.textContent = t("here", { n: total });
-    const colored = sharers
+    // Show whenever anyone else is around or has a marker (incl. offline ghosts).
+    this.rosterGroup.hidden = present < 2 && sharers.length < 1;
+    // Only collapse to a single "N here" when nobody is offline; otherwise spell
+    // out the split so "1 here" next to two markers can't read as a bug.
+    this.rosterCount.textContent = offline > 0 ? t("hereActiveOffline", { active: present, offline }) : t("here", { n: present });
+    const sharerPips = sharers
       .slice(0, 5)
-      .map((m) => `<span class="pip" style="background:${m.color}" title="${this.esc(m.name)}"></span>`);
-    const hollowN = Math.min(watchers, Math.max(0, 5 - colored.length));
+      .map(
+        (m) =>
+          `<span class="pip${m.offline ? " pip-offline" : ""}" style="background:${m.color}" title="${this.esc(m.name)}"></span>`
+      );
+    const hollowN = Math.min(watchers, Math.max(0, 5 - sharerPips.length));
     const hollow = Array.from(
       { length: hollowN },
       () => `<span class="pip pip-watcher" title="${t("watcher")}"></span>`
     );
-    this.rosterStack.innerHTML = [...colored, ...hollow].join("");
+    this.rosterStack.innerHTML = [...sharerPips, ...hollow].join("");
   }
 
   /** Participant list, opened by tapping the roster pill. "Fit everyone on
@@ -108,7 +116,7 @@ export class UI {
       ? `<ul class="party-list">${this.lastSharers
           .map(
             (m) =>
-              `<li><button type="button" class="party" data-seed="${this.esc(m.seed)}"><span class="pip" style="background:${m.color}"></span>${this.esc(m.name)}</button></li>`
+              `<li><button type="button" class="party${m.offline ? " is-offline" : ""}" data-seed="${this.esc(m.seed)}"><span class="pip${m.offline ? " pip-offline" : ""}" style="background:${m.color}"></span><span class="party-name">${this.esc(m.name)}</span>${m.offline ? `<span class="party-status">${t("offlineStatus")}</span>` : ""}</button></li>`
           )
           .join("")}</ul>`
       : `<p>${t("noSharers")}</p>`;

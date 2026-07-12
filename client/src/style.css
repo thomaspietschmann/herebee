@@ -229,6 +229,13 @@ body {
   border-color: var(--muted);
   border-style: dashed;
 }
+/* offline: was sharing, link dropped — greyed + dashed so it reads as inactive
+   while still keeping its identity colour underneath. */
+.pip.pip-offline {
+  filter: grayscale(0.85);
+  opacity: 0.5;
+  border-style: dashed;
+}
 
 /* ---------- participant list (in the sheet) ---------- */
 .party-list {
@@ -257,6 +264,20 @@ body {
   width: 22px;
   height: 22px;
   border-radius: 50%;
+}
+.party-name {
+  flex: 1;
+}
+.party.is-offline {
+  color: var(--muted);
+}
+.party-status {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--signal);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 .party:hover {
   color: #fff;

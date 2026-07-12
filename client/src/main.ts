@@ -160,11 +160,18 @@ async function main(): Promise<void> {
   // watchers = present but not sharing a location; shown anonymously.
   let presence = 0;
   const refreshRoster = () => {
+    // A sharer whose link dropped stays on the map as an offline ghost, but the
+    // server's presence count no longer includes it. So split the roster into
+    // online vs offline (online first), derive watchers from the ONLINE sharers
+    // only, and let the UI spell out "X active · Y offline" — otherwise the
+    // headline count and the number of markers/pips disagree.
     const sharers = [...roster.entries()]
-      .map(([s, v]) => ({ seed: s, color: v.color, name: v.name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    const watchers = Math.max(0, presence - sharers.length);
-    ui.setRoster(sharers, watchers, presence);
+      .map(([s, v]) => ({ seed: s, color: v.color, name: v.name, offline: markers.status(s)?.offline ?? false }))
+      .sort((a, b) => Number(a.offline) - Number(b.offline) || a.name.localeCompare(b.name));
+    const onlineCount = sharers.filter((x) => !x.offline).length;
+    const offlineCount = sharers.length - onlineCount;
+    const watchers = Math.max(0, presence - onlineCount);
+    ui.setRoster(sharers, watchers, presence, offlineCount);
   };
 
   const markers = new MarkerManager(map, (s) => onSelect(s));
@@ -175,6 +182,7 @@ async function main(): Promise<void> {
   const goTo = (s: string) => {
     const p = markers.positionOf(s);
     if (p) map.easeTo({ center: p, zoom: Math.max(map.getZoom(), 15), duration: 700 });
+    markers.raise(s); // bring it above any overlapping bee so it's clickable
   };
   const ui = new UI({
     // The leader owns sharing; a follower just asks it to flip via the bus.
