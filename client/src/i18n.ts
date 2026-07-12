@@ -75,10 +75,12 @@ const de = {
   infoFact1:
     "Der Server sieht <strong>weder Koordinaten noch Namen noch den Schlüssel</strong> — nur verschlüsselte Datenpakete.",
   infoFact2: "Der Schlüssel steckt im Link hinter <code>#</code> und wird nie an den Server gesendet.",
-  infoFact3: "Es gibt <strong>keine Datenbank und keine Logs</strong>; Räume leben nur, solange jemand da ist.",
+  infoFact3:
+    "Es gibt <strong>keine Datenbank</strong>; die App speichert nichts und führt keine eigenen Zugriffs-Logs. Räume leben nur, solange jemand da ist.",
   infoFact4:
-    "Der HereBee-Server (Relay und selbst gehostete Karten) sieht deine <strong>IP</strong> für die Dauer der Verbindung — nicht gespeichert, und keine fremden Karten- oder CDN-Dienste. Die eigene IP lässt sich im Browser generell nicht verbergen.",
-  infoFact5: "Wer den vollständigen Link hat, sieht den Raum. Teile ihn nur mit Vertrauten.",
+    "Der HereBee-Server (Relay und selbst gehostete Karten) sieht deine <strong>IP</strong> für die Dauer der Verbindung und kann an den geladenen Kartenkacheln grob deine Region ablesen. Die App speichert das nicht, aber vorgelagerte Infrastruktur (Proxy/Hoster) kann Logs führen. Keine fremden Karten- oder CDN-Dienste; die eigene IP lässt sich im Browser generell nicht verbergen.",
+  infoFact5:
+    "Wer den vollständigen Link hat, sieht den Raum — und alle im Raum teilen denselben Schlüssel, könnten also den Marker eines anderen fälschen. Teile den Link nur mit Vertrauten.",
   mapCredits: "Karte: {pm} © {osm}-Mitwirkende",
   legalLink: "Impressum & Datenschutz",
   noGeo: "Dieses Gerät kann keinen Standort teilen",
@@ -150,10 +152,12 @@ const en: Record<Key, string> = {
     "HereBee shares locations <strong>ephemerally and end-to-end encrypted</strong> between active participants. It's deliberately data-minimal — but don't call it “fully anonymous”.",
   infoFact1: "The server sees <strong>neither coordinates nor names nor the key</strong> — only encrypted packets.",
   infoFact2: "The key sits in the link after <code>#</code> and is never sent to the server.",
-  infoFact3: "There is <strong>no database and no logs</strong>; rooms exist only while someone is present.",
+  infoFact3:
+    "There is <strong>no database</strong>; the app stores nothing and keeps no access logs of its own. Rooms exist only while someone is present.",
   infoFact4:
-    "The HereBee server (relay and self-hosted maps) sees your <strong>IP</strong> for the duration of the connection — not stored, and no third-party map or CDN services. A browser generally can't hide your IP.",
-  infoFact5: "Anyone with the full link can see the room. Share it only with people you trust.",
+    "The HereBee server (relay and self-hosted maps) sees your <strong>IP</strong> for the duration of the connection and can roughly tell which area you're viewing from the map tiles you load. The app doesn't log this, but upstream infrastructure (proxy/host) may. No third-party map or CDN services; a browser generally can't hide your IP.",
+  infoFact5:
+    "Anyone with the full link can see the room — and everyone in it shares the same key, so a participant could spoof another's marker. Share the link only with people you trust.",
   mapCredits: "Map: {pm} © {osm} contributors",
   legalLink: "Legal notice & privacy",
   noGeo: "This device can't share a location",
@@ -223,10 +227,12 @@ const es: Record<Key, string> = {
     "HereBee comparte ubicaciones <strong>de forma efímera y cifrada de extremo a extremo</strong> entre participantes activos. Recopila los mínimos datos posibles, pero no lo llames «totalmente anónimo».",
   infoFact1: "El servidor no ve <strong>ni coordenadas, ni nombres, ni la clave</strong>: solo paquetes cifrados.",
   infoFact2: "La clave está en el enlace después de <code>#</code> y nunca se envía al servidor.",
-  infoFact3: "No hay <strong>ni base de datos ni registros</strong>; las salas existen solo mientras hay alguien.",
+  infoFact3:
+    "No hay <strong>base de datos</strong>; la app no guarda nada ni mantiene registros de acceso propios. Las salas existen solo mientras hay alguien.",
   infoFact4:
-    "El servidor de HereBee (relay y mapas alojados por nosotros mismos) ve tu <strong>IP</strong> mientras dura la conexión: no se guarda y no hay servicios de mapas o CDN de terceros. El navegador no puede ocultar tu IP en general.",
-  infoFact5: "Cualquiera con el enlace completo ve la sala. Compártelo solo con personas de confianza.",
+    "El servidor de HereBee (relay y mapas alojados por nosotros mismos) ve tu <strong>IP</strong> mientras dura la conexión y, por las teselas del mapa que cargas, puede deducir aproximadamente qué zona miras. La app no lo registra, pero la infraestructura previa (proxy/hosting) sí puede. No hay servicios de mapas o CDN de terceros; el navegador no puede ocultar tu IP en general.",
+  infoFact5:
+    "Cualquiera con el enlace completo ve la sala, y todos en ella comparten la misma clave, así que un participante podría falsificar el marcador de otro. Comparte el enlace solo con personas de confianza.",
   mapCredits: "Mapa: {pm} © colaboradores de {osm}",
   legalLink: "Aviso legal y privacidad",
   noGeo: "Este dispositivo no puede compartir la ubicación",
@@ -296,10 +302,12 @@ const it: Record<Key, string> = {
     "HereBee condivide le posizioni <strong>in modo effimero e cifrato end-to-end</strong> tra i partecipanti attivi. Raccoglie il minimo dei dati, ma non chiamarlo «completamente anonimo».",
   infoFact1: "Il server non vede <strong>né coordinate, né nomi, né la chiave</strong>: solo pacchetti cifrati.",
   infoFact2: "La chiave si trova nel link dopo <code>#</code> e non viene mai inviata al server.",
-  infoFact3: "Non c'è <strong>alcun database né log</strong>; le stanze esistono solo finché c'è qualcuno.",
+  infoFact3:
+    "Non c'è <strong>alcun database</strong>; l'app non memorizza nulla e non tiene log di accesso propri. Le stanze esistono solo finché c'è qualcuno.",
   infoFact4:
-    "Il server di HereBee (relay e mappe self-hosted) vede il tuo <strong>IP</strong> per la durata della connessione: non viene memorizzato e non ci sono servizi di mappe o CDN di terze parti. Il browser in generale non può nascondere il tuo IP.",
-  infoFact5: "Chiunque abbia il link completo vede la stanza. Condividilo solo con persone fidate.",
+    "Il server di HereBee (relay e mappe self-hosted) vede il tuo <strong>IP</strong> per la durata della connessione e, dalle tessere della mappa che carichi, può capire grossomodo quale zona stai guardando. L'app non lo registra, ma l'infrastruttura a monte (proxy/host) può farlo. Nessun servizio di mappe o CDN di terze parti; il browser in generale non può nascondere il tuo IP.",
+  infoFact5:
+    "Chiunque abbia il link completo vede la stanza, e tutti al suo interno condividono la stessa chiave, quindi un partecipante potrebbe falsificare il segnaposto di un altro. Condividi il link solo con persone fidate.",
   mapCredits: "Mappa: {pm} © contributori di {osm}",
   legalLink: "Note legali e privacy",
   noGeo: "Questo dispositivo non può condividere la posizione",
@@ -371,10 +379,12 @@ const fr: Record<Key, string> = {
   infoFact1:
     "Le serveur ne voit <strong>ni les coordonnées, ni les noms, ni la clé</strong> — uniquement des paquets chiffrés.",
   infoFact2: "La clé se trouve dans le lien après <code>#</code> et n'est jamais envoyée au serveur.",
-  infoFact3: "Il n'y a <strong>aucune base de données ni journaux</strong> ; les salons n'existent que tant que quelqu'un est présent.",
+  infoFact3:
+    "Il n'y a <strong>aucune base de données</strong> ; l'application ne stocke rien et ne tient aucun journal d'accès propre. Les salons n'existent que tant que quelqu'un est présent.",
   infoFact4:
-    "Le serveur HereBee (relais et cartes auto-hébergées) voit ton <strong>IP</strong> pendant la durée de la connexion — non conservée, et aucun service de cartes ou CDN tiers. Un navigateur ne peut généralement pas masquer ton IP.",
-  infoFact5: "Quiconque possède le lien complet voit le salon. Ne le partage qu'avec des personnes de confiance.",
+    "Le serveur HereBee (relais et cartes auto-hébergées) voit ton <strong>IP</strong> pendant la durée de la connexion et peut, d'après les tuiles de carte que tu charges, deviner approximativement la zone que tu regardes. L'application ne l'enregistre pas, mais l'infrastructure en amont (proxy/hébergeur) le peut. Aucun service de cartes ou CDN tiers ; un navigateur ne peut généralement pas masquer ton IP.",
+  infoFact5:
+    "Quiconque possède le lien complet voit le salon — et tout le monde y partage la même clé, donc un participant pourrait falsifier le marqueur d'un autre. Ne partage le lien qu'avec des personnes de confiance.",
   mapCredits: "Carte : {pm} © contributeurs d'{osm}",
   legalLink: "Mentions légales & confidentialité",
   noGeo: "Cet appareil ne peut pas partager de position",
@@ -444,10 +454,12 @@ const pt: Record<Key, string> = {
     "O HereBee partilha localizações <strong>de forma efémera e cifrada de ponta a ponta</strong> entre participantes ativos. Recolhe o mínimo de dados — mas não lhe chames «totalmente anónimo».",
   infoFact1: "O servidor não vê <strong>nem coordenadas, nem nomes, nem a chave</strong> — apenas pacotes cifrados.",
   infoFact2: "A chave está no link depois de <code>#</code> e nunca é enviada ao servidor.",
-  infoFact3: "Não há <strong>base de dados nem registos</strong>; as salas existem apenas enquanto alguém estiver presente.",
+  infoFact3:
+    "Não há <strong>base de dados</strong>; a app não guarda nada nem mantém registos de acesso próprios. As salas existem apenas enquanto alguém estiver presente.",
   infoFact4:
-    "O servidor do HereBee (relay e mapas alojados por nós) vê o teu <strong>IP</strong> durante a ligação — não é guardado e não há serviços de mapas ou CDN de terceiros. O navegador em geral não consegue ocultar o teu IP.",
-  infoFact5: "Qualquer pessoa com o link completo vê a sala. Partilha-o apenas com pessoas de confiança.",
+    "O servidor do HereBee (relay e mapas alojados por nós) vê o teu <strong>IP</strong> durante a ligação e, pelos tiles do mapa que carregas, consegue perceber aproximadamente que zona estás a ver. A app não regista isto, mas a infraestrutura a montante (proxy/alojamento) pode. Não há serviços de mapas ou CDN de terceiros; o navegador em geral não consegue ocultar o teu IP.",
+  infoFact5:
+    "Qualquer pessoa com o link completo vê a sala — e todos nela partilham a mesma chave, por isso um participante poderia falsificar o marcador de outro. Partilha o link apenas com pessoas de confiança.",
   mapCredits: "Mapa: {pm} © colaboradores do {osm}",
   legalLink: "Informação legal e privacidade",
   noGeo: "Este dispositivo não consegue partilhar a localização",

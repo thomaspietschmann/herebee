@@ -322,7 +322,9 @@ export class UI {
         <li><strong>IP-Adresse</strong> – vorübergehend, um die WebSocket-Verbindung aufzubauen und die
         Zahl gleichzeitiger Verbindungen pro IP zu begrenzen (Missbrauchsschutz). Rechtsgrundlage:
         Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Betrieb und Schutz des Dienstes). Die
-        Anwendung selbst speichert die IP nicht.</li>
+        Anwendung selbst speichert die IP nicht. Da die Kartenkacheln vom selben Server geladen werden,
+        kann dieser anhand der angefragten Kacheln grob erkennen, welche Region du ansiehst; die
+        Koordinaten selbst bleiben Ende-zu-Ende-verschlüsselt.</li>
         <li><strong>Verschlüsselte Standort- und Namensdaten</strong> – werden nur weitergeleitet,
         nicht gespeichert und sind für den Betreiber nicht lesbar.</li>
         <li><strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, sobald der
