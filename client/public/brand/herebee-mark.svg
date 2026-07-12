@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">HereBee logo mark</title>
+  <desc id="desc">A smiling bee hugging a red location pin.</desc>
+  <rect width="128" height="128" rx="30" fill="#0e1116"/>
+  <g fill="#fff7df" opacity=".88" stroke="#efe4c8" stroke-width="2">
+    <ellipse cx="31" cy="66" rx="20" ry="30" transform="rotate(-29 31 66)"/>
+    <ellipse cx="97" cy="66" rx="20" ry="30" transform="rotate(29 97 66)"/>
+  </g>
+  <ellipse cx="64" cy="68" rx="39" ry="44" fill="#ffc63b"/>
+  <path d="M28 75q36 16 72 0M34 94q30 15 60 0" fill="none" stroke="#17120d" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="64" cy="48" r="35" fill="#ffd43b"/>
+  <path d="M51 25q-6-13-20-17M77 25q6-13 20-17" fill="none" stroke="#17120d" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="30" cy="8" r="8" fill="#34e1b4"/>
+  <circle cx="98" cy="8" r="8" fill="#34e1b4"/>
+  <circle cx="51" cy="48" r="11" fill="#fff8ed" stroke="#17120d" stroke-width="3"/>
+  <circle cx="77" cy="48" r="11" fill="#fff8ed" stroke="#17120d" stroke-width="3"/>
+  <circle cx="53" cy="49" r="5" fill="#17120d"/>
+  <circle cx="75" cy="49" r="5" fill="#17120d"/>
+  <circle cx="49" cy="45" r="2.4" fill="#fff8ed"/>
+  <circle cx="72" cy="45" r="2.4" fill="#fff8ed"/>
+  <path d="M58 61q6 7 12 0" fill="none" stroke="#17120d" stroke-width="4" stroke-linecap="round"/>
+  <g fill="#ff6f73" opacity=".75">
+    <ellipse cx="40" cy="58" rx="8" ry="5"/>
+    <ellipse cx="88" cy="58" rx="8" ry="5"/>
+  </g>
+  <path d="M64 56c15 0 28 11 28 26 0 20-28 43-28 43S36 102 36 82c0-15 13-26 28-26Z" fill="#ff5a4d"/>
+  <circle cx="64" cy="82" r="12" fill="#0e1116"/>
+  <path d="M48 78q16 6 32 0" fill="none" stroke="#ff7b5f" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+  <ellipse cx="41" cy="76" rx="13" ry="10" fill="#17120d"/>
+  <ellipse cx="87" cy="76" rx="13" ry="10" fill="#17120d"/>
+</svg>

@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" role="img" aria-labelledby="title desc">
+  <title id="title">HereBee bee avatar samples</title>
+  <desc id="desc">Sixteen deterministic bee faces generated from different seeds.</desc>
+  <rect width="960" height="690" rx="0" fill="#0e1116"/>
+  <text x="34" y="38" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="24" font-weight="760">HereBee Bee-Face Avatare</text>
+  <text x="34" y="59" fill="#8a94a6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13">Seedbasiert, offline gerendert, keine Avatar-Library.</text>
+  <g transform="translate(68 86)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(51 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cfaj332"><ellipse cx="50" cy="55" rx="28" ry="36"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="16" ry="19" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="16" ry="19" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(51 78% 59%)">
+    <path d="M42 29 q-7 -10 -10 -18" fill="none"/><circle cx="32" cy="11" r="4.5"/>
+    <path d="M58 29 q7 -10 10 -18" fill="none"/><circle cx="68" cy="11" r="4.5"/></g><ellipse cx="50" cy="55" rx="28" ry="36" transform="rotate(0 50 55)" fill="hsl(44 96% 61%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cfaj332)" fill="#24170e" opacity="0.92" transform="rotate(-8 50 55)">
+    <rect x="13" y="56" width="74" height="8" rx="4"/>
+    <rect x="13" y="72" width="74" height="8" rx="4"/>
+    </g><circle cx="50" cy="27" r="4.5" fill="hsl(51 78% 59%)" stroke="#17120d" stroke-width="1.8"/><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="39" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="37.2" cy="48.2" r="5.4" fill="#17120d"/><circle cx="35.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="59.2" cy="48.2" r="5.4" fill="#17120d"/><circle cx="57.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><line x1="44" y1="68" x2="56" y2="68" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">gelassener Schwarmfreund</text>
+    </g><g transform="translate(288 86)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(42 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="c3eo1ad"><ellipse cx="50" cy="55" rx="28" ry="36"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="13" ry="21" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="13" ry="21" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(42 78% 59%)">
+    <path d="M42 29 q-10 -9 -7 -20" fill="none"/><circle cx="35" cy="9" r="4.5"/>
+    <path d="M58 29 q10 -9 7 -20" fill="none"/><circle cx="65" cy="9" r="4.5"/></g><ellipse cx="50" cy="55" rx="28" ry="36" transform="rotate(0 50 55)" fill="hsl(46 96% 60%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#c3eo1ad)" fill="#24170e" opacity="0.92" transform="rotate(8 50 55)">
+    <rect x="13" y="56" width="74" height="8" rx="4"/>
+    <rect x="13" y="72" width="74" height="8" rx="4"/>
+    </g><circle cx="50" cy="27" r="4.5" fill="hsl(42 78% 59%)" stroke="#17120d" stroke-width="1.8"/><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="39" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="38.6" cy="48.6" r="5.4" fill="#17120d"/><circle cx="35.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="60.6" cy="48.6" r="5.4" fill="#17120d"/><circle cx="57.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><ellipse cx="50" cy="67" rx="4.5" ry="5.5" fill="#17120d"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">putziger Nektarprofi</text>
+    </g><g transform="translate(508 86)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(44 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cemmern"><ellipse cx="50" cy="55" rx="28" ry="36"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="13" ry="21" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="13" ry="21" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(44 78% 59%)">
+    <path d="M42 29 q-7 -10 -10 -18" fill="none"/><circle cx="32" cy="11" r="4.5"/>
+    <path d="M58 29 q7 -10 10 -18" fill="none"/><circle cx="68" cy="11" r="4.5"/></g><ellipse cx="50" cy="55" rx="28" ry="36" transform="rotate(0 50 55)" fill="hsl(40 96% 62%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cemmern)" fill="none" stroke="#24170e" stroke-width="7" stroke-linecap="round" opacity="0.92">
+      <path d="M17 61 q17 8 33 0 t33 0"/>
+      <path d="M17 77 q17 8 33 0 t33 0"/></g><circle cx="39" cy="47" r="9.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="38.1" cy="48.1" r="4.8" fill="#17120d"/><circle cx="35.733333333333334" cy="44" r="1.5999999999999999" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="9.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="60.1" cy="48.1" r="4.8" fill="#17120d"/><circle cx="57.733333333333334" cy="44" r="1.5999999999999999" fill="#fdfdfb" opacity="0.9"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">gewitzter Schwarmfreund</text>
+    </g><g transform="translate(728 86)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(66 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cb8qbfp"><ellipse cx="50" cy="55" rx="28" ry="36"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="16" ry="19" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="16" ry="19" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(66 78% 59%)">
+    <path d="M42 29 q-10 -9 -7 -20" fill="none"/><circle cx="35" cy="9" r="4.5"/>
+    <path d="M58 29 q10 -9 7 -20" fill="none"/><circle cx="65" cy="9" r="4.5"/></g><ellipse cx="50" cy="55" rx="28" ry="36" transform="rotate(0 50 55)" fill="hsl(46 96% 64%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cb8qbfp)" fill="none" stroke="#24170e" stroke-width="7" stroke-linecap="round" opacity="0.92">
+      <path d="M17 61 q17 8 33 0 t33 0"/>
+      <path d="M17 77 q17 8 33 0 t33 0"/></g><path d="M50 20 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3Z" fill="hsl(66 78% 59%)" stroke="#17120d" stroke-width="1.6" stroke-linejoin="round"/><circle cx="38" cy="47" r="9.5" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="36.4" cy="47.8" r="4.7" fill="#17120d"/><circle cx="34.833333333333336" cy="44" r="1.5666666666666667" fill="#fdfdfb" opacity="0.9"/><path d="M55 47 q6 5 13 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><line x1="44" y1="68" x2="56" y2="68" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">putzige Nektarjägerin</text>
+    </g><g transform="translate(68 228)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(35 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="c7ql4g9"><ellipse cx="50" cy="56" rx="30" ry="34"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="16" ry="19" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="16" ry="19" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(35 78% 59%)">
+    <path d="M41 29 q-8 -13 -5 -23" fill="none"/><circle cx="36" cy="6" r="4.5"/>
+    <path d="M59 29 q8 -13 5 -23" fill="none"/><circle cx="64" cy="6" r="4.5"/></g><ellipse cx="50" cy="56" rx="30" ry="34" transform="rotate(-3 50 56)" fill="hsl(43 96% 61%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#c7ql4g9)" fill="#24170e" opacity="0.92" transform="rotate(0 50 56)">
+    <rect x="13" y="57" width="74" height="8" rx="4"/>
+    <rect x="13" y="73" width="74" height="8" rx="4"/>
+    </g><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="39" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="39.4" cy="48" r="5.4" fill="#17120d"/><circle cx="35.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="61.4" cy="48" r="5.4" fill="#17120d"/><circle cx="57.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><path d="M41 66 q9 9 18 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><ellipse cx="50" cy="72" rx="4" ry="3" fill="#ff7f90"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">kecke Wabenwache</text>
+    </g><g transform="translate(288 228)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(309 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="ceequw2"><ellipse cx="50" cy="56" rx="30" ry="34"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="13" ry="21" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="13" ry="21" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(309 78% 59%)">
+    <path d="M42 29 q-10 -9 -7 -20" fill="none"/><circle cx="35" cy="9" r="4.5"/>
+    <path d="M58 29 q10 -9 7 -20" fill="none"/><circle cx="65" cy="9" r="4.5"/></g><ellipse cx="50" cy="56" rx="30" ry="34" transform="rotate(-3 50 56)" fill="hsl(41 96% 58%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#ceequw2)" fill="#24170e" opacity="0.92" transform="rotate(0 50 56)">
+    <rect x="13" y="57" width="74" height="8" rx="4"/>
+    <rect x="13" y="73" width="74" height="8" rx="4"/>
+    </g><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="39" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="37.9" cy="48.6" r="5.4" fill="#17120d"/><circle cx="35.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="59.9" cy="48.6" r="5.4" fill="#17120d"/><circle cx="57.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">wilder Nektarprofi</text>
+    </g><g transform="translate(508 228)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(156 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cdwnvyo"><ellipse cx="50" cy="58" rx="36" ry="29"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="11" ry="22" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="11" ry="22" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(156 78% 59%)">
+    <path d="M42 29 q-7 -10 -10 -18" fill="none"/><circle cx="32" cy="11" r="4.5"/>
+    <path d="M58 29 q7 -10 10 -18" fill="none"/><circle cx="68" cy="11" r="4.5"/></g><ellipse cx="50" cy="58" rx="36" ry="29" transform="rotate(3 50 58)" fill="hsl(40 96% 63%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cdwnvyo)" fill="#24170e" opacity="0.92" transform="rotate(0 50 58)">
+    <rect x="13" y="59" width="74" height="8" rx="4"/>
+    <rect x="13" y="75" width="74" height="8" rx="4"/>
+    </g><g transform="translate(50 28) scale(.72)" fill="hsl(156 78% 59%)" stroke="#17120d" stroke-width="2.2"><path d="M0 -10c6 0 10 4 10 9 0 7-10 17-10 17S-10 6-10-1c0-5 4-9 10-9Z"/><circle cx="0" cy="-1" r="3.5" fill="#fdfdfb"/></g><circle cx="39" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="40.7" cy="46" r="5.4" fill="#17120d"/><circle cx="35.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="62.7" cy="46" r="5.4" fill="#17120d"/><circle cx="57.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">mutiges Honigherz</text>
+    </g><g transform="translate(728 228)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(73 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="c6esf8y"><ellipse cx="50" cy="56" rx="30" ry="34"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="16" ry="19" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="16" ry="19" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(73 78% 59%)">
+    <path d="M42 29 q-10 -9 -7 -20" fill="none"/><circle cx="35" cy="9" r="4.5"/>
+    <path d="M58 29 q10 -9 7 -20" fill="none"/><circle cx="65" cy="9" r="4.5"/></g><ellipse cx="50" cy="56" rx="30" ry="34" transform="rotate(-3 50 56)" fill="hsl(47 96% 62%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#c6esf8y)" fill="#24170e" opacity="0.92" transform="rotate(0 50 56)">
+    <rect x="13" y="57" width="74" height="8" rx="4"/>
+    <rect x="13" y="73" width="74" height="8" rx="4"/>
+    </g><circle cx="50" cy="27" r="4.5" fill="hsl(73 78% 59%)" stroke="#17120d" stroke-width="1.8"/><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="39" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="37.4" cy="46.4" r="5.4" fill="#17120d"/><circle cx="35.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="11" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="59.4" cy="46.4" r="5.4" fill="#17120d"/><circle cx="57.333333333333336" cy="44" r="1.8" fill="#fdfdfb" opacity="0.9"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">kluge Blütenfreundin</text>
+    </g><g transform="translate(68 370)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(148 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="c74nwst"><ellipse cx="50" cy="56" rx="30" ry="34"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="13" ry="21" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="13" ry="21" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(148 78% 59%)">
+    <path d="M42 29 q-10 -9 -7 -20" fill="none"/><circle cx="35" cy="9" r="4.5"/>
+    <path d="M58 29 q10 -9 7 -20" fill="none"/><circle cx="65" cy="9" r="4.5"/></g><ellipse cx="50" cy="56" rx="30" ry="34" transform="rotate(-3 50 56)" fill="hsl(41 96% 60%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#c74nwst)" fill="none" stroke="#24170e" stroke-width="7" stroke-linecap="round" opacity="0.92">
+      <path d="M17 62 q17 8 33 0 t33 0"/>
+      <path d="M17 78 q17 8 33 0 t33 0"/></g><g transform="translate(50 28) scale(.72)" fill="hsl(148 78% 59%)" stroke="#17120d" stroke-width="2.2"><path d="M0 -10c6 0 10 4 10 9 0 7-10 17-10 17S-10 6-10-1c0-5 4-9 10-9Z"/><circle cx="0" cy="-1" r="3.5" fill="#fdfdfb"/></g><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="39" cy="47" r="9.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="37.6" cy="47.2" r="4.8" fill="#17120d"/><circle cx="35.733333333333334" cy="44" r="1.5999999999999999" fill="#fdfdfb" opacity="0.9"/><circle cx="61" cy="47" r="9.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="59.6" cy="47.2" r="4.8" fill="#17120d"/><circle cx="57.733333333333334" cy="44" r="1.5999999999999999" fill="#fdfdfb" opacity="0.9"/><path d="M45 67 q5 4 10 0" fill="none" stroke="#17120d" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">verspielter Wabenwart</text>
+    </g><g transform="translate(288 370)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(59 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cfrt9pe"><ellipse cx="50" cy="58" rx="36" ry="29"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="16" ry="19" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="16" ry="19" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(59 78% 59%)">
+    <path d="M42 29 q-7 -10 -10 -18" fill="none"/><circle cx="32" cy="11" r="4.5"/>
+    <path d="M58 29 q7 -10 10 -18" fill="none"/><circle cx="68" cy="11" r="4.5"/></g><ellipse cx="50" cy="58" rx="36" ry="29" transform="rotate(3 50 58)" fill="hsl(45 96% 60%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cfrt9pe)" fill="#24170e" opacity="0.92" transform="rotate(0 50 58)">
+    <rect x="13" y="59" width="74" height="8" rx="4"/>
+    <rect x="13" y="75" width="74" height="8" rx="4"/>
+    </g><path d="M28 47 q22 -15 44 0 q-5 21 -22 21 q-17 0 -22 -21Z" fill="#fdfdfb" opacity="0.18"/><circle cx="50" cy="27" r="4.5" fill="hsl(59 78% 59%)" stroke="#17120d" stroke-width="1.8"/><circle cx="38" cy="47" r="9.5" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="36.6" cy="46.9" r="4.7" fill="#17120d"/><circle cx="34.833333333333336" cy="44" r="1.5666666666666667" fill="#fdfdfb" opacity="0.9"/><path d="M55 47 q6 5 13 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><line x1="44" y1="68" x2="56" y2="68" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">pfiffige Kundschafterin</text>
+    </g><g transform="translate(508 370)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(147 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cfmqr7r"><ellipse cx="50" cy="57" rx="34" ry="31"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="11" ry="22" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="11" ry="22" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(147 78% 59%)">
+    <path d="M42 29 q-10 -9 -7 -20" fill="none"/><circle cx="35" cy="9" r="4.5"/>
+    <path d="M58 29 q10 -9 7 -20" fill="none"/><circle cx="65" cy="9" r="4.5"/></g><ellipse cx="50" cy="57" rx="34" ry="31" transform="rotate(0 50 57)" fill="hsl(47 96% 62%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cfmqr7r)" fill="#24170e" opacity="0.92" transform="rotate(8 50 57)">
+    <rect x="13" y="58" width="74" height="8" rx="4"/>
+    <rect x="13" y="74" width="74" height="8" rx="4"/>
+    </g><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="38" cy="47" r="9.5" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="36.6" cy="48.7" r="4.7" fill="#17120d"/><circle cx="34.833333333333336" cy="44" r="1.5666666666666667" fill="#fdfdfb" opacity="0.9"/><path d="M55 47 q6 5 13 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">hurtige Sammlerin</text>
+    </g><g transform="translate(728 370)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(196 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="c8lq8wz"><ellipse cx="50" cy="57" rx="34" ry="31"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="13" ry="21" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="13" ry="21" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(196 78% 59%)">
+    <path d="M42 29 q-7 -10 -10 -18" fill="none"/><circle cx="32" cy="11" r="4.5"/>
+    <path d="M58 29 q7 -10 10 -18" fill="none"/><circle cx="68" cy="11" r="4.5"/></g><ellipse cx="50" cy="57" rx="34" ry="31" transform="rotate(0 50 57)" fill="hsl(45 96% 59%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#c8lq8wz)" fill="#24170e" opacity="0.92" transform="rotate(8 50 57)">
+    <rect x="13" y="58" width="74" height="8" rx="4"/>
+    <rect x="13" y="74" width="74" height="8" rx="4"/>
+    </g><circle cx="50" cy="27" r="4.5" fill="hsl(196 78% 59%)" stroke="#17120d" stroke-width="1.8"/><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><path d="M31 47 q8 6 16 0 M53 47 q8 6 16 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">wendige Blütenfreundin</text>
+    </g><g transform="translate(68 512)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(351 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cggc4sm"><ellipse cx="50" cy="56" rx="30" ry="34"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="11" ry="22" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="11" ry="22" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(351 78% 59%)">
+    <path d="M41 29 q-8 -13 -5 -23" fill="none"/><circle cx="36" cy="6" r="4.5"/>
+    <path d="M59 29 q8 -13 5 -23" fill="none"/><circle cx="64" cy="6" r="4.5"/></g><ellipse cx="50" cy="56" rx="30" ry="34" transform="rotate(-3 50 56)" fill="hsl(47 96% 64%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cggc4sm)" fill="#24170e" opacity="0.92" transform="rotate(8 50 56)">
+    <rect x="13" y="57" width="74" height="8" rx="4"/>
+    <rect x="13" y="73" width="74" height="8" rx="4"/>
+    </g><ellipse cx="50" cy="63" rx="18" ry="14" fill="hsl(51 90% 48%)" opacity="0.36"/><g transform="translate(50 28) scale(.72)" fill="hsl(351 78% 59%)" stroke="#17120d" stroke-width="2.2"><path d="M0 -10c6 0 10 4 10 9 0 7-10 17-10 17S-10 6-10-1c0-5 4-9 10-9Z"/><circle cx="0" cy="-1" r="3.5" fill="#fdfdfb"/></g><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><path d="M31 47 q8 6 16 0 M53 47 q8 6 16 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">schlaues Summtier</text>
+    </g><g transform="translate(288 512)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(260 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="cfwxsjf"><ellipse cx="50" cy="58" rx="36" ry="29"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="16" ry="19" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="16" ry="19" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(260 78% 59%)">
+    <path d="M42 29 q-7 -10 -10 -18" fill="none"/><circle cx="32" cy="11" r="4.5"/>
+    <path d="M58 29 q7 -10 10 -18" fill="none"/><circle cx="68" cy="11" r="4.5"/></g><ellipse cx="50" cy="58" rx="36" ry="29" transform="rotate(3 50 58)" fill="hsl(44 96% 61%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#cfwxsjf)" fill="#24170e" opacity="0.92" transform="rotate(0 50 58)">
+    <rect x="13" y="59" width="74" height="8" rx="4"/>
+    <rect x="13" y="75" width="74" height="8" rx="4"/>
+    </g><path d="M50 20 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3Z" fill="hsl(260 78% 59%)" stroke="#17120d" stroke-width="1.6" stroke-linejoin="round"/><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="38" cy="47" r="9.5" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="36" cy="46.1" r="4.7" fill="#17120d"/><circle cx="34.833333333333336" cy="44" r="1.5666666666666667" fill="#fdfdfb" opacity="0.9"/><path d="M55 47 q6 5 13 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><path d="M41 66 q9 9 18 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/><ellipse cx="50" cy="72" rx="4" ry="3" fill="#ff7f90"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">leiser Summbote</text>
+    </g><g transform="translate(508 512)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(7 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="c87zcdj"><ellipse cx="50" cy="58" rx="36" ry="29"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="11" ry="22" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="11" ry="22" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(7 78% 59%)">
+    <path d="M42 29 q-7 -10 -10 -18" fill="none"/><circle cx="32" cy="11" r="4.5"/>
+    <path d="M58 29 q7 -10 10 -18" fill="none"/><circle cx="68" cy="11" r="4.5"/></g><ellipse cx="50" cy="58" rx="36" ry="29" transform="rotate(3 50 58)" fill="hsl(40 96% 62%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#c87zcdj)" fill="#24170e" opacity="0.92" transform="rotate(0 50 58)">
+    <rect x="13" y="59" width="74" height="8" rx="4"/>
+    <rect x="13" y="75" width="74" height="8" rx="4"/>
+    </g><ellipse cx="50" cy="63" rx="18" ry="14" fill="hsl(44 90% 48%)" opacity="0.36"/><circle cx="50" cy="27" r="4.5" fill="hsl(7 78% 59%)" stroke="#17120d" stroke-width="1.8"/><circle cx="35" cy="47" r="8.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="33.1" cy="47.7" r="4.2" fill="#17120d"/><circle cx="32.06666666666666" cy="44" r="1.4000000000000001" fill="#fdfdfb" opacity="0.9"/><circle cx="65" cy="47" r="8.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="63.1" cy="47.7" r="4.2" fill="#17120d"/><circle cx="62.06666666666666" cy="44" r="1.4000000000000001" fill="#fdfdfb" opacity="0.9"/><line x1="44" y1="68" x2="56" y2="68" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">wendige Nektarjägerin</text>
+    </g><g transform="translate(728 512)">
+      <circle cx="36" cy="36" r="34" fill="#171b22" stroke="hsl(178 72% 56%)" stroke-width="4"/>
+      <svg x="0" y="0" width="72" height="72" viewBox="0 0 100 100"><defs><clipPath id="c3sv7d2"><ellipse cx="50" cy="56" rx="30" ry="34"/></clipPath></defs><g fill="rgba(253, 253, 251, 0.72)" stroke="#17120d" stroke-width="1.6">
+    <ellipse cx="27" cy="43" rx="16" ry="19" transform="rotate(-27 27 43)"/>
+    <ellipse cx="73" cy="43" rx="16" ry="19" transform="rotate(27 73 43)"/></g><g stroke="#17120d" stroke-width="3" stroke-linecap="round" fill="hsl(178 78% 59%)">
+    <path d="M41 29 q-8 -13 -5 -23" fill="none"/><circle cx="36" cy="6" r="4.5"/>
+    <path d="M59 29 q8 -13 5 -23" fill="none"/><circle cx="64" cy="6" r="4.5"/></g><ellipse cx="50" cy="56" rx="30" ry="34" transform="rotate(-3 50 56)" fill="hsl(44 96% 60%)" stroke="#17120d" stroke-width="3"/><g clip-path="url(#c3sv7d2)" fill="#24170e" opacity="0.92" transform="rotate(0 50 56)">
+    <rect x="13" y="57" width="74" height="8" rx="4"/>
+    <rect x="13" y="73" width="74" height="8" rx="4"/>
+    </g><ellipse cx="50" cy="63" rx="18" ry="14" fill="hsl(48 90% 48%)" opacity="0.36"/><g transform="translate(50 28) scale(.72)" fill="hsl(178 78% 59%)" stroke="#17120d" stroke-width="2.2"><path d="M0 -10c6 0 10 4 10 9 0 7-10 17-10 17S-10 6-10-1c0-5 4-9 10-9Z"/><circle cx="0" cy="-1" r="3.5" fill="#fdfdfb"/></g><g fill="#ff7f90" opacity="0.68"><ellipse cx="32" cy="61" rx="5" ry="3.4"/><ellipse cx="68" cy="61" rx="5" ry="3.4"/></g><circle cx="35" cy="47" r="8.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="33.9" cy="48.9" r="4.2" fill="#17120d"/><circle cx="32.06666666666666" cy="44" r="1.4000000000000001" fill="#fdfdfb" opacity="0.9"/><circle cx="65" cy="47" r="8.8" fill="#fdfdfb" stroke="#17120d" stroke-width="1.6"/><circle cx="63.9" cy="48.9" r="4.2" fill="#17120d"/><circle cx="62.06666666666666" cy="44" r="1.4000000000000001" fill="#fdfdfb" opacity="0.9"/><path d="M40 66 q10 10 20 0" fill="none" stroke="#17120d" stroke-width="3" stroke-linecap="round"/></svg>
+      <text x="36" y="94" text-anchor="middle" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="650">wilder Nektarprofi</text>
+    </g>
+</svg>

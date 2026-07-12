@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc">
+  <title id="title">HereBee logo alternatives</title>
+  <desc id="desc">Four vector logo directions for HereBee.</desc>
+  <rect width="1280" height="420" fill="#0e1116"/>
+  <text x="44" y="58" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="34" font-weight="760">HereBee Logo-Alternativen</text>
+  <text x="44" y="86" fill="#8a94a6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="16">Vektorbasiert, dunkles App-Icon, passend zu Signalrot und Beacon-Mint.</text>
+
+  <g transform="translate(44 126)">
+    <rect width="270" height="250" rx="8" fill="#171b22" stroke="rgba(232,237,242,.14)"/>
+    <image href="herebee-logo-pin.svg" x="59" y="24" width="152" height="152"/>
+    <text x="28" y="202" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="760">Pin Bee</text>
+    <text x="28" y="228" fill="#8a94a6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13">Standort und Raum-Link im Vordergrund.</text>
+  </g>
+  <g transform="translate(352 126)">
+    <rect width="270" height="250" rx="8" fill="#171b22" stroke="rgba(232,237,242,.14)"/>
+    <image href="herebee-logo-signal.svg" x="59" y="24" width="152" height="152"/>
+    <text x="28" y="202" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="760">Signal Bee</text>
+    <text x="28" y="228" fill="#8a94a6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13">Live-Sharing, Puls und Bewegung.</text>
+  </g>
+  <g transform="translate(660 126)">
+    <rect width="270" height="250" rx="8" fill="#171b22" stroke="rgba(232,237,242,.14)"/>
+    <image href="herebee-logo-hex.svg" x="59" y="24" width="152" height="152"/>
+    <text x="28" y="202" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="760">Honeycomb</text>
+    <text x="28" y="228" fill="#8a94a6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13">Badge-artig, ruhiger und solider.</text>
+  </g>
+  <g transform="translate(968 126)">
+    <rect width="270" height="250" rx="8" fill="#171b22" stroke="rgba(232,237,242,.14)"/>
+    <image href="herebee-logo-face.svg" x="59" y="24" width="152" height="152"/>
+    <text x="28" y="202" fill="#e8edf2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="760">Bee Face</text>
+    <text x="28" y="228" fill="#8a94a6" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13">Freundlichstes Icon/Favicon.</text>
+  </g>
+</svg>

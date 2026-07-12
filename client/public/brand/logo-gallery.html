@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HereBee Logo Alternatives</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #0e1116;
+        --ink-2: #171b22;
+        --hair: rgba(232, 237, 242, 0.14);
+        --mist: #e8edf2;
+        --muted: #8a94a6;
+        --signal: #ff5a4d;
+        --beacon: #34e1b4;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--ink);
+        color: var(--mist);
+        font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+        padding: 28px;
+      }
+      header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 24px;
+        margin: 0 auto 28px;
+        max-width: 1040px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+      p {
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+      .hud-sample {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 14px 9px 11px;
+        background: rgba(14, 17, 22, 0.72);
+        border: 1px solid var(--hair);
+        border-radius: 999px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        white-space: nowrap;
+      }
+      .hud-sample img {
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+      }
+      .hud-sample b {
+        color: var(--beacon);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 14px;
+        max-width: 1040px;
+        margin: 0 auto;
+      }
+      figure {
+        margin: 0;
+        padding: 18px;
+        background: var(--ink-2);
+        border: 1px solid var(--hair);
+        border-radius: 8px;
+      }
+      .tile {
+        display: grid;
+        place-items: center;
+        aspect-ratio: 1;
+        background:
+          linear-gradient(45deg, rgba(232, 237, 242, 0.06) 25%, transparent 25% 75%, rgba(232, 237, 242, 0.06) 75%),
+          linear-gradient(45deg, rgba(232, 237, 242, 0.06) 25%, transparent 25% 75%, rgba(232, 237, 242, 0.06) 75%);
+        background-position: 0 0, 10px 10px;
+        background-size: 20px 20px;
+        border-radius: 8px;
+      }
+      .tile img {
+        width: min(72%, 150px);
+        height: auto;
+        display: block;
+      }
+      figcaption {
+        margin-top: 14px;
+      }
+      strong {
+        display: block;
+        font-size: 13px;
+      }
+      small {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+      }
+      .sizes {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .sizes img {
+        display: block;
+        border-radius: 7px;
+      }
+      .s16 {
+        width: 16px;
+        height: 16px;
+      }
+      .s32 {
+        width: 32px;
+        height: 32px;
+      }
+      .s48 {
+        width: 48px;
+        height: 48px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>HereBee Logo-Alternativen</h1>
+        <p>Vektorbasiert, dunkles App-Icon, passend zu Signalrot und Beacon-Mint.</p>
+      </div>
+      <div class="hud-sample">
+        <img src="./herebee-logo-pin.svg" alt="" />
+        <span>Here<b>Bee</b></span>
+      </div>
+    </header>
+    <main class="grid">
+      <figure>
+        <div class="tile"><img src="./herebee-logo-pin.svg" alt="Pin Bee" /></div>
+        <figcaption>
+          <strong>Pin Bee</strong>
+          <small>Direkteste Verbindung zu Standort und Raum-Link.</small>
+        </figcaption>
+        <div class="sizes">
+          <img class="s16" src="./herebee-logo-pin.svg" alt="" />
+          <img class="s32" src="./herebee-logo-pin.svg" alt="" />
+          <img class="s48" src="./herebee-logo-pin.svg" alt="" />
+        </div>
+      </figure>
+      <figure>
+        <div class="tile"><img src="./herebee-logo-signal.svg" alt="Signal Bee" /></div>
+        <figcaption>
+          <strong>Signal Bee</strong>
+          <small>Mehr Live-Präsenz, Bewegung und Sharing-Gefühl.</small>
+        </figcaption>
+        <div class="sizes">
+          <img class="s16" src="./herebee-logo-signal.svg" alt="" />
+          <img class="s32" src="./herebee-logo-signal.svg" alt="" />
+          <img class="s48" src="./herebee-logo-signal.svg" alt="" />
+        </div>
+      </figure>
+      <figure>
+        <div class="tile"><img src="./herebee-logo-hex.svg" alt="Honeycomb" /></div>
+        <figcaption>
+          <strong>Honeycomb</strong>
+          <small>Stabiler Badge-Look, etwas weniger verspielt.</small>
+        </figcaption>
+        <div class="sizes">
+          <img class="s16" src="./herebee-logo-hex.svg" alt="" />
+          <img class="s32" src="./herebee-logo-hex.svg" alt="" />
+          <img class="s48" src="./herebee-logo-hex.svg" alt="" />
+        </div>
+      </figure>
+      <figure>
+        <div class="tile"><img src="./herebee-logo-face.svg" alt="Bee Face" /></div>
+        <figcaption>
+          <strong>Bee Face</strong>
+          <small>Freundlichstes Icon, gut als App-Avatar/Favicon.</small>
+        </figcaption>
+        <div class="sizes">
+          <img class="s16" src="./herebee-logo-face.svg" alt="" />
+          <img class="s32" src="./herebee-logo-face.svg" alt="" />
+          <img class="s48" src="./herebee-logo-face.svg" alt="" />
+        </div>
+      </figure>
+    </main>
+  </body>
+</html>
