@@ -6,9 +6,12 @@
   "description": "HereBee — ephemeral, end-to-end-encrypted live location sharing. The server never sees coordinates or the key.",
   "scripts": {
     "dev": "concurrently -n client,server -c cyan,magenta \"vite --config client/vite.config.ts\" \"tsx watch server/src/index.ts\"",
-    "build": "vite --config client/vite.config.ts build",
+    "build": "vite --config client/vite.config.ts build && tsx scripts/gen-style.ts",
     "start": "tsx server/src/index.ts",
     "typecheck": "tsc --noEmit",
+    "vectors": "tsx scripts/gen-vectors.ts",
+    "test:vectors": "tsx test/vectors.test.ts",
+    "i18n:arb": "tsx scripts/i18n-to-arb.ts",
     "fetch-assets": "bash scripts/fetch-assets.sh"
   },
   "dependencies": {

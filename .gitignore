@@ -11,3 +11,6 @@ server/assets/basemaps/
 .playwright-mcp/
 localizer-*.png
 /*.png
+
+# Stray Flutter build output if a command runs from the repo root instead of mobile/
+/build/

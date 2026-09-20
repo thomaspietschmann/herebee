@@ -4,6 +4,10 @@
  * the device locale: German devices get German personas (with correct strong
  * adjective declension), everyone else gets an English set. Locale is stable per
  * device, so a peer's displayed name never flickers between renders.
+ *
+ * `germanName` / `englishName` are exported (rather than reached only through
+ * `nameFromSeed`) so scripts/gen-vectors.ts can capture BOTH locales' output for
+ * one seed. The native apps must reproduce them bit-for-bit; see shared/PROTOCOL.md.
  */
 import { pick, rngFromSeed } from "./rng.js";
 import { lang } from "./i18n.js";
@@ -37,7 +41,7 @@ const PERSONAS_DE: readonly Persona[] = [
 
 const ENDING: Record<Gender, string> = { m: "er", f: "e", n: "es" };
 
-function germanName(seed: string): string {
+export function germanName(seed: string): string {
   const rng = rngFromSeed(seed + ":name");
   const adj = pick(rng, ADJECTIVES_DE);
   const persona = pick(rng, PERSONAS_DE);
@@ -59,7 +63,7 @@ const PERSONAS_EN = [
   "Pollen Bearer", "Swarm Guide", "Honey Finder", "Bloom Friend",
 ] as const;
 
-function englishName(seed: string): string {
+export function englishName(seed: string): string {
   const rng = rngFromSeed(seed + ":name");
   const adj = pick(rng, ADJECTIVES_EN);
   const persona = pick(rng, PERSONAS_EN);

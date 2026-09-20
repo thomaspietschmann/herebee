@@ -51,10 +51,14 @@ Open the printed URL; you'll be redirected to `/r/#<secret>`. Open the same full
 ## Build & run (single process)
 
 ```bash
-npm run build             # -> client/dist
+npm run build             # -> client/dist (bundle + /style/{lang}.json)
 npm run fetch-assets      # -> server/assets/{tiles,basemaps}
 npm run start             # serves everything on :3000
 ```
+
+Checks: `npm run typecheck`, `npm run test:vectors` (cross-client conformance —
+see `shared/vectors.json`), and `npx tsx test/e2e-relay.ts` against a running
+server. Regenerate derived files with `npm run vectors` and `npm run i18n:arb`.
 
 ## Deploy
 
@@ -80,3 +84,18 @@ Production env:
   otherwise share the proxy IP). Set it to the number of trusted proxy hops.
 - Resource ceilings (sensible defaults): `MAX_CONNS` (global sockets, 10000),
   `MAX_ROOMS` (5000), `MAX_CONNS_PER_ROOM` (100).
+
+Native-app support (all optional; unset means the feature is simply off):
+
+- `PUBLIC_ORIGIN=https://your.domain` — absolute origin baked into the generated
+  map style at `/style/{lang}.json`. Unset, it is derived from the request, which
+  is what dev wants.
+- `ALLOWED_ORIGINS=...,app://herebee` — add the app origin to let the native
+  clients open the WebSocket. The check is browser CSRF hygiene, not
+  authentication, so this is an explicit opt-in rather than a default.
+- `APPLE_APP_IDS=TEAMID.app.herebee` and `ANDROID_PACKAGE=app.herebee` +
+  `ANDROID_CERT_SHA256=AA:BB:…,CC:DD:…` — populate the deep-link association
+  documents under `/.well-known/`. Each document 404s until its env is set.
+
+See [`shared/PROTOCOL.md`](shared/PROTOCOL.md) for the cross-client contract and
+[`docs/mobile-plan.md`](docs/mobile-plan.md) for the mobile plan.

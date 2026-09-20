@@ -482,7 +482,9 @@ const pt: Record<Key, string> = {
   statusNoSignal: "Sem sinal",
 };
 
-const DICTS: Record<Lang, Record<Key, string>> = { de, en, es, it, fr, pt };
+/** Exported so scripts/i18n-to-arb.ts can export EVERY language to the native
+ *  apps' ARB files. At runtime only DICTS[lang] is ever read. */
+export const DICTS: Record<Lang, Record<Key, string>> = { de, en, es, it, fr, pt };
 
 /** Translate a key, replacing {name} placeholders from params. */
 export function t(key: Key, params?: Record<string, string | number>): string {

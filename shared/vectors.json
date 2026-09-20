@@ -1,0 +1,633 @@
+{
+  "$schema": "https://herebee.app/schemas/vectors-v1",
+  "version": 1,
+  "generator": "scripts/gen-vectors.ts",
+  "purpose": "Cross-implementation conformance vectors. Generated from client/src/*; the native apps must reproduce every value. See shared/PROTOCOL.md.",
+  "constants": {
+    "hkdfSalt": "localizer/v1",
+    "hkdfInfoRoomId": "room-id",
+    "hkdfInfoAesKey": "aes-key",
+    "roomIdLength": 32,
+    "ivBytes": 12,
+    "tagBytes": 16,
+    "huePalette": [
+      210,
+      25,
+      145,
+      335,
+      55,
+      265,
+      185,
+      5,
+      100,
+      300,
+      40,
+      230
+    ],
+    "hueFromIndexFirst8": [
+      210,
+      25,
+      145,
+      335,
+      55,
+      265,
+      185,
+      5
+    ]
+  },
+  "crypto": {
+    "rooms": [
+      {
+        "secret": "ByxRdpvA5QovVHmew-gNMld8ocbrEDVaf6TJ7hM4XYI",
+        "roomId": "w65p1OJ_vF49qIpQW3d_oxS1EApVFTZ4",
+        "idMaterialHex": "c3ae69d4e27fbc5e3da88a505b777fa3",
+        "aesKeyHex": "30051de139b8f1244b23927633898ed875f27fd01167fcccbbde11f785200553"
+      },
+      {
+        "secret": "bJG22wAlSm-Uud4DKE1yl7zhBitQdZq_5AkuU3idwuc",
+        "roomId": "yDXRs4qe7DH_4i46LWRSNvUssWGlLxgE",
+        "idMaterialHex": "c835d1b38a9eec31ffe22e3a2d645236",
+        "aesKeyHex": "5f6a8644564181a6a20f3027f44938432b8340fedbc4cda930b390cb53219b9b"
+      },
+      {
+        "secret": "0fYbQGWKr9T5HkNojbLX_CFGa5C12v8kSW6TuN0CJ0w",
+        "roomId": "S04pRjxbcXURrDID2zHB_V9A5-zuRxSv",
+        "idMaterialHex": "4b4e29463c5b717511ac3203db31c1fd",
+        "aesKeyHex": "6ccf831698472f0b29c094bce0067927375556f48285adee94ef6d8082b2631a"
+      },
+      {
+        "secret": "NluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLE",
+        "roomId": "vtM9_08K8hQHg3J34Nr4G4ajFs8DoG23",
+        "idMaterialHex": "bed33dff4f0af21407837277e0daf81b",
+        "aesKeyHex": "078dde2cd74f13a1e44ba81ed1d4af99ca75c9036dc5eb43e6aef11db017bd65"
+      },
+      {
+        "secret": "m8DlCi9UeZ7D6A0yV3yhxusQNVp_pMnuEzhdgqfM8RY",
+        "roomId": "7qhCm9RFFN9OQsdDYmLKRJXtTdHRlOSy",
+        "idMaterialHex": "eea8429bd44514df4e42c7436262ca44",
+        "aesKeyHex": "3d63f95aacbb769ef2ff0669be3a3db51d2e4e6d97149644300878912f078d27"
+      },
+      {
+        "secret": "ACVKb5S53gMoTXKXvOEGK1B1mr_kCS5TeJ3C5wwxVns",
+        "roomId": "meLhrDltv61Xc2XQjnFEnkWbsLi_hyZI",
+        "idMaterialHex": "99e2e1ac396dbfad577365d08e71449e",
+        "aesKeyHex": "bce40e65b57f4157350c6291d8ee3858561b04048d3fe91b2117ad85bc9ab514"
+      },
+      {
+        "secret": "ZYqv1PkeQ2iNstf8IUZrkLXa_yRJbpO43QInTHGWu-A",
+        "roomId": "Oz55Xzd-5TDCN29xeZMxoU4fc_tpy23Q",
+        "idMaterialHex": "3b3e795f377ee530c2376f71799331a1",
+        "aesKeyHex": "d7ad2631b474c79c1414165cc09720a95a2e73631afdf49389f1915c47578839"
+      },
+      {
+        "secret": "yu8UOV6DqM3yFzxhhqvQ9Ro_ZImu0_gdQmeMsdb7IEU",
+        "roomId": "mLoYuJYy1f5tm6IbyUTQnk7vpIVa1dbb",
+        "idMaterialHex": "98ba18b89632d5fe6d9ba21bc944d09e",
+        "aesKeyHex": "b52c0fb939b57422fdd77e1e5939401bb45ad496527ccb58b941657543bf2c1a"
+      }
+    ],
+    "messages": [
+      {
+        "secret": "ByxRdpvA5QovVHmew-gNMld8ocbrEDVaf6TJ7hM4XYI",
+        "roomId": "w65p1OJ_vF49qIpQW3d_oxS1EApVFTZ4",
+        "plaintext": {
+          "k": "loc",
+          "seed": "abc",
+          "lat": 52.52,
+          "lng": 13.405,
+          "acc": 12.5,
+          "hdg": 180,
+          "spd": 1.4,
+          "at": 1700000000000
+        },
+        "ciphertext": "LbliQ3fpE5CuphJhBCY8UBMrp4qOch8hG9wiBuXRCqsK19yD26cKWHDLNW0Pw-TpCAoGhby2RjCgkn4BdBdWBePvTra-M3JLoFvUjBQ-sO-HanlfMLEMtrRCkh-NhMlYdTqtNynNKCkSEAmf323Tvb1pVX3GMMT43tHivWtR6g"
+      },
+      {
+        "secret": "bJG22wAlSm-Uud4DKE1yl7zhBitQdZq_5AkuU3idwuc",
+        "roomId": "yDXRs4qe7DH_4i46LWRSNvUssWGlLxgE",
+        "plaintext": {
+          "k": "loc",
+          "seed": "tom",
+          "lat": -33.8688,
+          "lng": 151.2093,
+          "acc": null,
+          "hdg": null,
+          "spd": null,
+          "at": 1700000001000
+        },
+        "ciphertext": "j5Cb60zOBOXthfmXWKVM6kBoGxTGvQQJZDluvdmcEXWsQ7ofDrMMJJIZ0OkL9x1PrJF8AsCsii8ZHueRPckIWIt6-ice48_VpK49nMJGI3Phq9lPobPgobwcjWilq1WcRWfKnwNpXux8ehScpCxax1Sxd6HQVZAfzh9-ylVWSNpk9BhKdOA"
+      },
+      {
+        "secret": "0fYbQGWKr9T5HkNojbLX_CFGa5C12v8kSW6TuN0CJ0w",
+        "roomId": "S04pRjxbcXURrDID2zHB_V9A5-zuRxSv",
+        "plaintext": {
+          "k": "loc",
+          "seed": "ümlaut",
+          "lat": 0,
+          "lng": 0,
+          "acc": 0,
+          "hdg": 0,
+          "spd": 0,
+          "at": 1
+        },
+        "ciphertext": "4xwKDigz2cn20OEnHA3J3oxdGWs61fpVaqKNAIznhIhAGtyA_4Sy3PjM9f82XIgm-xMjGPWmQQwf-RZVSGgB7XN0u9ljTBC6aZ-T-69CVI0B5jpUsI47_G3PFN3Eho8kiL1l98txnw"
+      },
+      {
+        "secret": "NluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLE",
+        "roomId": "vtM9_08K8hQHg3J34Nr4G4ajFs8DoG23",
+        "plaintext": {
+          "k": "loc",
+          "seed": "emoji-🐝",
+          "lat": 90,
+          "lng": -180,
+          "acc": 99999.5,
+          "hdg": 359.9,
+          "spd": 42.25,
+          "at": 2000000000000
+        },
+        "ciphertext": "Y-mRvXMHUPdwfGVTsS7FSVIL0h_xyaQhjJkSUS5JK0plCkm0F46WIMuqhyaQwcJVQie9OPDVccLlc23tOVrga5makGf17Csm_U2LpFO066zdwc3-iPZ-H0XHn1qhjd3Hi1DlMToOXI0QatzUxh0h7w8wEMQvoQPIJ9LZfMZXO_WERaJay2u-dA"
+      },
+      {
+        "secret": "m8DlCi9UeZ7D6A0yV3yhxusQNVp_pMnuEzhdgqfM8RY",
+        "roomId": "7qhCm9RFFN9OQsdDYmLKRJXtTdHRlOSy",
+        "plaintext": {
+          "k": "stop",
+          "seed": "abc"
+        },
+        "ciphertext": "cQHLEHsBkeUDNgP3fANt_diYXaAuES1doqY7kA7UA22grqEFxY8Idz0bEd4QqWDnLRqJ578"
+      },
+      {
+        "secret": "ACVKb5S53gMoTXKXvOEGK1B1mr_kCS5TeJ3C5wwxVns",
+        "roomId": "meLhrDltv61Xc2XQjnFEnkWbsLi_hyZI",
+        "plaintext": {
+          "k": "stop",
+          "seed": "日本語"
+        },
+        "ciphertext": "LE5HHG3G6ceQVpHMv0C55j-fPh6I9YDqHt2k6c9BIFTgk9CL1SPr6ja_Ikge954h1WI21mGmxszbTh0"
+      }
+    ],
+    "invalidRoomIds": [
+      "w65p1OJ_vF49qIpQW3d_oxS1EAqqFTZ4",
+      "yDXRs4qe7DH_4i46LWRSNvUssWFaLxgE",
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "w65p1OJ_vF49qIpQW3d_oxS1EApVFTZ",
+      "w65p1OJ_vF49qIpQW3d_oxS1EApVFTZ4A"
+    ]
+  },
+  "rng": [
+    {
+      "seed": "abc",
+      "cyrb53": 5059922895146125,
+      "cyrb53Seed0x9e37": 7014697855177364,
+      "cyrb53Seed0x1234": 3196964975894569,
+      "mulberry32First5": [
+        0.9418499812018126,
+        0.35852886317297816,
+        0.9831295928452164,
+        0.724692314164713,
+        0.020403314381837845
+      ]
+    },
+    {
+      "seed": "0",
+      "cyrb53": 3136312542826423,
+      "cyrb53Seed0x9e37": 5489362783783776,
+      "cyrb53Seed0x1234": 1066092914788471,
+      "mulberry32First5": [
+        0.12206321931444108,
+        0.12768399599008262,
+        0.6116888914257288,
+        0.12932036677375436,
+        0.21674140403047204
+      ]
+    },
+    {
+      "seed": "z",
+      "cyrb53": 243530538881798,
+      "cyrb53Seed0x9e37": 4856808518253200,
+      "cyrb53Seed0x1234": 3378513808259297,
+      "mulberry32First5": [
+        0.05413489765487611,
+        0.044304947601631284,
+        0.501281900331378,
+        0.07687368500046432,
+        0.4836538021918386
+      ]
+    },
+    {
+      "seed": "seed-1",
+      "cyrb53": 4366671806825918,
+      "cyrb53Seed0x9e37": 3197832170183866,
+      "cyrb53Seed0x1234": 8459347036116402,
+      "mulberry32First5": [
+        0.8052122399676591,
+        0.3371782759204507,
+        0.6293767804745585,
+        0.7619624773506075,
+        0.4162994127254933
+      ]
+    },
+    {
+      "seed": "seed-2",
+      "cyrb53": 7238040201863760,
+      "cyrb53Seed0x9e37": 8012626696718864,
+      "cyrb53Seed0x1234": 2180253082692964,
+      "mulberry32First5": [
+        0.19437866914086044,
+        0.5303762753028423,
+        0.29152228962630033,
+        0.8040087949484587,
+        0.9528974732384086
+      ]
+    },
+    {
+      "seed": "aaaaaaaaaa",
+      "cyrb53": 7727826927758693,
+      "cyrb53Seed0x9e37": 3179161490920747,
+      "cyrb53Seed0x1234": 8834303834584090,
+      "mulberry32First5": [
+        0.910328071564436,
+        0.8220698609948158,
+        0.7433099062182009,
+        0.39124957006424665,
+        0.11641541565768421
+      ]
+    },
+    {
+      "seed": "9f3k2j1",
+      "cyrb53": 3268829056792564,
+      "cyrb53Seed0x9e37": 8696360891487634,
+      "cyrb53Seed0x1234": 2995124958921551,
+      "mulberry32First5": [
+        0.2336560080293566,
+        0.006004087161272764,
+        0.26786564430221915,
+        0.17857855930924416,
+        0.4305391041561961
+      ]
+    },
+    {
+      "seed": "Zz09",
+      "cyrb53": 6629017391163783,
+      "cyrb53Seed0x9e37": 4669970455715198,
+      "cyrb53Seed0x1234": 5797565776065777,
+      "mulberry32First5": [
+        0.623630580957979,
+        0.3943258235231042,
+        0.18103356449864805,
+        0.18136402033269405,
+        0.19444507313892245
+      ]
+    },
+    {
+      "seed": "tom",
+      "cyrb53": 6095266897766388,
+      "cyrb53Seed0x9e37": 1944127429274370,
+      "cyrb53Seed0x1234": 7476649556584138,
+      "mulberry32First5": [
+        0.6628617940004915,
+        0.6424891781061888,
+        0.7125576692633331,
+        0.07235751580446959,
+        0.04193503595888615
+      ]
+    },
+    {
+      "seed": "anna",
+      "cyrb53": 4805122696388060,
+      "cyrb53Seed0x9e37": 8020037231524861,
+      "cyrb53Seed0x1234": 5703183506113700,
+      "mulberry32First5": [
+        0.9208125784061849,
+        0.547080036252737,
+        0.6266990695148706,
+        0.9230153565295041,
+        0.6459773888345808
+      ]
+    },
+    {
+      "seed": "bee",
+      "cyrb53": 7267498646817755,
+      "cyrb53Seed0x9e37": 5151584670808131,
+      "cyrb53Seed0x1234": 1483137203530033,
+      "mulberry32First5": [
+        0.9375465493649244,
+        0.4396809109020978,
+        0.2151100249029696,
+        0.3284185722004622,
+        0.553445763187483
+      ]
+    },
+    {
+      "seed": "herebee",
+      "cyrb53": 2450317286636207,
+      "cyrb53Seed0x9e37": 5543147415263019,
+      "cyrb53Seed0x1234": 3682977334751072,
+      "mulberry32First5": [
+        0.09864626755006611,
+        0.026116926688700914,
+        0.9557060017250478,
+        0.29398901271633804,
+        0.8946275105699897
+      ]
+    },
+    {
+      "seed": "xyzzy",
+      "cyrb53": 4915850811146510,
+      "cyrb53Seed0x9e37": 5185920217060228,
+      "cyrb53Seed0x1234": 8966319404839599,
+      "mulberry32First5": [
+        0.9924761087168008,
+        0.024671982042491436,
+        0.6461307976860553,
+        0.7050229718443006,
+        0.4945905914064497
+      ]
+    },
+    {
+      "seed": "00000000",
+      "cyrb53": 6569900838436869,
+      "cyrb53Seed0x9e37": 4896393721840453,
+      "cyrb53Seed0x1234": 8466206543855546,
+      "mulberry32First5": [
+        0.07272728043608367,
+        0.6273282370530069,
+        0.01296021486632526,
+        0.11965657444670796,
+        0.553582409163937
+      ]
+    },
+    {
+      "seed": "ffffffff",
+      "cyrb53": 8113651758482038,
+      "cyrb53Seed0x9e37": 7456780496476813,
+      "cyrb53Seed0x1234": 1991754676289130,
+      "mulberry32First5": [
+        0.2717586229555309,
+        0.19934866460971534,
+        0.062111455481499434,
+        0.11570435180328786,
+        0.04758347966708243
+      ]
+    },
+    {
+      "seed": "a-b_c",
+      "cyrb53": 1827136496806984,
+      "cyrb53Seed0x9e37": 2232224393786815,
+      "cyrb53Seed0x1234": 6233299094704012,
+      "mulberry32First5": [
+        0.2576218801550567,
+        0.3057050611823797,
+        0.5534097827039659,
+        0.22968143923208117,
+        0.39168427558615804
+      ]
+    },
+    {
+      "seed": "ümlaut",
+      "cyrb53": 6761436374903919,
+      "cyrb53Seed0x9e37": 6669901760201125,
+      "cyrb53Seed0x1234": 8193173140800003,
+      "mulberry32First5": [
+        0.3065634809900075,
+        0.743052113102749,
+        0.7871500079054385,
+        0.5810485507827252,
+        0.5655481186695397
+      ]
+    },
+    {
+      "seed": "日本語",
+      "cyrb53": 179667132864817,
+      "cyrb53Seed0x9e37": 8811941765959120,
+      "cyrb53Seed0x1234": 5509876438895383,
+      "mulberry32First5": [
+        0.5726697884965688,
+        0.49946687603369355,
+        0.4562287915032357,
+        0.14000803278759122,
+        0.12435302324593067
+      ]
+    },
+    {
+      "seed": "emoji-🐝",
+      "cyrb53": 6391743123688421,
+      "cyrb53Seed0x9e37": 7017821536746929,
+      "cyrb53Seed0x1234": 3984854569470792,
+      "mulberry32First5": [
+        0.2653855043463409,
+        0.26569500868208706,
+        0.7398709843400866,
+        0.5613812466617674,
+        0.8003069977276027
+      ]
+    },
+    {
+      "seed": "the-quick-brown-fox-jumps-over-the-lazy-dog",
+      "cyrb53": 214516045520429,
+      "cyrb53Seed0x9e37": 6102183824371971,
+      "cyrb53Seed0x1234": 3295048137449985,
+      "mulberry32First5": [
+        0.0697418600320816,
+        0.2905008702073246,
+        0.8446939659770578,
+        0.07154092588461936,
+        0.3745617629028857
+      ]
+    }
+  ],
+  "identity": [
+    {
+      "seed": "abc",
+      "nameDe": "neugierige Tanzbiene",
+      "nameEn": "Spry Hive Guard",
+      "hueFromSeed": 91,
+      "colorFromSeed": "hsl(91 72% 56%)",
+      "svgSha256Default": "595c09a0a4e380d41c0b949cecae18fe8ff6c0913ce0936de7d492f51aed8d5a",
+      "svgSha256Hue210": "f7ef63b53a6daba679cd0db60f885685f44af532474a901dfcaf91f95d4661e7"
+    },
+    {
+      "seed": "0",
+      "nameDe": "heiteres Honigherz",
+      "nameEn": "Keen Honey Finder",
+      "hueFromSeed": 128,
+      "colorFromSeed": "hsl(128 72% 56%)",
+      "svgSha256Default": "0bde5b5860251bd7288361934f45b0d3853da447561e809f4f4d024f063d9536",
+      "svgSha256Hue210": "d3d785d2f2865b8330d059b612699d203df7d94fd6306acc83a9897bb9763b9f"
+    },
+    {
+      "seed": "z",
+      "nameDe": "tapfere Kundschafterin",
+      "nameEn": "Bold Waggle Scout",
+      "hueFromSeed": 310,
+      "colorFromSeed": "hsl(310 72% 56%)",
+      "svgSha256Default": "c12f8855d59342788b5bbecbfc007418a1eb0d240cb76aef57f8ab24c65467cb",
+      "svgSha256Hue210": "a2dc44a13c1f415308fec1821a446f303f7ae4237c6fb2b01bd03fdc5566c999"
+    },
+    {
+      "seed": "seed-1",
+      "nameDe": "freche Honigbiene",
+      "nameEn": "Cheeky Nectar Pilot",
+      "hueFromSeed": 129,
+      "colorFromSeed": "hsl(129 72% 56%)",
+      "svgSha256Default": "abe067526794e520345119a519fe0a92e5ee4dac0fdaee6485b965e4ae42b6fd",
+      "svgSha256Hue210": "293c84b62101d97f0566ef411d8056a8f9be87f529ec601235d2268816d4a545"
+    },
+    {
+      "seed": "seed-2",
+      "nameDe": "tapferer Nektarprofi",
+      "nameEn": "Bold Drifter",
+      "hueFromSeed": 110,
+      "colorFromSeed": "hsl(110 72% 56%)",
+      "svgSha256Default": "b2301aee60be356a3fa5e154f7119b479227f74e59d767ac2ff78b1d676e97bb",
+      "svgSha256Hue210": "fb206a762d3d706e122b2c4a31ff7dc8a9ebcfd4197754ec9abdf31f79156e01"
+    },
+    {
+      "seed": "aaaaaaaaaa",
+      "nameDe": "pfiffige Blütenfreundin",
+      "nameEn": "Chirpy Nectar Hunter",
+      "hueFromSeed": 121,
+      "colorFromSeed": "hsl(121 72% 56%)",
+      "svgSha256Default": "c85b2033de48cad6cd39f38fe7da3b7909af53be9d4d51dd60dd2a36c69ea450",
+      "svgSha256Hue210": "1c08b1be1450d13172e0f122fbd13a7317597378cdd4b7900c218925b0ab9831"
+    },
+    {
+      "seed": "9f3k2j1",
+      "nameDe": "putzige Sammlerin",
+      "nameEn": "Fuzzy Comb Keeper",
+      "hueFromSeed": 150,
+      "colorFromSeed": "hsl(150 72% 56%)",
+      "svgSha256Default": "6f996078866d0441c507e524eb5efde08c9b5e50065d794b40b2ae442783a31a",
+      "svgSha256Hue210": "10de00a5f191a1a34300d8fd0d68ad49192faf99c3c448202eba32c2ee30806f"
+    },
+    {
+      "seed": "Zz09",
+      "nameDe": "drolliges Summtier",
+      "nameEn": "Playful Pollen Bearer",
+      "hueFromSeed": 89,
+      "colorFromSeed": "hsl(89 72% 56%)",
+      "svgSha256Default": "8b8d4287013027798b35240fba09b2b1b0574864c02a90bd167ab03a14fdd8ad",
+      "svgSha256Hue210": "61b4817aa96fbba07ebe277e2f3ebda7cdd7fe18a4bfb10988e621af222eada7"
+    },
+    {
+      "seed": "tom",
+      "nameDe": "putziges Honigherz",
+      "nameEn": "Fuzzy Bloom Friend",
+      "hueFromSeed": 73,
+      "colorFromSeed": "hsl(73 72% 56%)",
+      "svgSha256Default": "5598d44af43e795e5c6103c89d24c51aa2b74293dbcc7b8dda41a578b57bd32f",
+      "svgSha256Hue210": "27940c296aebdd97f7f09ca69bd7ecf9923d1385e7cfb83cdbcaf3418b735097"
+    },
+    {
+      "seed": "anna",
+      "nameDe": "gewitzte Schwarmlotsin",
+      "nameEn": "Perky Nectar Hunter",
+      "hueFromSeed": 145,
+      "colorFromSeed": "hsl(145 72% 56%)",
+      "svgSha256Default": "225b12c69977eaf334e983716a84328fc0689ebd07dd7efe71d567a08dc75a94",
+      "svgSha256Hue210": "1681eff046b0767f4266fbb0a3c83924b9be5e99f7d0880e5685cd8109ede7d6"
+    },
+    {
+      "seed": "bee",
+      "nameDe": "heitere Kundschafterin",
+      "nameEn": "Keen Bloom Seeker",
+      "hueFromSeed": 47,
+      "colorFromSeed": "hsl(47 72% 56%)",
+      "svgSha256Default": "08e325208346a2a106b38fd921ead1b5dc22a24482d1de9a6fe59e405b9a9638",
+      "svgSha256Hue210": "d01e04010b9af0e02caa7047d1ca2f70fbfdbbbccca913a647af4ef057db5531"
+    },
+    {
+      "seed": "herebee",
+      "nameDe": "ruhige Spurbiene",
+      "nameEn": "Calm Pollen Pilot",
+      "hueFromSeed": 7,
+      "colorFromSeed": "hsl(7 72% 56%)",
+      "svgSha256Default": "e36f3c6626f39bc5c3616eac472743be8dd7b5d8dd4d8de63b782e16c7b55f9b",
+      "svgSha256Hue210": "387997daed01322880df91de86b985f08592c06c3c916ef91be9607694ad085b"
+    },
+    {
+      "seed": "xyzzy",
+      "nameDe": "kluges Wabenkind",
+      "nameEn": "Bright Swarm Guide",
+      "hueFromSeed": 351,
+      "colorFromSeed": "hsl(351 72% 56%)",
+      "svgSha256Default": "228a38c22a143934bf68a7c693cbd1a201ff60c53da9ea4744fea666e1ce1efa",
+      "svgSha256Hue210": "92188082124a3deea6e5bbdcf3105349ea1e45843fe74199d4ad921c12ef0efc"
+    },
+    {
+      "seed": "00000000",
+      "nameDe": "neugierige Wabenwache",
+      "nameEn": "Spry Comb Keeper",
+      "hueFromSeed": 236,
+      "colorFromSeed": "hsl(236 72% 56%)",
+      "svgSha256Default": "4be8c35602bd74897d1689a3ff7b39d5b657530cfbfa34689f69a5bbec65bfb2",
+      "svgSha256Hue210": "dd684161850ce480966f341832350d586e1a965f6a34e33ba24975227068e2e3"
+    },
+    {
+      "seed": "ffffffff",
+      "nameDe": "mutiger Wiesenflitzer",
+      "nameEn": "Brave Honeybee",
+      "hueFromSeed": 87,
+      "colorFromSeed": "hsl(87 72% 56%)",
+      "svgSha256Default": "a20831d0ff0bb888c52819e3fb97e6628452cf54a2bf5acc2188cef531f657ad",
+      "svgSha256Hue210": "1a312c8193acbb771a3d4bb5302bae8c214ee792c8b48982a75d4a14e413dd46"
+    },
+    {
+      "seed": "a-b_c",
+      "nameDe": "kluge Spurbiene",
+      "nameEn": "Bright Pollen Pilot",
+      "hueFromSeed": 146,
+      "colorFromSeed": "hsl(146 72% 56%)",
+      "svgSha256Default": "4dd3d028b8e1d47860fe182160811fabb8d28c60108c126692e6f98c021c4670",
+      "svgSha256Hue210": "95a5aceaa25a256b17ce1df579d7822e625e4f96723d1c673ed01e55c1aaa0e2"
+    },
+    {
+      "seed": "ümlaut",
+      "nameDe": "wilder Honigfinder",
+      "nameEn": "Wild Dancer",
+      "hueFromSeed": 7,
+      "colorFromSeed": "hsl(7 72% 56%)",
+      "svgSha256Default": "1f635766adecb079cc02d14603690c3f429af4ce36443dc6cb6403212c87d533",
+      "svgSha256Hue210": "bea3c40ba5b4ca444f77f4dcddb0e0ebf3211eed1c77f55e354a7e3660ba757b"
+    },
+    {
+      "seed": "日本語",
+      "nameDe": "sanfter Honigfinder",
+      "nameEn": "Gentle Dancer",
+      "hueFromSeed": 344,
+      "colorFromSeed": "hsl(344 72% 56%)",
+      "svgSha256Default": "915a1e310c23468898fa11ba6d2a0445c52a4df93048307ad20199fd8c96b8ed",
+      "svgSha256Hue210": "fd69ac6233f5b086dd74491b3dc48eacee56f73afc4cf1d7137a7d7e5fb3caef"
+    },
+    {
+      "seed": "emoji-🐝",
+      "nameDe": "drolliger Schwarmfreund",
+      "nameEn": "Playful Scout",
+      "hueFromSeed": 273,
+      "colorFromSeed": "hsl(273 72% 56%)",
+      "svgSha256Default": "e3d4d7a0ff002dcf02957fa028d1d2ab08bd1854c865e4606072ef9276ab1b73",
+      "svgSha256Hue210": "71cc690e24c6145000ea3b20585d6b5630f9067e5e65ea5b5710680a12e8d71a"
+    },
+    {
+      "seed": "the-quick-brown-fox-jumps-over-the-lazy-dog",
+      "nameDe": "hurtiges Nektarlicht",
+      "nameEn": "Cute Bloom Friend",
+      "hueFromSeed": 59,
+      "colorFromSeed": "hsl(59 72% 56%)",
+      "svgSha256Default": "7b7c24455a58fb49c9db30729eb332d9e6b0256b1582339b6c2429bff7c1c443",
+      "svgSha256Hue210": "d19638f20a78db2f633c7bac65ea8fe7f620f5583319602559ac26b4fdfc76db"
+    }
+  ],
+  "svgSamples": [
+    {
+      "seed": "abc",
+      "hue": null,
+      "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><defs><clipPath id=\"cesy365\"><ellipse cx=\"50\" cy=\"58\" rx=\"36\" ry=\"29\"/></clipPath></defs><g fill=\"rgba(253, 253, 251, 0.72)\" stroke=\"#17120d\" stroke-width=\"1.6\">\n    <ellipse cx=\"27\" cy=\"43\" rx=\"13\" ry=\"21\" transform=\"rotate(-27 27 43)\"/>\n    <ellipse cx=\"73\" cy=\"43\" rx=\"13\" ry=\"21\" transform=\"rotate(27 73 43)\"/></g><g stroke=\"#17120d\" stroke-width=\"3\" stroke-linecap=\"round\" fill=\"hsl(91 78% 59%)\">\n    <path d=\"M42 29 q-7 -10 -10 -18\" fill=\"none\"/><circle cx=\"32\" cy=\"11\" r=\"4.5\"/>\n    <path d=\"M58 29 q7 -10 10 -18\" fill=\"none\"/><circle cx=\"68\" cy=\"11\" r=\"4.5\"/></g><ellipse cx=\"50\" cy=\"58\" rx=\"36\" ry=\"29\" transform=\"rotate(3 50 58)\" fill=\"hsl(41 96% 62%)\" stroke=\"#17120d\" stroke-width=\"3\"/><g clip-path=\"url(#cesy365)\" fill=\"#24170e\" opacity=\"0.92\" transform=\"rotate(8 50 58)\">\n    <rect x=\"13\" y=\"59\" width=\"74\" height=\"8\" rx=\"4\"/>\n    <rect x=\"13\" y=\"75\" width=\"74\" height=\"8\" rx=\"4\"/>\n    </g><g fill=\"#ff7f90\" opacity=\"0.68\"><ellipse cx=\"32\" cy=\"61\" rx=\"5\" ry=\"3.4\"/><ellipse cx=\"68\" cy=\"61\" rx=\"5\" ry=\"3.4\"/></g><circle cx=\"35\" cy=\"47\" r=\"8.8\" fill=\"#fdfdfb\" stroke=\"#17120d\" stroke-width=\"1.6\"/><circle cx=\"34\" cy=\"46.5\" r=\"4.2\" fill=\"#17120d\"/><circle cx=\"32.06666666666666\" cy=\"44\" r=\"1.4000000000000001\" fill=\"#fdfdfb\" opacity=\"0.9\"/><circle cx=\"65\" cy=\"47\" r=\"8.8\" fill=\"#fdfdfb\" stroke=\"#17120d\" stroke-width=\"1.6\"/><circle cx=\"64\" cy=\"46.5\" r=\"4.2\" fill=\"#17120d\"/><circle cx=\"62.06666666666666\" cy=\"44\" r=\"1.4000000000000001\" fill=\"#fdfdfb\" opacity=\"0.9\"/><path d=\"M40 66 q10 10 20 0\" fill=\"none\" stroke=\"#17120d\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"
+    },
+    {
+      "seed": "0",
+      "hue": null,
+      "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><defs><clipPath id=\"c8z6njr\"><ellipse cx=\"50\" cy=\"56\" rx=\"30\" ry=\"34\"/></clipPath></defs><g fill=\"rgba(253, 253, 251, 0.72)\" stroke=\"#17120d\" stroke-width=\"1.6\">\n    <ellipse cx=\"27\" cy=\"43\" rx=\"13\" ry=\"21\" transform=\"rotate(-27 27 43)\"/>\n    <ellipse cx=\"73\" cy=\"43\" rx=\"13\" ry=\"21\" transform=\"rotate(27 73 43)\"/></g><g stroke=\"#17120d\" stroke-width=\"3\" stroke-linecap=\"round\" fill=\"hsl(128 78% 59%)\">\n    <path d=\"M42 29 q-10 -9 -7 -20\" fill=\"none\"/><circle cx=\"35\" cy=\"9\" r=\"4.5\"/>\n    <path d=\"M58 29 q10 -9 7 -20\" fill=\"none\"/><circle cx=\"65\" cy=\"9\" r=\"4.5\"/></g><ellipse cx=\"50\" cy=\"56\" rx=\"30\" ry=\"34\" transform=\"rotate(-3 50 56)\" fill=\"hsl(45 96% 60%)\" stroke=\"#17120d\" stroke-width=\"3\"/><g clip-path=\"url(#c8z6njr)\" fill=\"#24170e\" opacity=\"0.92\" transform=\"rotate(0 50 56)\">\n    <rect x=\"13\" y=\"57\" width=\"74\" height=\"8\" rx=\"4\"/>\n    <rect x=\"13\" y=\"73\" width=\"74\" height=\"8\" rx=\"4\"/>\n    </g><g fill=\"#ff7f90\" opacity=\"0.68\"><ellipse cx=\"32\" cy=\"61\" rx=\"5\" ry=\"3.4\"/><ellipse cx=\"68\" cy=\"61\" rx=\"5\" ry=\"3.4\"/></g><circle cx=\"38\" cy=\"47\" r=\"9.5\" fill=\"#fdfdfb\" stroke=\"#17120d\" stroke-width=\"1.6\"/><circle cx=\"36.8\" cy=\"47.2\" r=\"4.7\" fill=\"#17120d\"/><circle cx=\"34.833333333333336\" cy=\"44\" r=\"1.5666666666666667\" fill=\"#fdfdfb\" opacity=\"0.9\"/><path d=\"M55 47 q6 5 13 0\" fill=\"none\" stroke=\"#17120d\" stroke-width=\"3\" stroke-linecap=\"round\"/><ellipse cx=\"50\" cy=\"67\" rx=\"4.5\" ry=\"5.5\" fill=\"#17120d\"/></svg>"
+    }
+  ]
+}

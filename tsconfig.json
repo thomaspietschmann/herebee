@@ -16,5 +16,5 @@
     "verbatimModuleSyntax": true,
     "noEmit": true
   },
-  "include": ["server", "client", "shared"]
+  "include": ["server", "client", "shared", "scripts", "test"]
 }

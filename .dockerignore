@@ -6,3 +6,4 @@ server/assets/basemaps
 .idea
 *.log
 .DS_Store
+mobile/

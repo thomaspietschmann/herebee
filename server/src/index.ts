@@ -20,10 +20,35 @@ const PORT = Number(process.env.PORT ?? 3000);
 const ROOT = resolve(process.cwd());
 const CLIENT_DIST = resolve(process.env.CLIENT_DIST ?? join(ROOT, "client", "dist"));
 const ASSETS_DIR = resolve(process.env.ASSETS_DIR ?? join(ROOT, "server", "assets"));
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+const csv = (v: string | undefined): string[] =>
+  (v ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+const ALLOWED_ORIGINS = csv(process.env.ALLOWED_ORIGINS);
+
+// Absolute origin handed to native clients in the generated map style. Set it in
+// production (e.g. https://herebee.app); left empty it is derived per request,
+// which is what dev wants.
+const PUBLIC_ORIGIN = (process.env.PUBLIC_ORIGIN ?? "").trim().replace(/\/+$/, "");
+
+// Deep-link association files. Each is served only when its env is present, so a
+// half-configured deployment serves nothing rather than something wrong.
+// APPLE_APP_IDS: comma list of "TEAMID.bundleId". ANDROID_CERT_SHA256: comma list
+// of colon-separated SHA-256 signing fingerprints (debug, upload, Play App Signing).
+const APPLE_APP_IDS = csv(process.env.APPLE_APP_IDS);
+const ANDROID_PACKAGE = (process.env.ANDROID_PACKAGE ?? "").trim();
+const ANDROID_CERT_SHA256 = csv(process.env.ANDROID_CERT_SHA256);
+
+/** Origin the native apps use on the WebSocket upgrade. See originAllowed(). */
+const APP_ORIGIN = "app://herebee";
+
+/** UI languages with a generated map style. Keep in sync with client/src/i18n.ts. */
+const STYLE_LANGS = new Set(["de", "en", "es", "it", "fr", "pt"]);
+
+/** Placeholder written by scripts/gen-style.ts, replaced per request. */
+const ORIGIN_PLACEHOLDER = "__HEREBEE_ORIGIN__";
 
 // --- rate limiting -------------------------------------------------------
 const RATE_TOKENS = 10; // burst
@@ -145,6 +170,117 @@ function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, 
   createReadStream(filePath).pipe(res);
 }
 
+// --- native app endpoints -------------------------------------------------
+/**
+ * Absolute origin to hand out in generated documents (the map style). Prefer the
+ * explicit PUBLIC_ORIGIN; otherwise reconstruct it from the request so dev
+ * (http://localhost:3000) and any future domain work without a rebuild.
+ */
+function publicOrigin(req: IncomingMessage): string {
+  if (PUBLIC_ORIGIN) return PUBLIC_ORIGIN;
+  const host = req.headers.host ?? `localhost:${PORT}`;
+  // Only believe the scheme header when a trusted proxy actually sits in front.
+  // Unlike X-Forwarded-For (where the LAST entry is the trustworthy one), the
+  // FIRST X-Forwarded-Proto entry is the scheme the client originally used.
+  const fwd = TRUSTED_PROXY_HOPS > 0 ? req.headers["x-forwarded-proto"] : undefined;
+  const proto = typeof fwd === "string" && fwd.length ? fwd.split(",")[0].trim() : "http";
+  return `${proto}://${host}`;
+}
+
+function serveJson(res: ServerResponse, value: unknown, cacheSeconds = 0): void {
+  const body = Buffer.from(JSON.stringify(value), "utf8");
+  res.setHeader("Content-Type", "application/json");
+  if (cacheSeconds > 0) res.setHeader("Cache-Control", `public, max-age=${cacheSeconds}`);
+  res.setHeader("Content-Length", body.length);
+  res.end(body);
+}
+
+/**
+ * The generated MapLibre style for the native apps (see scripts/gen-style.ts).
+ * Files on disk carry ORIGIN_PLACEHOLDER; the real origin is substituted here so
+ * one build serves every domain. Cached per language in its raw form.
+ */
+const styleCache = new Map<string, string>();
+
+function serveStyle(req: IncomingMessage, res: ServerResponse, lang: string): void {
+  let raw = styleCache.get(lang);
+  if (raw === undefined) {
+    try {
+      raw = readFileSync(join(CLIENT_DIST, "style", `${lang}.json`), "utf8");
+    } catch {
+      // Not built yet (e.g. `npm run start` without `npm run build`).
+      res.writeHead(404).end("Not found");
+      return;
+    }
+    styleCache.set(lang, raw);
+  }
+  const body = Buffer.from(raw.split(ORIGIN_PLACEHOLDER).join(publicOrigin(req)), "utf8");
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.setHeader("Vary", "Host, X-Forwarded-Proto");
+  res.setHeader("Content-Length", body.length);
+  res.end(body);
+}
+
+/**
+ * The /.well-known/ namespace. Apple's CDN and Google's verifier fetch the two
+ * association documents to confirm this domain may open the apps; they carry no
+ * user data, only the app id and signing fingerprints, which are public by
+ * nature.
+ *
+ * This owns the WHOLE namespace: anything unrecognised gets a 404 rather than
+ * falling through to the SPA. A verifier that receives index.html instead of
+ * JSON fails in a way that is very hard to debug, and well-known paths are a
+ * machine-readable namespace where an HTML app shell is never a valid answer.
+ * Real static files under /.well-known/ (should any ever be added to
+ * client/public) still win — they are checked before the 404.
+ */
+function serveWellKnown(req: IncomingMessage, res: ServerResponse, path: string): void {
+  if (path === "/.well-known/apple-app-site-association") {
+    if (APPLE_APP_IDS.length === 0) {
+      res.writeHead(404).end("Not found");
+      return;
+    }
+    // Room links only. Everything else stays in the browser, which is the point
+    // of the web app: no install required.
+    serveJson(
+      res,
+      { applinks: { details: [{ appIDs: APPLE_APP_IDS, components: [{ "/": "/r/*", comment: "room link" }] }] } },
+      300
+    );
+    return;
+  }
+  if (path === "/.well-known/assetlinks.json") {
+    if (!ANDROID_PACKAGE || ANDROID_CERT_SHA256.length === 0) {
+      res.writeHead(404).end("Not found");
+      return;
+    }
+    serveJson(
+      res,
+      [
+        {
+          relation: ["delegate_permission/common.handle_all_urls"],
+          target: {
+            namespace: "android_app",
+            package_name: ANDROID_PACKAGE,
+            sha256_cert_fingerprints: ANDROID_CERT_SHA256,
+          },
+        },
+      ],
+      300
+    );
+    return;
+  }
+
+  // A real file, if one was ever placed in client/public/.well-known/.
+  const file = safeJoin(CLIENT_DIST, path);
+  if (file && existsSync(file) && statSync(file).isFile()) {
+    serveFile(req, res, file);
+    return;
+  }
+  res.writeHead(404).end("Not found");
+}
+
 // --- OG/Twitter meta localization -----------------------------------------
 // Social crawlers don't run JS, so the client's runtime i18n never reaches
 // them — only what this server sends on the initial HTML response does. The
@@ -205,6 +341,27 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
+  // Deep-link association files for the native apps. Must come before the static
+  // handler, which would otherwise fall through to index.html and hand Apple /
+  // Google an HTML page (a silent, hard-to-debug verification failure).
+  if (path.startsWith("/.well-known/")) {
+    serveWellKnown(req, res, path);
+    return;
+  }
+
+  // Generated map style for the native apps: /style/{lang}.json. Handled here
+  // rather than as a plain static file because the origin is substituted per
+  // request (the file on disk holds a placeholder).
+  if (path.startsWith("/style/") && path.endsWith(".json")) {
+    const lang = path.slice("/style/".length, -".json".length);
+    if (STYLE_LANGS.has(lang)) {
+      serveStyle(req, res, lang);
+      return;
+    }
+    res.writeHead(404).end("Not found");
+    return;
+  }
+
   // Self-hosted map assets (tiles, glyphs, sprites) — immutable, cacheable.
   if (path.startsWith("/tiles/") || path.startsWith("/basemaps/")) {
     const file = safeJoin(ASSETS_DIR, path);
@@ -235,6 +392,19 @@ const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD });
 
 function originAllowed(req: IncomingMessage): boolean {
   const origin = req.headers.origin;
+
+  // Native apps. The Origin check exists to stop a FOREIGN WEB PAGE from opening
+  // a socket in a visitor's browser — it is CSRF hygiene, not authentication
+  // (nothing here is authenticated: the room secret never reaches the server, and
+  // any non-browser client can set whatever Origin it likes). Native clients are
+  // not browsers, so they announce themselves explicitly and the operator opts in
+  // by listing APP_ORIGIN in ALLOWED_ORIGINS. Some platforms refuse to let a
+  // WebSocket set `Origin`, hence the X-HereBee-Client fallback for that case.
+  const appClient = req.headers["x-herebee-client"];
+  if (origin === APP_ORIGIN || (!origin && typeof appClient === "string" && appClient.length > 0)) {
+    return ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(APP_ORIGIN);
+  }
+
   // In production (ALLOWED_ORIGINS set) require a browser Origin so a headless
   // client can't skip the check by omitting the header. In dev (no list) allow it.
   if (!origin) return ALLOWED_ORIGINS.length === 0;

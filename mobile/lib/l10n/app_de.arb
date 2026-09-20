@@ -1,0 +1,173 @@
+{
+  "@@locale": "de",
+  "title": "HereBee — flüchtig zusammenfinden",
+  "hint": "Nur aktive Teilnehmer sehen dich. Standorte werden Ende-zu-Ende verschlüsselt und nicht gespeichert.",
+  "shareLink": "Link teilen",
+  "shareLocation": "Standort teilen",
+  "stopSharing": "Teilen stoppen",
+  "infoAria": "Wie anonym ist das?",
+  "close": "Schließen",
+  "connOn": "Verbunden",
+  "connOff": "Getrennt",
+  "connConnecting": "Verbindung…",
+  "here": "{n} hier",
+  "@here": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "hereActiveOffline": "{active} aktiv · {offline} offline",
+  "@hereActiveOffline": {
+    "placeholders": {
+      "active": {
+        "type": "String"
+      },
+      "offline": {
+        "type": "String"
+      }
+    }
+  },
+  "youSuffix": "(du)",
+  "linkCopied": "Link kopiert",
+  "shareTitle": "Raum teilen",
+  "shareBody": "Wer diesen Link öffnet, tritt dem Raum bei und sieht die Live-Standorte. Der Link <strong>ist</strong> der Schlüssel — teile ihn bewusst.",
+  "@shareBody": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "copy": "Kopieren",
+  "welcomeTitle": "Willkommen bei HereBee",
+  "welcomeIntro": "Du bist in einem privaten Raum. Alle mit diesem Link finden sich hier live auf der Karte.",
+  "welcomeFact1": "<strong>Anwesenheit:</strong> Sobald du den Raum betrittst, sehen die anderen, dass jemand da ist — nur eine Zahl, ohne Name oder Standort. Vorher wird nichts übertragen.",
+  "@welcomeFact1": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "welcomeFact2": "<strong>Nur zuschauen ist okay:</strong> Du musst deinen Standort nicht teilen und bleibst dann eine anonyme Zahl. Tippe auf <em>„Standort teilen“</em>, damit <strong>alle im Raum</strong> deinen Live-Standort sehen — Ende-zu-Ende-verschlüsselt, nichts wird gespeichert.",
+  "@welcomeFact2": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "welcomeFact3": "<strong>Jederzeit stoppen:</strong> Der Button wird zu <em>„Teilen stoppen“</em> — ein Tipp, und du teilst nichts mehr.",
+  "@welcomeFact3": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "welcomeCta": "Raum betreten",
+  "watcher": "Schaut zu",
+  "participantsTitle": "Wer ist hier?",
+  "fitAll": "Alle auf einen Blick",
+  "watchingLine": "{n} schauen zu (anonym)",
+  "@watchingLine": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "noSharers": "Noch niemand teilt seinen Standort.",
+  "renameTitle": "Namen vergeben",
+  "renameBody": "Nur für dich sichtbar, lokal auf diesem Gerät gespeichert.",
+  "renamePlaceholder": "z. B. Anna",
+  "save": "Speichern",
+  "renameReset": "Auf Zufallsnamen zurücksetzen",
+  "invalidTitle": "Dieser Link führt nirgendwo hin",
+  "invalidBody": "Der Raum-Schlüssel im Link fehlt oder ist unvollständig. Raum-Links werden automatisch erzeugt — man kann sie nicht von Hand eintippen.",
+  "invalidCta": "Neuen Raum öffnen",
+  "infoTitle": "Wie privat ist das?",
+  "infoIntro": "HereBee teilt Standorte <strong>flüchtig und Ende-zu-Ende-verschlüsselt</strong> zwischen aktiven Teilnehmern. Es ist bewusst datensparsam — aber nenne es nicht „vollständig anonym“.",
+  "@infoIntro": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "infoFact1": "Der Server sieht <strong>weder Koordinaten noch Namen noch den Schlüssel</strong> — nur verschlüsselte Datenpakete.",
+  "@infoFact1": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "infoFact2": "Der Schlüssel steckt im Link hinter <code>#</code> und wird nie an den Server gesendet.",
+  "@infoFact2": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "infoFact3": "Es gibt <strong>keine Datenbank</strong>; die App speichert nichts und führt keine eigenen Zugriffs-Logs. Räume leben nur, solange jemand da ist.",
+  "@infoFact3": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "infoFact4": "Der HereBee-Server (Relay und selbst gehostete Karten) sieht deine <strong>IP</strong> für die Dauer der Verbindung und kann an den geladenen Kartenkacheln grob deine Region ablesen. Die App speichert das nicht, aber vorgelagerte Infrastruktur (Proxy/Hoster) kann Logs führen. Keine fremden Karten- oder CDN-Dienste; die eigene IP lässt sich im Browser generell nicht verbergen.",
+  "@infoFact4": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
+  },
+  "infoFact5": "Wer den vollständigen Link hat, sieht den Raum — und alle im Raum teilen denselben Schlüssel, könnten also den Marker eines anderen fälschen. Teile den Link nur mit Vertrauten.",
+  "mapCredits": "Karte: {pm} © {osm}-Mitwirkende",
+  "@mapCredits": {
+    "placeholders": {
+      "pm": {
+        "type": "String"
+      },
+      "osm": {
+        "type": "String"
+      }
+    }
+  },
+  "legalLink": "Impressum & Datenschutz",
+  "noGeo": "Dieses Gerät kann keinen Standort teilen",
+  "geoDenied": "Standortfreigabe wurde abgelehnt",
+  "geoUnavailable": "Standort nicht verfügbar",
+  "fatalInvalidRoom": "Ungültiger Raum-Link",
+  "fatalRejected": "Verbindung abgelehnt",
+  "justNow": "gerade eben",
+  "secsAgo": "vor {n} s",
+  "@secsAgo": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "minsAgo": "vor {n} min",
+  "@minsAgo": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "noSignal": "kein Signal ({t})",
+  "@noSignal": {
+    "placeholders": {
+      "t": {
+        "type": "String"
+      }
+    }
+  },
+  "noSignalLong": "lange kein Signal ({t})",
+  "@noSignalLong": {
+    "placeholders": {
+      "t": {
+        "type": "String"
+      }
+    }
+  },
+  "offlineStatus": "offline",
+  "menuRenameAria": "Namen ändern",
+  "menuFollow": "Folgen",
+  "menuUnfollow": "Folgen beenden",
+  "infoLastSeen": "Zuletzt gesehen: {t}",
+  "@infoLastSeen": {
+    "placeholders": {
+      "t": {
+        "type": "String"
+      }
+    }
+  },
+  "infoDistance": "{d} entfernt",
+  "@infoDistance": {
+    "placeholders": {
+      "d": {
+        "type": "String"
+      }
+    }
+  },
+  "statusOnline": "Online",
+  "statusNoSignal": "Kein Signal"
+}
