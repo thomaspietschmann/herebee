@@ -1,0 +1,37 @@
+name: herebee
+description: "Ephemeral, end-to-end-encrypted live location sharing."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+# Dependency policy (see docs/mobile-plan.md §3): no analytics, no crash
+# reporting, no Google Play Services. Every addition here is a privacy decision,
+# not just a build decision. test/dependency_audit_test.dart enforces it.
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # HKDF-SHA256 + AES-256-GCM, matching the browser's WebCrypto output.
+  cryptography: ^2.7.0
+  # ARB-generated message lookup.
+  intl: any
+  # Identity seed, custom names, per-room sharing flag. Nothing else is stored.
+  shared_preferences: ^2.3.0
+  maplibre: ^0.3.6
+  flutter_svg: ^2.3.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # Drives the app on a real device/simulator, which is the only place the
+  # native map view can render. See integration_test/room_flow_test.dart.
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true

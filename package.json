@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "vectors": "tsx scripts/gen-vectors.ts",
     "test:vectors": "tsx test/vectors.test.ts",
+    "test:interop": "bash scripts/interop-test.sh",
     "i18n:arb": "tsx scripts/i18n-to-arb.ts",
     "fetch-assets": "bash scripts/fetch-assets.sh"
   },

@@ -1,0 +1,7 @@
+# Strings come from client/src/i18n.ts via `npm run i18n:arb`; never edit the ARB
+# files by hand, or the web app and the apps will drift apart.
+arb-dir: lib/l10n
+template-arb-file: app_de.arb
+output-localization-file: app_localizations.dart
+output-class: L
+nullable-getter: false
