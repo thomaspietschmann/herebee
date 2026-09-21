@@ -169,5 +169,14 @@
     }
   },
   "statusOnline": "Online",
-  "statusNoSignal": "Kein Signal"
+  "statusNoSignal": "Kein Signal",
+  "notifSharingTitle": "HereBee teilt deinen Standort",
+  "notifSharingBody": "Nur wer den Link hat, sieht dich.",
+  "notifStop": "Stoppen",
+  "sharingStopped": "Standortfreigabe beendet",
+  "sharingStoppedPermission": "Standortfreigabe beendet — Berechtigung entzogen",
+  "sharingStoppedServices": "Standortfreigabe beendet — Ortung ist ausgeschaltet",
+  "bgNote": "Das Teilen läuft weiter, wenn du das Display sperrst. Wischst du die App weg, endet es.",
+  "batteryWarning": "Dieses Gerät beendet Hintergrunddienste früh. Nimm HereBee von der Akku-Optimierung aus, damit das Teilen bei gesperrtem Display zuverlässig weiterläuft.",
+  "batteryOpen": "Akku-Einstellungen öffnen"
 }

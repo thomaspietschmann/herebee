@@ -1,0 +1,26 @@
+name: herebee_location
+description: "Foreground and background location for HereBee, without Google Play Services."
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.12.0
+  flutter: '>=3.44.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: app.herebee.herebee_location
+        pluginClass: HerebeeLocationPlugin
+      ios:
+        pluginClass: HerebeeLocationPlugin

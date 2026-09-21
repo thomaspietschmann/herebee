@@ -81,6 +81,7 @@ class _RoomHostState extends State<_RoomHost> {
       secret: _secretOverride.isNotEmpty ? _secretOverride : generateSecret(),
       storage: widget.storage,
       languageCode: Localizations.localeOf(context).languageCode,
+      youSuffix: L.of(context).youSuffix,
     );
     _controller = controller;
     controller.init().then((_) {

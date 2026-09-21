@@ -21,6 +21,12 @@ dependencies:
   intl: any
   # Identity seed, custom names, per-room sharing flag. Nothing else is stored.
   shared_preferences: ^2.3.0
+
+  # Our own location plugin. Hand-written specifically to avoid
+  # com.google.android.gms:play-services-location, which every off-the-shelf
+  # Flutter location package pulls in. See packages/herebee_location/.
+  herebee_location:
+    path: packages/herebee_location
   maplibre: ^0.3.6
   flutter_svg: ^2.3.0
 dev_dependencies:

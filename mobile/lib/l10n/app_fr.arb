@@ -62,5 +62,14 @@
   "infoLastSeen": "Vu pour la dernière fois : {t}",
   "infoDistance": "À {d}",
   "statusOnline": "En ligne",
-  "statusNoSignal": "Aucun signal"
+  "statusNoSignal": "Aucun signal",
+  "notifSharingTitle": "HereBee partage ta position",
+  "notifSharingBody": "Seules les personnes ayant le lien te voient.",
+  "notifStop": "Arrêter",
+  "sharingStopped": "Partage de position arrêté",
+  "sharingStoppedPermission": "Partage arrêté — autorisation retirée",
+  "sharingStoppedServices": "Partage arrêté — la localisation est désactivée",
+  "bgNote": "Le partage continue écran verrouillé. Si tu fermes l'app en la balayant, il s'arrête.",
+  "batteryWarning": "Cet appareil arrête tôt les services en arrière-plan. Exclus HereBee de l'optimisation de la batterie pour que le partage continue écran verrouillé.",
+  "batteryOpen": "Ouvrir les réglages de batterie"
 }

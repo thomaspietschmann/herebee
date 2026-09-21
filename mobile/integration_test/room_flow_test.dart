@@ -14,7 +14,9 @@
 /// whole chain: style, tiles, socket, decryption, identity derivation, markers.
 library;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:herebee_location/herebee_location.dart';
 import 'package:herebee/core/names.dart';
 import 'package:herebee/core/storage.dart';
 import 'package:herebee/main.dart';
@@ -88,15 +90,55 @@ void main() {
     expect(await pumpUntil(tester, () => bee.evaluate().isNotEmpty), isTrue,
         reason: 'expected a bee labelled "$expectedName" on the map');
 
-    // Two people in the room now: the walking peer and us, watching.
-    expect(await pumpUntil(tester, () => find.text('2 here').evaluate().isNotEmpty), isTrue,
-        reason: 'the roster should count the peer and this watcher');
+    // At least the peer and us. Not an exact number: how many helper processes
+    // sit in the room is a property of whoever ran this, not of the app.
+    expect(
+      await pumpUntil(tester, () {
+        final matches = find.textContaining(RegExp(r'^\d+ here$')).evaluate();
+        if (matches.isEmpty) return false;
+        final text = (matches.first.widget as Text).data ?? '';
+        return (int.tryParse(text.split(' ').first) ?? 0) >= 2;
+      }),
+      isTrue,
+      reason: 'the roster should count at least the peer and this watcher',
+    );
 
     // Fit-all with a single sharer zooms to it. Worth exercising here because a
     // wide initial view shows no tiles when the basemap is a small local
     // extract, which looks exactly like a rendering bug and is not one.
     await tapWhenOnScreen(tester, find.bySemanticsLabel('Fit everyone on screen'));
     await tester.pump(const Duration(seconds: 2));
+
+    await pumpUntil(tester, () => false, timeout: Duration(seconds: _holdSeconds));
+  });
+
+  testWidgets('shares its own position when location is already granted', (tester) async {
+    // Runs only where the permission was pre-granted (simctl privacy / adb pm
+    // grant). A system permission dialog is not part of the Flutter tree, so a
+    // test cannot dismiss it; skipping is honest, hanging is not.
+    if (await HereBeeLocation.checkPermission() != LocationPermissionState.whileInUse) {
+      markTestSkipped('location not pre-granted on this device');
+      return;
+    }
+
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(HereBeeApp(storage: await Storage.open()));
+
+    final enter = find.text('Enter room');
+    expect(await pumpUntil(tester, () => enter.evaluate().isNotEmpty), isTrue);
+    await tapWhenOnScreen(tester, enter);
+    expect(await pumpUntil(tester, () => enter.evaluate().isEmpty), isTrue);
+
+    final share = find.text('Share location');
+    expect(await pumpUntil(tester, () => share.evaluate().isNotEmpty), isTrue);
+    await tapWhenOnScreen(tester, share);
+
+    // The button flipping is the app's own state; our bee appearing on the map
+    // means a real fix arrived, was encrypted, and came back through the store.
+    expect(await pumpUntil(tester, () => find.text('Stop sharing').evaluate().isNotEmpty), isTrue,
+        reason: 'the control must flip so stopping is one tap away');
+    expect(await pumpUntil(tester, () => find.textContaining('(you)').evaluate().isNotEmpty), isTrue,
+        reason: 'our own bee should appear once the platform reports a position');
 
     await pumpUntil(tester, () => false, timeout: Duration(seconds: _holdSeconds));
   });

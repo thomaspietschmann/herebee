@@ -6,12 +6,17 @@
  * and two people. Also useful for the native app before it can share a location
  * of its own.
  *
+ * With --watch-only it broadcasts nothing and instead logs every position it
+ * decrypts, with arrival times. That is how the background-location requirement
+ * is actually verified: lock the phone, watch this keep printing.
+ *
  * Usage: tsx scripts/fake-peer.ts [--ws ws://127.0.0.1:3100/ws] [--secret <s>]
  *                                 [--seed dev-peer] [--lat 52.52] [--lng 13.405]
+ *                                 [--watch-only]
  * Prints the room link to open in a browser or pass to the app.
  */
 import { WebSocket } from "ws";
-import { deriveRoomKeys, encryptJson, generateSecret } from "../client/src/crypto.js";
+import { decryptJson, deriveRoomKeys, encryptJson, generateSecret } from "../client/src/crypto.js";
 import type { PeerUpdate } from "../client/src/types.js";
 
 function arg(name: string, fallback: string): string {
@@ -25,6 +30,7 @@ const seed = arg("seed", "dev-peer");
 const originHeader = arg("origin", "https://herebee.app");
 let lat = Number(arg("lat", "52.52"));
 let lng = Number(arg("lng", "13.405"));
+const watchOnly = process.argv.includes("--watch-only");
 
 // One update per second, matching the client's outbound throttle.
 const STEP_MS = 1000;
@@ -63,15 +69,26 @@ async function main(): Promise<void> {
 
   ws.on("open", async () => {
     ws.send(JSON.stringify({ t: "join", roomId, cid: `fake-${seed}` }));
+    if (watchOnly) {
+      console.log(`\n✓ watching only. Every decrypted position is logged below.`);
+      return;
+    }
     await broadcast();
     setInterval(() => void broadcast(), STEP_MS);
     console.log(`\n✓ "${seed}" is walking. Ctrl-C to stop.`);
   });
-  ws.on("message", (raw) => {
+  ws.on("message", async (raw) => {
     const msg = JSON.parse(raw.toString());
-    if (msg.t === "request") void broadcast();
+    if (msg.t === "request" && !watchOnly) void broadcast();
     if (msg.t === "presence") console.log(`  presence: ${msg.n}`);
     if (msg.t === "error") console.error(`  relay error: ${msg.reason}`);
+    if (msg.t === "peer") {
+      const u = await decryptJson<PeerUpdate>(key, msg.data);
+      if (!u) return;
+      const stamp = new Date().toISOString().slice(11, 19);
+      if (u.k === "stop") console.log(`  [${stamp}] ${u.seed} stopped sharing`);
+      else console.log(`  [${stamp}] ${u.seed} @ ${u.lat.toFixed(5)},${u.lng.toFixed(5)} acc=${u.acc ?? "-"}`);
+    }
   });
   ws.on("close", () => {
     console.error("socket closed");

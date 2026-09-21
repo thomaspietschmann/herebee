@@ -164,12 +164,11 @@ Future<void> showInfoSheet(BuildContext context) => _sheet<void>(
 /// It deliberately differs from the web page in two ways. The app's code is
 /// bundled rather than delivered per page load, so the web's "a compromised
 /// server could ship different JavaScript" caveat does not apply here. And the
-/// location section describes THIS build: it joins as a watcher and does not
-/// transmit a position at all.
+/// location section describes what the app actually does, including background
+/// behaviour, which the browser cannot do at all.
 ///
-/// PHASE 3 MUST UPDATE the Standortfreigabe paragraph when sharing and the
-/// background service land. Shipping the current wording alongside a build that
-/// transmits a location would make the disclosure false.
+/// Any change to how location is collected MUST be made here in the same commit.
+/// A disclosure that lags the code by even one release is a false statement.
 ///
 /// The `[…]` placeholders mark exactly what has to be filled in before any
 /// public release. "In Entwicklung" stops being an exemption the moment the
@@ -232,9 +231,24 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
             _fact('<strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, '
                 'sobald der letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine '
                 'Historie, keine Speicherung von Koordinaten oder Namen.'),
-            p('<strong>Standortfreigabe.</strong> Diese Version der App teilt keinen eigenen '
-                'Standort. Sie nimmt am Raum teil und zeigt die Standorte anderer Teilnehmer an; auf '
-                'die Ortungsdienste des Geräts wird nicht zugegriffen.'),
+            p('<strong>Standortfreigabe.</strong> Die App greift auf die Ortungsdienste des '
+                'Geräts zu, <strong>nur</strong> nachdem du die Berechtigung erteilt und das Teilen '
+                'ausdrücklich eingeschaltet hast. Rechtsgrundlage ist deine Einwilligung '
+                '(Art. 6 Abs. 1 lit. a DSGVO); du kannst sie jederzeit im Betriebssystem oder über '
+                'den Stopp-Knopf widerrufen. Die Koordinaten werden auf dem Gerät verschlüsselt und '
+                'sind für den Server nie sichtbar.'),
+            p('<strong>Im Hintergrund.</strong> Das Teilen läuft weiter, wenn du das Display sperrst '
+                'oder die App in den Hintergrund legst — sonst wäre die Funktion nutzlos. Das ist '
+                'sichtbar: Android zeigt dauerhaft eine Benachrichtigung mit einem Stopp-Knopf, iOS '
+                'die blaue Standortanzeige. Beendest du die App, indem du sie wegwischst, endet auch '
+                'das Teilen. Angefordert wird ausschließlich die Berechtigung „bei App-Nutzung"; die '
+                'weitergehende Berechtigung „immer erlauben" verlangt die App nicht.'),
+            p('<strong>Ortungsquelle.</strong> Verwendet werden die Ortungsdienste des '
+                'Betriebssystems: unter Android der System-Dienst <code>LocationManager</code> '
+                '(GPS und Netzwerk), unter iOS CoreLocation. Google Play Services werden nicht '
+                'eingebunden; die App läuft daher auch auf Geräten ohne Google-Dienste. Welche Daten '
+                'das Betriebssystem selbst dabei verarbeitet, liegt außerhalb des Einflusses dieser '
+                'App und richtet sich nach den Angaben des jeweiligen Herstellers.'),
             p('<strong>Auf dem Gerät gespeichert.</strong> Nur eine zufällige Kennung für die eigene '
                 'Bienen-Identität, selbst vergebene Namen für andere Teilnehmer und die Einstellung, '
                 'ob in einem Raum geteilt wurde. Keine Standorthistorie, keine Protokolle. Diese '

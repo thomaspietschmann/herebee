@@ -62,5 +62,14 @@
   "infoLastSeen": "Last seen: {t}",
   "infoDistance": "{d} away",
   "statusOnline": "Online",
-  "statusNoSignal": "No signal"
+  "statusNoSignal": "No signal",
+  "notifSharingTitle": "HereBee is sharing your location",
+  "notifSharingBody": "Only people with the link can see you.",
+  "notifStop": "Stop",
+  "sharingStopped": "Location sharing ended",
+  "sharingStoppedPermission": "Location sharing ended — permission was revoked",
+  "sharingStoppedServices": "Location sharing ended — location is switched off",
+  "bgNote": "Sharing keeps running when you lock the screen. Swiping the app away ends it.",
+  "batteryWarning": "This device stops background services early. Exempt HereBee from battery optimisation so sharing keeps running with the screen locked.",
+  "batteryOpen": "Open battery settings"
 }

@@ -1,7 +1,7 @@
 # HereBee mobile: native Android + iOS apps
 
-Plan of record. Approved 2026-09-18. Phases 0, 1 and 2 are implemented; phases 3
-and 4 are not started. The protocol contract the apps must satisfy lives in
+Plan of record. Approved 2026-09-18. Phases 0 to 3 are implemented; phase 4 is
+not started. The protocol contract the apps must satisfy lives in
 [`shared/PROTOCOL.md`](../shared/PROTOCOL.md).
 
 **Repository layout: one repo, not two.** The app lives in `mobile/` alongside
@@ -165,24 +165,14 @@ is not needed and should stay unbuilt.
 | `features/sheets/sheets.dart` | Entry gate, info, Impressum and Datenschutz, rename, invalid link. |
 | `util/markup.dart` | Renders the `<strong>/<em>/<code>` the shared strings carry. |
 
-### Scope: this phase joins as a WATCHER
-
-The app renders peers and counts as present, but does not transmit a position.
-Sharing needs the location service, which is Phase 3. "Just watching" is a
-first-class state in HereBee, not a stand-in, so this is a shippable slice
-rather than a stub. **Phase 3 must update the Standortfreigabe paragraph in
-`showLegalSheet` in the same change that enables sharing** — the current wording
-says the app does not access location, and shipping it alongside a build that
-does would make the disclosure false.
-
 ### Deviations from the plan, and why
 
 - **Widget markers, not a symbol layer.** The plan preferred a symbol layer for
   pan performance. The web client uses DOM markers at the same scale (rooms are
   a handful of people), and widget markers buy the pulse animation, the bubble
   menu and direct SVG rendering. Revisit if a busy room ever stutters.
-- **Copy link, not a share sheet.** Matches the web button. `share_plus` moves to
-  Phase 3 with the rest of the platform integration.
+- **Copy link, not a share sheet.** Matches the web button. `share_plus` is still
+  outstanding.
 - **`org.jlleitschuh.gradle.ktlint` declared in `android/settings.gradle.kts`.**
   Upstream bug: `maplibre_android` 0.3.6 applies that plugin without a version,
   and its own settings file is ignored when Flutter includes it as a subproject.
@@ -221,19 +211,86 @@ map view. Check the archive's real bounds before suspecting the renderer:
 .bin/pmtiles show server/assets/tiles/basemap.pmtiles
 ```
 
-## 8. Phase 3 — background location, lifecycle, deep links
+## 8. Phase 3 — background location (done; deep links still open)
 
-Own plugin `mobile/packages/herebee_location/`. Android: a
-`foregroundServiceType="location"` service with an ongoing notification carrying
-a Stop action; permissions `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`,
-`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `POST_NOTIFICATIONS`,
-`INTERNET`, and deliberately **not** `ACCESS_BACKGROUND_LOCATION`. iOS:
-`UIBackgroundModes: location`, `allowsBackgroundLocationUpdates`,
-`pausesLocationUpdatesAutomatically = false`, When-In-Use only unless testing
-shows suspension while stationary. Lifecycle resume and connectivity regain call
-`resync()`. Deep links via `app_links`, reading `uri.fragment`.
+Sharing works, and keeps working with the screen off. The plugin is
+`mobile/packages/herebee_location/`.
 
-Acceptance: ten minutes locked while sharing, with a web peer still receiving.
+### The decision that matters: the socket stays in Dart
+
+Only the *fix* is native. Encryption and the WebSocket stay in Dart, for two
+reasons. It is sufficient — a location foreground service on Android and the
+location background mode on iOS both keep the whole process running, so Dart
+timers and sockets keep going. And it means **no native code ever holds a
+coordinate in a form it could transmit**: the plugin hands raw fixes to Dart and
+has no network access of its own.
+
+### Android
+
+A `foregroundServiceType="location"` service, started only while the app is in
+the foreground (the platform forbids anything else, and it matches the feature:
+you tap share, then pocket the phone). Framework `LocationManager`, not the Fused
+Location Provider, so no Play Services in the APK.
+
+- Permissions: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`,
+  `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `POST_NOTIFICATIONS`,
+  `WAKE_LOCK`. Deliberately **not** `ACCESS_BACKGROUND_LOCATION`.
+- Android 14+ needs the type passed to `startForeground`, not only declared in
+  the manifest.
+- `START_NOT_STICKY`: a system restart must never resurrect sharing the user did
+  not ask for.
+- `onTaskRemoved` stops sharing when the app is swiped away.
+- A partial wake lock with a four-hour ceiling. It costs battery and it is the
+  only thing that keeps several vendors' power managers from suspending the
+  process minutes after the screen goes off, foreground service or not.
+- Vendor power management is the real-world limit. `isBatteryOptimized()` detects
+  it and the app offers to open the system battery settings. HereBee does **not**
+  request `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` programmatically: that permission
+  is policy-restricted on Play and asking for it is worse than guiding the user.
+
+### iOS
+
+`UIBackgroundModes: location`, `allowsBackgroundLocationUpdates = true`,
+`pausesLocationUpdatesAutomatically = false` (iOS otherwise pauses a "stationary"
+device and never resumes on its own), `showsBackgroundLocationIndicator = true`.
+
+**When-In-Use only.** Always authorisation would let iOS relaunch the app after
+termination, but it is far more than a link-scoped, ephemeral session needs, and
+the sharper prompt would misrepresent what the app does. The consequence is
+stated in the app: swiping the app away ends sharing and iOS will not relaunch
+it. That matches the Android behaviour and what people expect from swiping an app
+away.
+
+### Verified on an Android emulator
+
+| Condition | Result |
+|---|---|
+| Screen locked, 60 s | 37 positions delivered |
+| Forced deep Doze (`deviceidle` IDLE), 60 s | 36 positions delivered |
+| Foreground service type | `0x8`, i.e. location, with an ongoing notification carrying a Stop action |
+| Stop from the app | peers receive an explicit stop, the service record disappears, nothing further is sent |
+
+Delivery was measured at the far end: `scripts/fake-peer.ts --watch-only` joins
+the room and logs every position it decrypts. That checks the whole path, not
+just that the service is alive.
+
+iOS sharing is verified on the simulator by `integration_test/room_flow_test.dart`
+(own bee appears, a real fix reaches a peer) and by the built app's Info.plist.
+**Background behaviour on iOS is still unverified on hardware**, because that
+needs a signing identity. It is configuration-correct; treat it as unproven until
+it has run on the paired iPhone for ten minutes with the screen locked.
+
+### Still open in this phase
+
+Deep links (`app_links`, Universal Links / App Links plus the `herebee://`
+fallback) and the system share sheet. Neither affects background reliability.
+
+### Disclosure
+
+`showLegalSheet` now describes location collection, the background behaviour, the
+swipe-away limit, the When-In-Use-only choice and the absence of Play Services.
+`test/widget_test.dart` asserts the old watcher-only wording is gone, so the text
+cannot silently lag the code again.
 
 ## 9. Phase 4 — release
 

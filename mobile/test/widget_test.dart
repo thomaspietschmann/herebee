@@ -37,6 +37,7 @@ Future<RoomController> makeController() async {
     secret: 'ByxRdpvA5QovVHmew-gNMld8ocbrEDVaf6TJ7hM4XYI',
     storage: await Storage.open(),
     languageCode: 'de',
+    youSuffix: '(du)',
   );
   await controller.init();
   return controller;
@@ -70,6 +71,7 @@ void main() {
       onFitAll: () {},
       onGoTo: (_) {},
       onShareLink: () {},
+      onToggleShare: () {},
       onInfo: () {},
     )));
     await tester.pump();
@@ -108,6 +110,31 @@ void main() {
     expect(find.text('Impressum'), findsOneWidget);
     // These must stay visible until someone fills them in before release.
     expect(find.textContaining('wird vor Veröffentlichung ergänzt'), findsWidgets);
+  });
+
+  testWidgets('the privacy sheet describes background location, not the old watcher build',
+      (tester) async {
+    // This is a correctness test, not a copy test. The disclosure and the code
+    // must ship together: a sheet that still claims the app never touches the
+    // device's location, next to a build that runs a background location
+    // service, is a false statement to users and to the stores.
+    await tester.pumpWidget(harness(Builder(
+      builder: (context) => TextButton(
+        onPressed: () => showLegalSheet(context),
+        child: const Text('open'),
+      ),
+    )));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('teilt keinen eigenen Standort'), findsNothing,
+        reason: 'the watcher-only wording must not outlive the watcher-only build');
+    expect(find.textContaining('Ortungsdienste'), findsWidgets);
+    expect(find.textContaining('Im Hintergrund'), findsWidgets,
+        reason: 'background behaviour is the part users cannot infer');
+    expect(find.textContaining('wegwischst'), findsWidgets,
+        reason: 'the swipe-away limit is a real behaviour people rely on');
+    expect(find.textContaining('Play Services'), findsWidgets);
   });
 
   group('markup renderer', () {

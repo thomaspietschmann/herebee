@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:herebee_location/herebee_location.dart';
 import 'package:maplibre/maplibre.dart';
 
 import '../../app_config.dart';
@@ -66,8 +67,27 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) c.resume();
   }
 
+  LocationStopReason? _shownStopReason;
+  bool _batteryHintShown = false;
+
   void _onControllerChange() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+
+    // The platform ended sharing without the user asking. Going quiet here would
+    // look exactly like "nobody can see me and I don't know why".
+    final reason = c.stoppedReason;
+    if (reason != null && reason != _shownStopReason) {
+      _shownStopReason = reason;
+      final l = L.of(context);
+      _toast(switch (reason) {
+        LocationStopReason.permissionLost => l.sharingStoppedPermission,
+        LocationStopReason.servicesDisabled => l.sharingStoppedServices,
+        LocationStopReason.killedBySystem => l.sharingStopped,
+        LocationStopReason.stoppedFromNotification => l.sharingStopped,
+      });
+    }
+    if (reason == null) _shownStopReason = null;
   }
 
   Future<void> _maybeOpenGate() async {
@@ -220,6 +240,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
             onFitAll: _fitAll,
             onGoTo: _goTo,
             onShareLink: () => shareRoomLink(context, c.roomLink),
+            onToggleShare: _toggleShare,
             onInfo: () => showInfoSheet(context),
           ),
           if (c.fatal != null)
@@ -236,11 +257,99 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     );
   }
 
-  /// Our own marker, once this client shares a position (Phase 3). Until then
-  /// there is none, and distances in the info box are simply omitted.
+  /// Our own marker, present only while sharing. Until then the info box simply
+  /// omits the distance line rather than showing a made-up one.
   PeerEntry? _selfOrNull() {
     final seed = c.selfSeed;
     return seed == null ? null : c.peers[seed];
+  }
+
+  // --- sharing ------------------------------------------------------------
+
+  Future<void> _toggleShare() async {
+    final l = L.of(context);
+    if (c.sharing) {
+      await c.stopSharing();
+      return;
+    }
+
+    // Ask only when we have to. Re-prompting someone who already granted it is
+    // noise, and on iOS the system would not show a prompt twice anyway.
+    var state = await HereBeeLocation.checkPermission();
+    if (state == LocationPermissionState.notDetermined) {
+      state = await c.requestLocationPermission();
+    }
+    if (!mounted) return;
+
+    switch (state) {
+      case LocationPermissionState.whileInUse:
+      case LocationPermissionState.coarseOnly:
+        break;
+      case LocationPermissionState.servicesDisabled:
+        _toast(l.geoUnavailable);
+        return;
+      case LocationPermissionState.deniedForever:
+        // The system will not ask again, so a plain refusal message would be a
+        // dead end. Offer the only route that still works.
+        _toast(l.geoDenied, actionLabel: l.close, onAction: c.openAppSettings);
+        return;
+      case LocationPermissionState.denied:
+      case LocationPermissionState.notDetermined:
+        _toast(l.geoDenied);
+        return;
+    }
+
+    try {
+      await c.startSharing(
+        notificationTitle: l.notifSharingTitle,
+        notificationBody: l.notifSharingBody,
+        notificationStopLabel: l.notifStop,
+      );
+    } on LocationException catch (e) {
+      if (!mounted) return;
+      _toast(e.code == 'servicesDisabled' ? l.geoUnavailable : l.noGeo);
+      return;
+    }
+    if (!mounted) return;
+
+    // Say what happens next. People put the phone in a pocket expecting this to
+    // keep working, and on Android it sometimes will not.
+    if (c.batteryRisk && !_batteryHintShown) {
+      _batteryHintShown = true;
+      _toast(l.batteryWarning,
+          duration: const Duration(seconds: 10),
+          actionLabel: l.batteryOpen,
+          onAction: c.openBatterySettings);
+    } else if (!c.batteryRisk) {
+      _toast(l.bgNote, duration: const Duration(seconds: 6));
+    }
+  }
+
+  void _toast(
+    String message, {
+    Duration duration = const Duration(seconds: 4),
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    ScaffoldMessenger.of(context)
+      // One message at a time, and never stacked: several queued snackbars sit
+      // on top of the dock for a minute and hide the Stop button.
+      ..removeCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(message),
+        duration: duration,
+        behavior: SnackBarBehavior.floating,
+        // Clears the dock. A floating snackbar defaults to the bottom edge,
+        // which is exactly where the primary control lives.
+        margin: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 150 + MediaQuery.paddingOf(context).bottom,
+        ),
+        action: actionLabel == null || onAction == null
+            ? null
+            : SnackBarAction(label: actionLabel, onPressed: onAction),
+      ));
   }
 }
 

@@ -1,0 +1,9 @@
+.dart_tool/
+.packages
+build/
+**/build/
+pubspec.lock
+android/local.properties
+android/.gradle/
+*.iml
+.idea/

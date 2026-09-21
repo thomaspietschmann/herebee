@@ -101,6 +101,20 @@ const de = {
   infoDistance: "{d} entfernt",
   statusOnline: "Online",
   statusNoSignal: "Kein Signal",
+
+  // --- native apps only (see docs/mobile-plan.md) -------------------------
+  // The web client never reads these. They live here anyway so that every
+  // user-facing string in the product has exactly one source; scripts/i18n-to-arb.ts
+  // exports them to the apps.
+  notifSharingTitle: "HereBee teilt deinen Standort",
+  notifSharingBody: "Nur wer den Link hat, sieht dich.",
+  notifStop: "Stoppen",
+  sharingStopped: "Standortfreigabe beendet",
+  sharingStoppedPermission: "Standortfreigabe beendet — Berechtigung entzogen",
+  sharingStoppedServices: "Standortfreigabe beendet — Ortung ist ausgeschaltet",
+  bgNote: "Das Teilen läuft weiter, wenn du das Display sperrst. Wischst du die App weg, endet es.",
+  batteryWarning: "Dieses Gerät beendet Hintergrunddienste früh. Nimm HereBee von der Akku-Optimierung aus, damit das Teilen bei gesperrtem Display zuverlässig weiterläuft.",
+  batteryOpen: "Akku-Einstellungen öffnen",
 } as const;
 
 export type Key = keyof typeof de;
@@ -178,6 +192,16 @@ const en: Record<Key, string> = {
   infoDistance: "{d} away",
   statusOnline: "Online",
   statusNoSignal: "No signal",
+
+  notifSharingTitle: "HereBee is sharing your location",
+  notifSharingBody: "Only people with the link can see you.",
+  notifStop: "Stop",
+  sharingStopped: "Location sharing ended",
+  sharingStoppedPermission: "Location sharing ended — permission was revoked",
+  sharingStoppedServices: "Location sharing ended — location is switched off",
+  bgNote: "Sharing keeps running when you lock the screen. Swiping the app away ends it.",
+  batteryWarning: "This device stops background services early. Exempt HereBee from battery optimisation so sharing keeps running with the screen locked.",
+  batteryOpen: "Open battery settings",
 };
 
 const es: Record<Key, string> = {
@@ -253,6 +277,16 @@ const es: Record<Key, string> = {
   infoDistance: "A {d}",
   statusOnline: "En línea",
   statusNoSignal: "Sin señal",
+
+  notifSharingTitle: "HereBee está compartiendo tu ubicación",
+  notifSharingBody: "Solo quien tenga el enlace puede verte.",
+  notifStop: "Detener",
+  sharingStopped: "Se dejó de compartir la ubicación",
+  sharingStoppedPermission: "Se dejó de compartir — se revocó el permiso",
+  sharingStoppedServices: "Se dejó de compartir — la ubicación está desactivada",
+  bgNote: "Se sigue compartiendo con la pantalla bloqueada. Si cierras la app deslizándola, se detiene.",
+  batteryWarning: "Este dispositivo detiene pronto los servicios en segundo plano. Excluye HereBee de la optimización de batería para que siga compartiendo con la pantalla bloqueada.",
+  batteryOpen: "Abrir ajustes de batería",
 };
 
 const it: Record<Key, string> = {
@@ -328,6 +362,16 @@ const it: Record<Key, string> = {
   infoDistance: "A {d} di distanza",
   statusOnline: "Online",
   statusNoSignal: "Nessun segnale",
+
+  notifSharingTitle: "HereBee sta condividendo la tua posizione",
+  notifSharingBody: "Ti vede solo chi ha il link.",
+  notifStop: "Interrompi",
+  sharingStopped: "Condivisione della posizione terminata",
+  sharingStoppedPermission: "Condivisione terminata — autorizzazione revocata",
+  sharingStoppedServices: "Condivisione terminata — la localizzazione è disattivata",
+  bgNote: "La condivisione continua a schermo bloccato. Se chiudi l'app scorrendo, si interrompe.",
+  batteryWarning: "Questo dispositivo interrompe presto i servizi in background. Escludi HereBee dall'ottimizzazione della batteria perché la condivisione continui a schermo bloccato.",
+  batteryOpen: "Apri le impostazioni batteria",
 };
 
 const fr: Record<Key, string> = {
@@ -405,6 +449,16 @@ const fr: Record<Key, string> = {
   infoDistance: "À {d}",
   statusOnline: "En ligne",
   statusNoSignal: "Aucun signal",
+
+  notifSharingTitle: "HereBee partage ta position",
+  notifSharingBody: "Seules les personnes ayant le lien te voient.",
+  notifStop: "Arrêter",
+  sharingStopped: "Partage de position arrêté",
+  sharingStoppedPermission: "Partage arrêté — autorisation retirée",
+  sharingStoppedServices: "Partage arrêté — la localisation est désactivée",
+  bgNote: "Le partage continue écran verrouillé. Si tu fermes l'app en la balayant, il s'arrête.",
+  batteryWarning: "Cet appareil arrête tôt les services en arrière-plan. Exclus HereBee de l'optimisation de la batterie pour que le partage continue écran verrouillé.",
+  batteryOpen: "Ouvrir les réglages de batterie",
 };
 
 const pt: Record<Key, string> = {
@@ -480,6 +534,16 @@ const pt: Record<Key, string> = {
   infoDistance: "A {d} de distância",
   statusOnline: "Online",
   statusNoSignal: "Sem sinal",
+
+  notifSharingTitle: "O HereBee está a partilhar a tua localização",
+  notifSharingBody: "Só quem tem o link te vê.",
+  notifStop: "Parar",
+  sharingStopped: "Partilha de localização terminada",
+  sharingStoppedPermission: "Partilha terminada — permissão revogada",
+  sharingStoppedServices: "Partilha terminada — a localização está desligada",
+  bgNote: "A partilha continua com o ecrã bloqueado. Se fechares a app deslizando, termina.",
+  batteryWarning: "Este dispositivo termina cedo os serviços em segundo plano. Exclui o HereBee da otimização de bateria para a partilha continuar com o ecrã bloqueado.",
+  batteryOpen: "Abrir definições de bateria",
 };
 
 /** Exported so scripts/i18n-to-arb.ts can export EVERY language to the native

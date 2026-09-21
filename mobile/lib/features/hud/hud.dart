@@ -15,6 +15,7 @@ class Hud extends StatelessWidget {
     required this.onFitAll,
     required this.onGoTo,
     required this.onShareLink,
+    required this.onToggleShare,
     required this.onInfo,
     super.key,
   });
@@ -23,6 +24,7 @@ class Hud extends StatelessWidget {
   final VoidCallback onFitAll;
   final void Function(String seed) onGoTo;
   final VoidCallback onShareLink;
+  final VoidCallback onToggleShare;
   final VoidCallback onInfo;
 
   @override
@@ -47,7 +49,9 @@ class Hud extends StatelessWidget {
           bottom: 0,
           child: _Dock(
             onShareLink: onShareLink,
+            onToggleShare: onToggleShare,
             onInfo: onInfo,
+            sharing: controller.sharing,
             bottomInset: padding.bottom,
           ),
         ),
@@ -250,12 +254,16 @@ class _RosterButton extends StatelessWidget {
 class _Dock extends StatelessWidget {
   const _Dock({
     required this.onShareLink,
+    required this.onToggleShare,
     required this.onInfo,
+    required this.sharing,
     required this.bottomInset,
   });
 
   final VoidCallback onShareLink;
+  final VoidCallback onToggleShare;
   final VoidCallback onInfo;
+  final bool sharing;
   final double bottomInset;
 
   @override
@@ -297,10 +305,22 @@ class _Dock extends StatelessWidget {
                   child: Text(l.shareLink),
                 ),
                 const SizedBox(width: 10),
-                // Sharing a position needs the background location service and
-                // arrives in Phase 3; until then the app is a watcher, which is
-                // a supported way to be in a room.
-                const SizedBox(width: 0),
+                // The primary action. It reads "Stop sharing" while active, so
+                // turning it off is never more than one tap away.
+                FilledButton(
+                  onPressed: onToggleShare,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    backgroundColor:
+                        sharing ? const Color(0xFF3A2020) : const Color(0xFFF5B301),
+                    foregroundColor: sharing ? Colors.white : const Color(0xFF17120D),
+                  ),
+                  child: Text(
+                    sharing ? l.stopSharing : l.shareLocation,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: 10),
                 IconButton(
                   onPressed: onInfo,
                   icon: const Icon(Icons.info_outline),

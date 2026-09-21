@@ -1,0 +1,28 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Precise location. COARSE is declared too because Android 12+ lets the
+         user grant only approximate location; the app stays usable then, just
+         visibly vague, rather than refusing to work. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Sharing runs as a location-type foreground service. Deliberately NO
+         ACCESS_BACKGROUND_LOCATION: the service is always started while the app
+         is in the foreground, which is the model Play prefers and the one that
+         matches "you turned sharing on just now". -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Keeps the CPU awake between fixes. Without it, aggressive vendor power
+         managers suspend the process minutes after the screen goes off even
+         with a foreground service running. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application>
+        <service
+            android:name=".LocationForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="location"
+            android:stopWithTask="true" />
+    </application>
+</manifest>

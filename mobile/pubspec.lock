@@ -175,6 +175,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  herebee_location:
+    dependency: "direct main"
+    description:
+      path: "packages/herebee_location"
+      relative: true
+    source: path
+    version: "0.1.0"
   hooks:
     dependency: transitive
     description:

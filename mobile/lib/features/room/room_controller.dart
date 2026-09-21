@@ -5,15 +5,14 @@
 /// election — a browser can have the same room open several times, an app
 /// process cannot, so `coord.ts` has no counterpart here.
 ///
-/// Phase 2 scope: the app joins as a WATCHER. It renders peers and counts as
-/// present, but never broadcasts a position. Sharing arrives in Phase 3 with the
-/// background location service; the "just watching" mode is a first-class state
-/// in HereBee, not a stand-in.
+/// Watching and sharing are both first-class: a participant who never shares a
+/// position is a normal member of the room, counted but anonymous.
 library;
 
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:herebee_location/herebee_location.dart';
 
 import '../../app_config.dart';
 import '../../core/avatar.dart';
@@ -48,6 +47,7 @@ class RoomController extends ChangeNotifier {
     required this.secret,
     required this.storage,
     required this.languageCode,
+    required this.youSuffix,
   });
 
   final String secret;
@@ -56,6 +56,10 @@ class RoomController extends ChangeNotifier {
   /// Drives which nickname set is used, exactly as the browser's device locale
   /// does. Peers may therefore see different (but stable) names for each other.
   final String languageCode;
+
+  /// Localized "(you)". Appended to our own bee so you can spot yourself among
+  /// a dozen identical-looking markers.
+  final String youSuffix;
 
   RoomKeys? _keys;
   NetClient? _net;
@@ -94,6 +98,35 @@ class RoomController extends ChangeNotifier {
 
   String? _followSeed;
   String? get followSeed => _followSeed;
+
+  // --- sharing ------------------------------------------------------------
+  StreamSubscription<LocationFix>? _fixSub;
+  StreamSubscription<LocationStopReason>? _stopSub;
+  Timer? _heartbeat;
+
+  bool _sharing = false;
+  bool get sharing => _sharing;
+
+  /// Our own last fix, or null when not sharing.
+  Position? _lastPos;
+  Position? get lastPos => _lastPos;
+
+  /// Set when the platform ended sharing on its own, so the UI can say why
+  /// instead of just going quiet.
+  LocationStopReason? _stoppedReason;
+  LocationStopReason? get stoppedReason => _stoppedReason;
+
+  /// Android: this device's vendor is likely to kill background services.
+  bool _batteryRisk = false;
+  bool get batteryRisk => _batteryRisk;
+
+  /// Outbound updates are capped at one per second, matching the web client.
+  /// Our own marker still moves with every fix; only what leaves the device is
+  /// throttled.
+  static const Duration _minSendInterval = Duration(seconds: 1);
+  static const Duration _stationaryHeartbeat = Duration(seconds: 10);
+  DateTime _lastSendAt = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? _pendingSend;
 
   /// Emits a seed whose marker the camera should pan to. The screen listens;
   /// keeping the camera out of the controller keeps this testable.
@@ -138,8 +171,9 @@ class RoomController extends ChangeNotifier {
       handlers: NetHandlers(
         onPeer: _onPeer,
         onLeft: _onLeft,
-        // Nothing to re-broadcast while we are a watcher.
-        onRequest: () {},
+        onRequest: () {
+          if (_sharing && _lastPos != null) _flushSend();
+        },
         onStatus: (connected) {
           _connection = connected ? LinkState.on : LinkState.off;
           notifyListeners();
@@ -192,11 +226,155 @@ class RoomController extends ChangeNotifier {
   /// carries nothing. Rebuild it.
   void resume() => _net?.resync();
 
+  // --- sharing ------------------------------------------------------------
+
+  /// Ask the platform for permission. Must be called from the foreground.
+  Future<LocationPermissionState> requestLocationPermission() =>
+      HereBeeLocation.requestPermission();
+
+  /// Start broadcasting our position.
+  ///
+  /// The caller supplies the notification text so it stays in the app's
+  /// localisation rather than being hardcoded in the plugin. Throws
+  /// [LocationException] if the platform refuses.
+  Future<void> startSharing({
+    required String notificationTitle,
+    required String notificationBody,
+    required String notificationStopLabel,
+  }) async {
+    if (_sharing || _selfSeed == null) return;
+    _stoppedReason = null;
+
+    // Subscribe first: the platform can deliver a cached fix immediately, and a
+    // listener attached afterwards would miss it.
+    _fixSub = HereBeeLocation.updates.listen(_onFix);
+    _stopSub = HereBeeLocation.stops.listen((reason) {
+      // The platform pulled the plug: permission revoked, location switched
+      // off, or the service was killed. Tear down our side and say so.
+      _stoppedReason = reason;
+      unawaited(_stopSharing(broadcastStop: true, callPlatform: false));
+    });
+
+    try {
+      await HereBeeLocation.start(
+        notificationTitle: notificationTitle,
+        notificationBody: notificationBody,
+        notificationStopLabel: notificationStopLabel,
+      );
+    } catch (_) {
+      // Do not leave listeners attached for a session that never began.
+      await _fixSub?.cancel();
+      await _stopSub?.cancel();
+      _fixSub = null;
+      _stopSub = null;
+      rethrow;
+    }
+
+    // Desktop-style static fixes and a stationary phone both mean the provider
+    // may go quiet. Re-send the last position on a heartbeat so peers see us as
+    // live and the relay's cached blob stays current for newcomers.
+    _heartbeat = Timer.periodic(_stationaryHeartbeat, (_) {
+      if (_lastPos != null) _flushSend();
+    });
+
+    _batteryRisk = await HereBeeLocation.isBatteryOptimized();
+    _sharing = true;
+    unawaited(storage.setWasSharing(_keys!.roomId, true));
+    notifyListeners();
+  }
+
+  /// Stop broadcasting. Peers see us disappear immediately.
+  Future<void> stopSharing() => _stopSharing(broadcastStop: true, callPlatform: true);
+
+  Future<void> _stopSharing({required bool broadcastStop, required bool callPlatform}) async {
+    if (!_sharing) return;
+    _sharing = false;
+    await _fixSub?.cancel();
+    await _stopSub?.cancel();
+    _fixSub = null;
+    _stopSub = null;
+    _heartbeat?.cancel();
+    _heartbeat = null;
+    _pendingSend?.cancel();
+    _pendingSend = null;
+    if (callPlatform) await HereBeeLocation.stop();
+
+    // An explicit stop is the ONLY thing that removes our marker on the other
+    // side. Losing signal leaves a ghost; stopping must not.
+    if (broadcastStop && _lastPos != null && _selfSeed != null) {
+      await _net?.broadcast(StopUpdate(_selfSeed!));
+    }
+    _lastPos = null;
+    peers.remove(_selfSeed ?? '');
+    if (_keys != null) await storage.setWasSharing(_keys!.roomId, false);
+    notifyListeners();
+  }
+
+  void _onFix(LocationFix fix) {
+    final seed = _selfSeed;
+    if (seed == null) return;
+    _lastPos = Position(lat: fix.lat, lng: fix.lng, acc: fix.acc, hdg: fix.hdg, spd: fix.spd);
+
+    // Render our own marker from every fix, unthrottled: the throttle exists to
+    // spare the network, not to make our own dot stutter.
+    peers.upsert(
+      LocUpdate(
+        seed: seed,
+        lat: fix.lat,
+        lng: fix.lng,
+        acc: fix.acc,
+        hdg: fix.hdg,
+        spd: fix.spd,
+        at: fix.at,
+      ),
+      isSelf: true,
+    );
+    if (_followSeed == seed) _panRequests.add(seed);
+    notifyListeners();
+    _scheduleSend();
+  }
+
+  void _scheduleSend() {
+    final elapsed = DateTime.now().difference(_lastSendAt);
+    if (elapsed >= _minSendInterval) {
+      _flushSend();
+    } else {
+      // A single trailing timer catches up with whatever the latest position is
+      // by the time it fires, rather than queueing every fix.
+      _pendingSend ??= Timer(_minSendInterval - elapsed, () {
+        _pendingSend = null;
+        _flushSend();
+      });
+    }
+  }
+
+  void _flushSend() {
+    final pos = _lastPos;
+    final seed = _selfSeed;
+    if (pos == null || seed == null) return;
+    _lastSendAt = DateTime.now();
+    unawaited(_net?.broadcast(LocUpdate(
+      seed: seed,
+      lat: pos.lat,
+      lng: pos.lng,
+      acc: pos.acc,
+      hdg: pos.hdg,
+      spd: pos.spd,
+      at: DateTime.now().millisecondsSinceEpoch,
+    )));
+  }
+
+  Future<void> openBatterySettings() => HereBeeLocation.openBatterySettings();
+
+  Future<void> openAppSettings() => HereBeeLocation.openAppSettings();
+
   int colorIndexFor(String seed) =>
       _colorIndex.putIfAbsent(seed, () => _colorIndex.length);
 
-  String resolveName(String seed) =>
-      storage.customName(seed) ?? nameFromSeed(seed, languageCode);
+  String resolveName(String seed) {
+    final name = storage.customName(seed) ?? nameFromSeed(seed, languageCode);
+    return seed == _selfSeed ? '$name $youSuffix' : name;
+  }
 
   Identity identityFor(String seed) =>
       identityFromSeed(seed, resolveName(seed), hueFromIndex(colorIndexFor(seed)));
@@ -245,6 +423,10 @@ class RoomController extends ChangeNotifier {
   @override
   void dispose() {
     _ageTimer?.cancel();
+    _heartbeat?.cancel();
+    _pendingSend?.cancel();
+    unawaited(_fixSub?.cancel());
+    unawaited(_stopSub?.cancel());
     unawaited(_net?.close());
     unawaited(_panRequests.close());
     super.dispose();
