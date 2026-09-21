@@ -7,3 +7,9 @@ server/assets/basemaps
 *.log
 .DS_Store
 mobile/
+
+# Test fixtures only. The relay imports shared/messages.ts and shared/og.ts at
+# runtime, but never the vectors, and a production image has no reason to carry
+# a file full of AES keys — even keys for fixed, public test secrets that unlock
+# nothing.
+shared/vectors.json
