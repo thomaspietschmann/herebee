@@ -129,7 +129,16 @@ class _RoomHostState extends State<_RoomHost> {
       return;
     }
     if (looksLikeRoomLink(uri)) {
-      setState(() => _brokenLink = true);
+      // Tear the old room down first. Showing only a notice while its controller
+      // lives on would keep the socket open and, if the user was sharing, keep
+      // broadcasting a location behind a screen with no Stop button.
+      _controller?.dispose();
+      setState(() {
+        _controller = null;
+        _secret = null;
+        _ready = false;
+        _brokenLink = true;
+      });
       return;
     }
     // Not a room link at all (the bare site). Only mint a room if we have none.

@@ -22,7 +22,6 @@
         <service
             android:name=".LocationForegroundService"
             android:exported="false"
-            android:foregroundServiceType="location"
-            android:stopWithTask="true" />
+            android:foregroundServiceType="location" />
     </application>
 </manifest>

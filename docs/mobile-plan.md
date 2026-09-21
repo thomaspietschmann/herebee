@@ -357,3 +357,70 @@ accounts adds two calendar weeks, so start it during Phase 3.
    direction.
 2. The production env vars from §5.
 3. Apple Developer Program enrollment, which gates Universal Links and TestFlight.
+
+## 12. Review round (2026-09-21)
+
+Three independent reviews covered the protocol/crypto/server layer, the Dart
+application, and the native Kotlin/Swift code. What they found, and what was
+done about it.
+
+**The crypto port holds.** A 4005-seed differential run of Node against Dart
+(cyrb53, mulberry32, hues, colours, both nickname sets, full avatar SVG hashes,
+including astral emoji and lone surrogates) produced zero mismatches. Room id
+derivation, AES-GCM packing, inbound validation and the new server endpoints
+came back clean.
+
+**The sharing state machine did not.** `startSharing` set its guard only after
+two awaited platform calls, so a double tap attached a second fix subscription
+and heartbeat, and the stop path cancelled only the second pair. The orphan then
+broadcast a position every ten seconds forever — a location leaving the device
+after the user stopped, which is the one thing this app must never do. Fixed
+with an in-flight guard, cancel-before-assign, and `_sharing` checks on every
+send path.
+
+Also fixed:
+
+| Was | Now |
+|---|---|
+| `dispose()` left the platform session running, so a room switch while sharing kept GPS on behind a UI saying "not sharing" | dispose stops the platform and tells peers |
+| A broken link hid the whole UI but kept the controller, socket and sharing alive | the room is torn down before the notice is shown |
+| The age ticker was created after the socket handshake, leaking on a dispose in that window | a `_disposed` flag guards the resumption points |
+| Our own bee decayed to "no signal" and vanished after 20 minutes while peers saw us live | the heartbeat re-stamps our own marker; self is never aged out |
+| A dead Android service left the app believing it still shared | `resume()` reconciles against `isSharing()` |
+| The foreground service outlived the Flutter engine, holding GPS and a wake lock while dropping every fix | the plugin stops it on engine detach |
+| A double start orphaned a wake lock for up to four hours | acquire is idempotent |
+| Notification permission denied meant a running service with no Stop button | `start` refuses and says why |
+| A cancelled permission dialog was reported as "denied forever" | reported as not-yet-asked |
+| iOS reported location services being off as a revoked permission | the two are distinguished |
+| `onTaskRemoved` was dead code under `stopWithTask` | the flag is gone, the callback fires and tells Dart |
+| A persisted "was sharing" flag nobody read | removed, and the disclosure updated to match |
+
+**Tests added.** `mobile/test/sharing_test.dart` covers the state machine:
+double start, late fix after stop, dispose while sharing, platform-initiated
+stop, failed start, resume reconciliation, and self-marker lifetime. Verified to
+FAIL against the pre-fix code. Note which test does the work: the single-start
+case passes either way, because the ordinary stop cancels the subscription; it
+is the double-start test that pins the orphan.
+
+**CI added** (`.github/workflows/ci.yml`). The vectors were the drift alarm and
+ran only when someone remembered. Worse, `npm run vectors` REGENERATES them, so
+the habit of running it after a change made the TypeScript test go green. CI now
+runs both sides and fails if the committed file is stale.
+
+**Re-verified on device after the changes:** 37 positions delivered over a minute
+with the screen locked, exactly one wake lock held, backing out of the app stops
+the service and the wake lock and ends delivery, the normal stop still reaches
+peers, and both integration tests pass on Android and iOS.
+
+### Open, accepted for now
+
+- Sheets are pushed on the root navigator, so a link arriving during the entry
+  gate can stack a second gate. Confusing, not harmful.
+- GPS and network fixes are forwarded unfiltered, so a coarse network fix between
+  precise ones can make a marker jump. Accuracy is on the wire, so this is
+  filterable later.
+- `NSAllowsLocalNetworking` applies to release builds on iOS, unlike the Android
+  cleartext config which is debug-only. Benign while the app only talks to its
+  fixed origin, but the asymmetry should be closed before release.
+- `new URL(req.url)` can throw on a malformed request line and hang that one
+  connection. Pre-existing, not from this work.

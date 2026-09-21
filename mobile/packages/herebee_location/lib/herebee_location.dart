@@ -147,6 +147,10 @@ class HereBeeLocation {
   /// [notificationTitle] / [notificationBody] / [notificationStopLabel] are the
   /// Android notification's text; they are passed in rather than hardcoded so
   /// they stay in the app's localisation.
+  ///
+  /// Throws [LocationException] with code `notifications` when Android would
+  /// suppress that notification. The Stop button lives in it, and sharing a
+  /// location with no visible way to stop is worse than not starting.
   static Future<void> start({
     required String notificationTitle,
     required String notificationBody,

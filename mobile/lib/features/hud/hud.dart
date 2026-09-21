@@ -52,6 +52,7 @@ class Hud extends StatelessWidget {
             onToggleShare: onToggleShare,
             onInfo: onInfo,
             sharing: controller.sharing,
+            busy: controller.toggling,
             bottomInset: padding.bottom,
           ),
         ),
@@ -204,9 +205,12 @@ class _RosterButton extends StatelessWidget {
                         color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
                 Text(
+                  // "active" is everyone present, matching the pill above and
+                  // the web client. Using the online SHARERS here instead would
+                  // make the headline disagree with the count next to it.
                   controller.offlineSharers > 0
                       ? l.hereActiveOffline(
-                          '${controller.onlineSharers}', '${controller.offlineSharers}')
+                          '${controller.presence}', '${controller.offlineSharers}')
                       : l.here('${controller.presence}'),
                   style: const TextStyle(color: Colors.white54, fontSize: 13),
                 ),
@@ -257,6 +261,7 @@ class _Dock extends StatelessWidget {
     required this.onToggleShare,
     required this.onInfo,
     required this.sharing,
+    required this.busy,
     required this.bottomInset,
   });
 
@@ -264,6 +269,10 @@ class _Dock extends StatelessWidget {
   final VoidCallback onToggleShare;
   final VoidCallback onInfo;
   final bool sharing;
+
+  /// A start or stop is in flight. The control is disabled rather than hidden,
+  /// so the button does not move under the user's finger.
+  final bool busy;
   final double bottomInset;
 
   @override
@@ -308,7 +317,7 @@ class _Dock extends StatelessWidget {
                 // The primary action. It reads "Stop sharing" while active, so
                 // turning it off is never more than one tap away.
                 FilledButton(
-                  onPressed: onToggleShare,
+                  onPressed: busy ? null : onToggleShare,
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                     backgroundColor:

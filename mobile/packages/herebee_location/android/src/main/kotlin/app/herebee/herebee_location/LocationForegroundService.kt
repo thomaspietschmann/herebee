@@ -79,7 +79,16 @@ class LocationForegroundService : Service(), LocationListener {
         val intervalMs = intent?.getLongExtra(EXTRA_INTERVAL_MS, 1000L) ?: 1000L
         val distanceFilter = intent?.getFloatExtra(EXTRA_DISTANCE_FILTER, 3f) ?: 3f
 
-        startForegroundCompat(buildNotification(title, body, stopLabel))
+        try {
+            startForegroundCompat(buildNotification(title, body, stopLabel))
+        } catch (e: Exception) {
+            // The platform can still refuse (a revoked permission, or a
+            // background-start restriction). Letting it propagate out of
+            // onStartCommand kills the app; tell Dart and stop instead.
+            onStopped?.invoke("killedBySystem")
+            stopSelf()
+            return START_NOT_STICKY
+        }
         acquireWakeLock()
 
         if (!requestUpdates(intervalMs, distanceFilter)) {
@@ -130,6 +139,11 @@ class LocationForegroundService : Service(), LocationListener {
         // several vendors' power managers from suspending the process minutes
         // after the screen goes off, foreground service or not. Released in
         // onDestroy, and sharing is short-lived by design.
+        //
+        // onStartCommand can run more than once for the same session, so bail if
+        // we already hold one: overwriting the field would orphan the previous
+        // lock and keep the CPU awake until its timeout, long after sharing ended.
+        if (wakeLock?.isHeld == true) return
         val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "herebee:sharing").apply {
             setReferenceCounted(false)
@@ -205,6 +219,10 @@ class LocationForegroundService : Service(), LocationListener {
     override fun onTaskRemoved(rootIntent: Intent?) {
         // The user swiped the app away. Treat that as "stop sharing": continuing
         // to broadcast a location from a dismissed app would be a nasty surprise.
+        //
+        // This is only delivered because the manifest does NOT set
+        // stopWithTask; with that flag the platform stops the service without
+        // calling this, and Dart would never learn why sharing ended.
         onStopped?.invoke("stoppedFromNotification")
         stopSelf()
         super.onTaskRemoved(rootIntent)

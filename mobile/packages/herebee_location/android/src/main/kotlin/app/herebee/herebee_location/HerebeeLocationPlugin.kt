@@ -64,6 +64,13 @@ class HerebeeLocationPlugin :
         events.setStreamHandler(null)
         LocationForegroundService.onFix = null
         LocationForegroundService.onStopped = null
+        // Nothing consumes fixes once the engine is gone, so a service left
+        // running would hold GPS and a wake lock while dropping every fix — the
+        // notification would still claim the location is being shared. There is
+        // no state in this app where that is useful.
+        if (LocationForegroundService.isRunning) {
+            context.stopService(Intent(context, LocationForegroundService::class.java))
+        }
     }
 
     // --- event channel ----------------------------------------------------
@@ -127,6 +134,12 @@ class HerebeeLocationPlugin :
     private fun start(call: MethodCall, result: MethodChannel.Result) {
         if (permissionState() !in setOf("whileInUse", "coarseOnly")) {
             result.error("permission", "location permission not granted", null)
+            return
+        }
+        if (!notificationsAllowed()) {
+            // The ongoing notification carries the Stop button. Sharing a
+            // location with no visible way to stop it is worse than not starting.
+            result.error("notifications", "notification permission not granted", null)
             return
         }
         if (!locationEnabled()) {
@@ -215,6 +228,14 @@ class HerebeeLocationPlugin :
         val result = pendingPermissionResult ?: return true
         pendingPermissionResult = null
 
+        if (grantResults.isEmpty()) {
+            // Documented as "the request was cancelled" (the user swiped it away,
+            // or another dialog took over). Reporting deniedForever here would
+            // send someone to the Settings app who was never actually asked.
+            result.success("notDetermined")
+            return true
+        }
+
         val act = activity
         val state = when {
             granted(Manifest.permission.ACCESS_FINE_LOCATION) -> "whileInUse"
@@ -230,6 +251,10 @@ class HerebeeLocationPlugin :
         result.success(state)
         return true
     }
+
+    private fun notificationsAllowed(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            granted(Manifest.permission.POST_NOTIFICATIONS)
 
     private fun isBatteryOptimized(): Boolean {
         val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return false

@@ -251,9 +251,10 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'das Betriebssystem selbst dabei verarbeitet, liegt außerhalb des Einflusses dieser '
                 'App und richtet sich nach den Angaben des jeweiligen Herstellers.'),
             p('<strong>Auf dem Gerät gespeichert.</strong> Nur eine zufällige Kennung für die eigene '
-                'Bienen-Identität, selbst vergebene Namen für andere Teilnehmer und die Einstellung, '
-                'ob in einem Raum geteilt wurde. Keine Standorthistorie, keine Protokolle. Diese '
-                'Daten verlassen das Gerät nicht und werden beim Löschen der App-Daten entfernt.'),
+                'Bienen-Identität, ein ebenso zufälliges Token für die Wiederverbindung und die '
+                'Namen, die du anderen Teilnehmern selbst gegeben hast. Keine Standorthistorie, '
+                'keine Protokolle, keine Liste besuchter Räume. Diese Daten verlassen das Gerät '
+                'nicht und werden beim Löschen der App-Daten entfernt.'),
             p('<strong>Hosting.</strong> Die App wird auf einem Server in Deutschland betrieben. Der '
                 'Hosting-Anbieter'),
             ph('[Anbieter, Anschrift – wird vor Veröffentlichung ergänzt]'),

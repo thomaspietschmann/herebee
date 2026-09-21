@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:herebee_location/herebee_location.dart';
 import 'package:maplibre/maplibre.dart';
 
@@ -268,6 +269,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
 
   Future<void> _toggleShare() async {
     final l = L.of(context);
+    // A start or stop is already in flight. Without this, a double tap would
+    // start two platform sessions, and the second would orphan the first.
+    if (c.toggling) return;
     if (c.sharing) {
       await c.stopSharing();
       return;
@@ -275,9 +279,16 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
 
     // Ask only when we have to. Re-prompting someone who already granted it is
     // noise, and on iOS the system would not show a prompt twice anyway.
-    var state = await HereBeeLocation.checkPermission();
-    if (state == LocationPermissionState.notDetermined) {
-      state = await c.requestLocationPermission();
+    LocationPermissionState state;
+    try {
+      state = await HereBeeLocation.checkPermission();
+      if (state == LocationPermissionState.notDetermined) {
+        state = await c.requestLocationPermission();
+      }
+    } on PlatformException {
+      // Both platforms answer "pending" when a dialog is already up. A second
+      // tap must not surface as an unhandled exception.
+      return;
     }
     if (!mounted) return;
 
@@ -295,7 +306,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         return;
       case LocationPermissionState.denied:
       case LocationPermissionState.notDetermined:
-        _toast(l.geoDenied);
+        // On Android "denied" is the ordinary "declined once" state and the app
+        // does not re-prompt, so a bare refusal would be a dead end here too.
+        _toast(l.geoDenied, actionLabel: l.batteryOpen, onAction: c.openAppSettings);
         return;
     }
 
@@ -307,7 +320,17 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       );
     } on LocationException catch (e) {
       if (!mounted) return;
-      _toast(e.code == 'servicesDisabled' ? l.geoUnavailable : l.noGeo);
+      _toast(
+        switch (e.code) {
+          'servicesDisabled' => l.geoUnavailable,
+          // Android suppressed the ongoing notification, so there would be no
+          // Stop button. Settings is the only way back.
+          'notifications' => l.geoDenied,
+          _ => l.noGeo,
+        },
+        actionLabel: e.code == 'notifications' ? l.batteryOpen : null,
+        onAction: e.code == 'notifications' ? c.openAppSettings : null,
+      );
       return;
     }
     if (!mounted) return;

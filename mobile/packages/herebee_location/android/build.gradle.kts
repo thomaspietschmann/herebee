@@ -45,7 +45,9 @@ android {
     }
 
     defaultConfig {
-        minSdk = 24
+        // NotificationChannel and Notification.Builder(Context, String) are
+        // API 26, and this module uses them unguarded.
+        minSdk = 26
     }
 
     testOptions {

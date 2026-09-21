@@ -123,7 +123,7 @@ public class HerebeeLocationPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
             // Authorisation revoked mid-session: stop rather than go quiet.
             if sharing, manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
                 stop()
-                sink?(["event": "stopped", "reason": "permissionLost"])
+                sink?(["event": "stopped", "reason": stopReason()])
             }
             return
         }
@@ -160,6 +160,13 @@ public class HerebeeLocationPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
         sharing = false
     }
 
+    /// Location switched off device-wide reads as `.denied` too, but the app has
+    /// a separate message for it — "you revoked the permission" is wrong and
+    /// unhelpful when the user simply turned Location Services off.
+    private func stopReason() -> String {
+        CLLocationManager.locationServicesEnabled() ? "permissionLost" : "servicesDisabled"
+    }
+
     private func openAppSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         DispatchQueue.main.async { UIApplication.shared.open(url) }
@@ -188,6 +195,6 @@ public class HerebeeLocationPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
         // session; only a hard denial does.
         guard let clError = error as? CLError, clError.code == .denied else { return }
         stop()
-        sink?(["event": "stopped", "reason": "permissionLost"])
+        sink?(["event": "stopped", "reason": stopReason()])
     }
 }

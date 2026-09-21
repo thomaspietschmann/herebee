@@ -27,6 +27,18 @@ import '../../core/types.dart';
 /// does not collide with Flutter's own type of that name.
 enum LinkState { connecting, on, off }
 
+/// Builds the relay client. Injectable so the sharing state machine can be
+/// tested without a relay: whether a position is ever broadcast after the user
+/// stopped is exactly the property that needs a test, and it is invisible from
+/// the outside.
+typedef NetClientFactory = NetClient Function({
+  required String endpoint,
+  required RoomKeys keys,
+  required String cid,
+  required String clientLabel,
+  required NetHandlers handlers,
+});
+
 /// One row in the roster / one bee on the map.
 class RosterEntry {
   const RosterEntry({
@@ -48,7 +60,25 @@ class RoomController extends ChangeNotifier {
     required this.storage,
     required this.languageCode,
     required this.youSuffix,
-  });
+    NetClientFactory? netClientFactory,
+  }) : _newNetClient = netClientFactory ?? _defaultNetClient;
+
+  static NetClient _defaultNetClient({
+    required String endpoint,
+    required RoomKeys keys,
+    required String cid,
+    required String clientLabel,
+    required NetHandlers handlers,
+  }) =>
+      NetClient(
+        endpoint: endpoint,
+        keys: keys,
+        cid: cid,
+        clientLabel: clientLabel,
+        handlers: handlers,
+      );
+
+  final NetClientFactory _newNetClient;
 
   final String secret;
   final Storage storage;
@@ -107,6 +137,21 @@ class RoomController extends ChangeNotifier {
   bool _sharing = false;
   bool get sharing => _sharing;
 
+  /// True from the first await of a start/stop until it settles.
+  ///
+  /// `_sharing` alone is not enough: it can only be set AFTER the platform
+  /// round-trips, so a second tap in that window would slip past it and attach a
+  /// second fix subscription and heartbeat. The first pair would then outlive
+  /// every stop and keep broadcasting a position after the user stopped, which
+  /// is the one thing this app must never do.
+  bool _toggling = false;
+  bool get toggling => _toggling;
+
+  /// Set in dispose(). Async work started before it must not touch this object
+  /// afterwards: the socket handshake and the platform calls both outlive a
+  /// room switch.
+  bool _disposed = false;
+
   /// Our own last fix, or null when not sharing.
   Position? _lastPos;
   Position? get lastPos => _lastPos;
@@ -163,7 +208,7 @@ class RoomController extends ChangeNotifier {
     _entered = true;
     notifyListeners();
 
-    final net = NetClient(
+    final net = _newNetClient(
       endpoint: AppConfig.wsUrl,
       keys: _keys!,
       cid: await storage.cid(),
@@ -191,6 +236,13 @@ class RoomController extends ChangeNotifier {
     );
     _net = net;
     await net.connect();
+    if (_disposed) {
+      // A deep link switched rooms while the handshake was in flight. Without
+      // this, the ticker below is attached to a dead controller and calls
+      // notifyListeners() once a second forever.
+      unawaited(net.close());
+      return;
+    }
 
     // Age markers once a second: freshness tiers change with time alone, and
     // ghosts past the linger window drop off on their own.
@@ -223,8 +275,24 @@ class RoomController extends ChangeNotifier {
   }
 
   /// Returning from the background can leave a socket that reports open but
-  /// carries nothing. Rebuild it.
-  void resume() => _net?.resync();
+  /// carries nothing. Rebuild it, and re-check what the platform is actually
+  /// doing.
+  void resume() {
+    _net?.resync();
+    unawaited(_reconcileSharing());
+  }
+
+  /// The Android service can die without telling us (vendor power management,
+  /// low memory). Believing we still share would keep the heartbeat
+  /// re-broadcasting a stale position with a fresh timestamp, so peers would
+  /// watch a live bee standing at a place we left. Ask the platform instead.
+  Future<void> _reconcileSharing() async {
+    if (!_sharing || _toggling || _disposed) return;
+    final actuallySharing = await HereBeeLocation.isSharing();
+    if (actuallySharing || !_sharing || _disposed) return;
+    _stoppedReason = LocationStopReason.killedBySystem;
+    await _stopSharing(broadcastStop: true, callPlatform: false);
+  }
 
   // --- sharing ------------------------------------------------------------
 
@@ -242,11 +310,16 @@ class RoomController extends ChangeNotifier {
     required String notificationBody,
     required String notificationStopLabel,
   }) async {
-    if (_sharing || _selfSeed == null) return;
+    if (_sharing || _toggling || _disposed || _selfSeed == null) return;
+    _toggling = true;
     _stoppedReason = null;
+    notifyListeners();
 
     // Subscribe first: the platform can deliver a cached fix immediately, and a
-    // listener attached afterwards would miss it.
+    // listener attached afterwards would miss it. Cancel anything still attached
+    // rather than overwriting it, so no subscription can be orphaned.
+    await _fixSub?.cancel();
+    await _stopSub?.cancel();
     _fixSub = HereBeeLocation.updates.listen(_onFix);
     _stopSub = HereBeeLocation.stops.listen((reason) {
       // The platform pulled the plug: permission revoked, location switched
@@ -267,20 +340,58 @@ class RoomController extends ChangeNotifier {
       await _stopSub?.cancel();
       _fixSub = null;
       _stopSub = null;
+      _toggling = false;
+      notifyListeners();
       rethrow;
+    }
+
+    if (_disposed) {
+      // Disposed mid-start. The platform session is ours to clean up; nothing
+      // else here may run.
+      await HereBeeLocation.stop();
+      await _fixSub?.cancel();
+      await _stopSub?.cancel();
+      return;
     }
 
     // Desktop-style static fixes and a stationary phone both mean the provider
     // may go quiet. Re-send the last position on a heartbeat so peers see us as
     // live and the relay's cached blob stays current for newcomers.
+    _heartbeat?.cancel();
     _heartbeat = Timer.periodic(_stationaryHeartbeat, (_) {
-      if (_lastPos != null) _flushSend();
+      if (!_sharing || _lastPos == null) return;
+      // Refresh our OWN last-seen too, not just the peers'. The web does this
+      // (renderSelf before flushSend); without it a stationary sharer watches
+      // their own bee decay to "no signal" and vanish after the linger window,
+      // while everyone else still sees them live.
+      _touchSelf();
+      _flushSend();
     });
 
     _batteryRisk = await HereBeeLocation.isBatteryOptimized();
+    if (_disposed) return;
     _sharing = true;
-    unawaited(storage.setWasSharing(_keys!.roomId, true));
+    _toggling = false;
     notifyListeners();
+  }
+
+  /// Re-stamp our own marker with the current time, without a new fix.
+  void _touchSelf() {
+    final seed = _selfSeed;
+    final pos = _lastPos;
+    if (seed == null || pos == null) return;
+    peers.upsert(
+      LocUpdate(
+        seed: seed,
+        lat: pos.lat,
+        lng: pos.lng,
+        acc: pos.acc,
+        hdg: pos.hdg,
+        spd: pos.spd,
+        at: DateTime.now().millisecondsSinceEpoch,
+      ),
+      isSelf: true,
+    );
   }
 
   /// Stop broadcasting. Peers see us disappear immediately.
@@ -288,7 +399,11 @@ class RoomController extends ChangeNotifier {
 
   Future<void> _stopSharing({required bool broadcastStop, required bool callPlatform}) async {
     if (!_sharing) return;
+    // Flip first: everything downstream (_onFix, _flushSend, the heartbeat)
+    // checks this, so a fix still in flight from the platform cannot be
+    // broadcast after the user stopped.
     _sharing = false;
+    _toggling = true;
     await _fixSub?.cancel();
     await _stopSub?.cancel();
     _fixSub = null;
@@ -306,13 +421,15 @@ class RoomController extends ChangeNotifier {
     }
     _lastPos = null;
     peers.remove(_selfSeed ?? '');
-    if (_keys != null) await storage.setWasSharing(_keys!.roomId, false);
-    notifyListeners();
+    _toggling = false;
+    if (!_disposed) notifyListeners();
   }
 
   void _onFix(LocationFix fix) {
     final seed = _selfSeed;
-    if (seed == null) return;
+    // A fix can arrive after stop: the platform stop is asynchronous on both
+    // sides, and a straggler must not resurrect us for our peers.
+    if (seed == null || !_sharing || _disposed) return;
     _lastPos = Position(lat: fix.lat, lng: fix.lng, acc: fix.acc, hdg: fix.hdg, spd: fix.spd);
 
     // Render our own marker from every fix, unthrottled: the throttle exists to
@@ -351,7 +468,7 @@ class RoomController extends ChangeNotifier {
   void _flushSend() {
     final pos = _lastPos;
     final seed = _selfSeed;
-    if (pos == null || seed == null) return;
+    if (pos == null || seed == null || !_sharing || _disposed) return;
     _lastSendAt = DateTime.now();
     unawaited(_net?.broadcast(LocUpdate(
       seed: seed,
@@ -422,12 +539,30 @@ class RoomController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _ageTimer?.cancel();
     _heartbeat?.cancel();
     _pendingSend?.cancel();
     unawaited(_fixSub?.cancel());
     unawaited(_stopSub?.cancel());
-    unawaited(_net?.close());
+    _fixSub = null;
+    _stopSub = null;
+
+    // Leaving a room must end the platform's location session. Otherwise a room
+    // switch while sharing leaves the foreground service and GPS running with
+    // no UI that admits it, and on iOS no in-app way to stop at all.
+    if (_sharing) {
+      _sharing = false;
+      final seed = _selfSeed;
+      if (seed != null && _lastPos != null) {
+        unawaited(_net!.broadcast(StopUpdate(seed)).whenComplete(() => _net?.close()));
+      } else {
+        unawaited(_net?.close());
+      }
+      unawaited(HereBeeLocation.stop());
+    } else {
+      unawaited(_net?.close());
+    }
     unawaited(_panRequests.close());
     super.dispose();
   }

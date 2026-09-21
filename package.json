@@ -8,6 +8,7 @@
     "dev": "concurrently -n client,server -c cyan,magenta \"vite --config client/vite.config.ts\" \"tsx watch server/src/index.ts\"",
     "build": "vite --config client/vite.config.ts build && tsx scripts/gen-style.ts",
     "start": "tsx server/src/index.ts",
+    "test": "npm run typecheck && npm run test:vectors",
     "typecheck": "tsc --noEmit",
     "vectors": "tsx scripts/gen-vectors.ts",
     "test:vectors": "tsx test/vectors.test.ts",

@@ -1,7 +1,10 @@
-/// The only thing this app persists. Deliberately tiny: an identity seed, any
-/// locally chosen names, and whether we were sharing in a given room.
+/// The only thing this app persists: an identity seed, a reconnect token, and
+/// any names the user typed for other people.
 ///
-/// No location history, no logs, no room list. See docs/mobile-plan.md §3.
+/// Deliberately nothing else. There is no "was sharing" flag, because the app
+/// never resumes sharing on its own — starting must always come from a tap in
+/// the foreground. No location history, no logs, no room list.
+/// See docs/mobile-plan.md §3.
 library;
 
 import 'dart:math';
@@ -11,7 +14,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 const String _seedKey = 'herebee.seed';
 const String _cidKey = 'herebee.cid';
 const String _namePrefix = 'herebee.name.';
-const String _sharingPrefix = 'herebee.sharing.';
 
 /// Matches the browser's token shape (see `mintToken` in client/src/main.ts).
 String mintToken() {
@@ -51,16 +53,6 @@ class Storage {
       await _prefs.remove('$_namePrefix$seed');
     } else {
       await _prefs.setString('$_namePrefix$seed', name);
-    }
-  }
-
-  bool wasSharing(String roomId) => _prefs.getBool('$_sharingPrefix$roomId') ?? false;
-
-  Future<void> setWasSharing(String roomId, bool sharing) async {
-    if (sharing) {
-      await _prefs.setBool('$_sharingPrefix$roomId', true);
-    } else {
-      await _prefs.remove('$_sharingPrefix$roomId');
     }
   }
 }

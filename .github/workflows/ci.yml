@@ -1,0 +1,62 @@
+# The conformance vectors are the only thing standing between a refactor and two
+# clients that silently disagree — a different derived room id puts the phone in
+# a different, valid, empty room, and nothing errors. Running them by hand is not
+# a safety net, so they run here.
+#
+# Note the ordering trap this guards against: `npm run vectors` REGENERATES the
+# file, so someone who habitually runs it after a change makes the TypeScript
+# test go green. Only the Dart side, tested against the committed file, catches
+# that. Both run below.
+name: CI
+
+on:
+  push:
+    branches: [main, mobile-apps]
+  pull_request:
+
+jobs:
+  web:
+    name: Web client, relay and vectors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:vectors
+      - name: Vectors are committed in sync with the code
+        run: |
+          npm run vectors
+          # Ciphertexts carry a random IV and differ every run; everything else
+          # must be byte-identical or the committed file is stale.
+          git diff --quiet -- shared/vectors.json || \
+            node -e '
+              const {execSync} = require("node:child_process");
+              const before = JSON.parse(execSync("git show HEAD:shared/vectors.json"));
+              const after = require("./shared/vectors.json");
+              const strip = (o) => { o.crypto.messages.forEach((m) => delete m.ciphertext); return JSON.stringify(o); };
+              if (strip(before) !== strip(after)) {
+                console.error("shared/vectors.json is out of date; run `npm run vectors` and commit it");
+                process.exit(1);
+              }
+            '
+
+  app:
+    name: Flutter app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+        working-directory: mobile
+      - run: flutter analyze
+        working-directory: mobile
+      # Includes mobile/test/vectors_test.dart, which reads the SAME
+      # shared/vectors.json the web job checks.
+      - run: flutter test
+        working-directory: mobile

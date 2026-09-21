@@ -107,9 +107,13 @@ class PeerStore {
 
   /// Drop ghosts whose last fix is older than [lingerFor]. Returns the seeds
   /// removed so callers can clean up markers and follow state.
+  ///
+  /// Our own marker is never dropped. It is owned by the sharing state, not by
+  /// freshness: removing it would tell the user they had vanished at the very
+  /// moment their peers still see them, which is the opposite of the truth.
   List<String> tick(DateTime now) {
     final expired = _entries.values
-        .where((e) => e.ageAt(now) > lingerFor)
+        .where((e) => !e.isSelf && e.ageAt(now) > lingerFor)
         .map((e) => e.seed)
         .toList();
     for (final seed in expired) {
