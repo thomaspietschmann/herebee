@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../util/markup.dart';
@@ -333,13 +334,28 @@ Future<String?> showRenameSheet(
   );
 }
 
-/// Copies the room link, matching the web client's share button. The link is the
-/// key, so the confirmation deliberately says nothing more than that it copied.
+/// Hands the room link to the system share sheet, which is how people actually
+/// pass it to one person in one messenger.
+///
+/// The link IS the key, so nothing extra is attached: no preview text that a
+/// messenger might quote into a group, no subject line. If the sheet cannot be
+/// opened, the link goes to the clipboard instead — failing to share the link is
+/// the one outcome that leaves the user stuck.
 Future<void> shareRoomLink(BuildContext context, String link) async {
   final l = L.of(context);
   final messenger = ScaffoldMessenger.of(context);
-  await Clipboard.setData(ClipboardData(text: link));
-  messenger.showSnackBar(
-    SnackBar(content: Text(l.linkCopied), behavior: SnackBarBehavior.floating),
-  );
+  final box = context.findRenderObject() as RenderBox?;
+  try {
+    await SharePlus.instance.share(ShareParams(
+      uri: Uri.parse(link),
+      // iPad needs an anchor for the popover or the sheet throws.
+      sharePositionOrigin:
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+    ));
+  } catch (_) {
+    await Clipboard.setData(ClipboardData(text: link));
+    messenger.showSnackBar(
+      SnackBar(content: Text(l.linkCopied), behavior: SnackBarBehavior.floating),
+    );
+  }
 }

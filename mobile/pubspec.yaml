@@ -29,6 +29,8 @@ dependencies:
     path: packages/herebee_location
   maplibre: ^0.3.6
   flutter_svg: ^2.3.0
+  app_links: ^7.2.1
+  share_plus: ^13.3.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

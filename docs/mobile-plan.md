@@ -211,7 +211,7 @@ map view. Check the archive's real bounds before suspecting the renderer:
 .bin/pmtiles show server/assets/tiles/basemap.pmtiles
 ```
 
-## 8. Phase 3 — background location (done; deep links still open)
+## 8. Phase 3 — background location and deep links (done)
 
 Sharing works, and keeps working with the screen off. The plugin is
 `mobile/packages/herebee_location/`.
@@ -280,10 +280,48 @@ iOS sharing is verified on the simulator by `integration_test/room_flow_test.dar
 needs a signing identity. It is configuration-correct; treat it as unproven until
 it has run on the paired iPhone for ten minutes with the screen locked.
 
-### Still open in this phase
+### Deep links
 
-Deep links (`app_links`, Universal Links / App Links plus the `herebee://`
-fallback) and the system share sheet. Neither affects background reliability.
+`app_links` handles both the initial link and later ones. The secret is read from
+`uri.fragment`, which is the point of putting it there: a fragment never reaches
+a server. The link's **host is ignored** — it decides nothing, because the app
+always talks to its configured origin, so a link delivered from anywhere cannot
+redirect anyone.
+
+Parsing is strict (43 base64url characters, exactly a 32-byte secret). A
+truncated link must fail visibly rather than derive some other valid room id and
+drop the user into an empty room nobody else can reach.
+
+| Case | Behaviour |
+|---|---|
+| Cold start from a room link | joins that room |
+| A different link while running | leaves the old room, entry gate for the new one |
+| The same link again | nothing happens |
+| A room link with a broken secret | says so; no room is joined |
+| No link at all (home screen) | mints a fresh room, as the web does for "/" |
+
+All five verified on the Android emulator against two live rooms, watching
+presence on both sides. Room switching tears the controller down completely, so
+no socket, peer or sharing state bleeds across.
+
+Android registers a verified App Link for `https://herebee.app/r/*` plus the
+`herebee://` fallback. **App Link verification cannot be tested locally** — the
+device verifies against the real host — and it stays unverified until
+`ANDROID_CERT_SHA256` holds the release signing key. Until then links open in the
+browser, which is the right failure: the web app handles them.
+
+iOS registers `herebee://` only. Universal Links need an Associated Domains
+entitlement and therefore the paid Developer Program. The difference is visible:
+a custom scheme makes iOS ask "Open in HereBee?" first, a Universal Link does
+not. Verified on the simulator that the scheme is registered and the dialog
+appears.
+
+### Share sheet
+
+`share_plus` hands the bare link to the system sheet, with nothing attached: no
+preview text a messenger might quote into a group, no subject line. If the sheet
+cannot open, the link goes to the clipboard instead, because failing to share the
+link is the one outcome that leaves the user stuck.
 
 ### Disclosure
 

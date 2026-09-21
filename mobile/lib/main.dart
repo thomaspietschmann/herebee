@@ -1,15 +1,23 @@
 /// App entry point.
 ///
-/// A room is identified solely by the 256-bit secret in the link fragment. With
-/// no link (the app opened from the home screen) we mint a fresh room, exactly
-/// as the web client does when you open "/". Deep links arrive in Phase 3; until
-/// then `--dart-define=HEREBEE_SECRET=…` joins a specific room for testing.
+/// A room is identified solely by the 256-bit secret in the link fragment.
+///
+/// Opened from a link, we join that room. Opened from the home screen, we mint a
+/// fresh one, exactly as the web client does for "/". Opened from a room link
+/// whose secret is broken, we say so rather than quietly minting a different
+/// room, because the user came expecting a specific one.
+///
+/// `--dart-define=HEREBEE_SECRET=…` forces a room for testing.
 library;
 
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/crypto.dart';
+import 'core/deep_links.dart';
 import 'core/storage.dart';
 import 'features/room/room_controller.dart';
 import 'features/room/room_screen.dart';
@@ -66,41 +74,136 @@ class _RoomHost extends StatefulWidget {
 }
 
 class _RoomHostState extends State<_RoomHost> {
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSub;
+
   RoomController? _controller;
+  String? _secret;
+
+  /// A link arrived without a usable secret. Shown instead of a room.
+  bool _brokenLink = false;
 
   /// The screen is not built until the room keys exist. Otherwise the entry
   /// gate can be tapped before `init()` resolves, and `enter()` would find no
   /// keys and silently do nothing — a room you can never actually join.
   bool _ready = false;
 
+  bool _started = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_controller != null) return;
+    if (_started) return;
+    _started = true;
+    unawaited(_start());
+  }
+
+  Future<void> _start() async {
+    // A link that launched the app is delivered once, separately from the
+    // stream; missing it would land a tapped link in a freshly minted room.
+    Uri? initial;
+    try {
+      initial = await _appLinks.getInitialLink();
+    } catch (_) {
+      // No link, or the platform has none to give.
+    }
+    _linkSub = _appLinks.uriLinkStream.listen(_onLink);
+
+    if (_secretOverride.isNotEmpty) {
+      _openRoom(_secretOverride);
+      return;
+    }
+    if (initial != null) {
+      _onLink(initial);
+      return;
+    }
+    _openRoom(generateSecret());
+  }
+
+  void _onLink(Uri uri) {
+    final secret = secretFromLink(uri);
+    if (secret != null) {
+      // Tapping the link for the room you are already in should do nothing,
+      // not throw you out and back in again.
+      if (secret != _secret) _openRoom(secret);
+      return;
+    }
+    if (looksLikeRoomLink(uri)) {
+      setState(() => _brokenLink = true);
+      return;
+    }
+    // Not a room link at all (the bare site). Only mint a room if we have none.
+    if (_secret == null) _openRoom(generateSecret());
+  }
+
+  void _openRoom(String secret) {
+    // Switching rooms is a full teardown: the old socket, its peers and its
+    // sharing state must not bleed into the new room.
+    _controller?.dispose();
     final controller = RoomController(
-      secret: _secretOverride.isNotEmpty ? _secretOverride : generateSecret(),
+      secret: secret,
       storage: widget.storage,
       languageCode: Localizations.localeOf(context).languageCode,
       youSuffix: L.of(context).youSuffix,
     );
-    _controller = controller;
+    setState(() {
+      _secret = secret;
+      _controller = controller;
+      _brokenLink = false;
+      _ready = false;
+    });
     controller.init().then((_) {
-      if (mounted) setState(() => _ready = true);
+      if (mounted && _controller == controller) setState(() => _ready = true);
     });
   }
 
   @override
   void dispose() {
+    unawaited(_linkSub?.cancel());
     _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_brokenLink) return const _BrokenLinkScreen();
     final controller = _controller;
     if (controller == null || !_ready) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return RoomScreen(controller: controller);
+    // Keyed by secret so switching rooms rebuilds the screen from scratch
+    // rather than reusing state that belongs to the previous room.
+    return RoomScreen(key: ValueKey(_secret), controller: controller);
+  }
+}
+
+/// A room link whose secret is missing or mangled. Room links are generated and
+/// cannot be typed, so there is nothing for the user to correct here.
+class _BrokenLinkScreen extends StatelessWidget {
+  const _BrokenLinkScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l.invalidTitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              Text(l.invalidBody,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, height: 1.45)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

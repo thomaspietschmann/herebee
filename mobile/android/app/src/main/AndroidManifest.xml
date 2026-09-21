@@ -2,7 +2,7 @@
     <!-- The app talks to exactly one origin: its own relay and map host. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="herebee"
+        android:label="HereBee"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -25,6 +25,30 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <!-- Verified App Links. autoVerify makes Android fetch
+                 /.well-known/assetlinks.json from the host and, on success, open
+                 room links here without an app-chooser. The server serves that
+                 document from env (see server/src/index.ts); until
+                 ANDROID_CERT_SHA256 is set for the release signing key,
+                 verification fails and links fall back to the browser — which is
+                 the right failure, since the web app handles them fine. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="herebee.app" android:pathPrefix="/r"/>
+            </intent-filter>
+
+            <!-- Fallback scheme. Needed for local testing and while the Apple
+                 side is not enrolled; unverified, so it must never be the only
+                 way in. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="herebee"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
