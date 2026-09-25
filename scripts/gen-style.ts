@@ -29,12 +29,24 @@ const LANGS: readonly OgLang[] = ["de", "en", "es", "it", "fr", "pt"];
 /** Replaced per request by the server. Must not appear in any real URL. */
 const ORIGIN = "__HEREBEE_ORIGIN__";
 
+/**
+ * Replaced per request with a token tied to the current basemap.pmtiles (see
+ * tilesVersion() in server/src/index.ts). Busts native apps' ambient HTTP
+ * cache whenever the archive is swapped for a different region/zoom — without
+ * it, a client that already has a cached "no tile here" response for some area
+ * keeps trusting it until the "week" Cache-Control lifetime runs out, even
+ * though the server is now serving a completely different archive.
+ */
+const TILES_VERSION = "__HEREBEE_TILES_VERSION__";
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "client", "dist", "style");
 
-// Identical to client/src/map.ts's buildStyle(), except for the absolute origin
-// and the per-language `lang`. If that function changes, change this too — the
-// apps and the browser must render the same map.
+// Identical to client/src/map.ts's buildStyle(), except for the absolute origin,
+// the per-language `lang`, and the tiles URL's `?v=` cache-buster (the browser
+// doesn't need one: it never persists a cross-session ambient cache the way the
+// native apps' MapLibre runtime does). If that function changes, change this
+// too — the apps and the browser must render the same map.
 function buildStyle(lang: OgLang): unknown {
   return {
     version: 8,
@@ -43,7 +55,7 @@ function buildStyle(lang: OgLang): unknown {
     sources: {
       protomaps: {
         type: "vector",
-        url: `pmtiles://${ORIGIN}/tiles/basemap.pmtiles`,
+        url: `pmtiles://${ORIGIN}/tiles/basemap.pmtiles?v=${TILES_VERSION}`,
         attribution:
           '<a href="https://protomaps.com">Protomaps</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       },

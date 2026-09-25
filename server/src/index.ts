@@ -50,6 +50,28 @@ const STYLE_LANGS = new Set(["de", "en", "es", "it", "fr", "pt"]);
 /** Placeholder written by scripts/gen-style.ts, replaced per request. */
 const ORIGIN_PLACEHOLDER = "__HEREBEE_ORIGIN__";
 
+/**
+ * Placeholder written by scripts/gen-style.ts into the tiles source URL,
+ * replaced per request with a token tied to the current basemap.pmtiles.
+ * The tiles route itself ignores the query string entirely (only the path is
+ * matched) — its only job is to change the URL, and so the cache key, whenever
+ * the archive is swapped. Without this, a native app's ambient HTTP cache (or a
+ * browser's) can hold onto a stale response — e.g. "no tile here" for a region
+ * outside an old, smaller extract — for as long as the "week" Cache-Control
+ * allows, even after the server starts serving a completely different archive.
+ */
+const TILES_VERSION_PLACEHOLDER = "__HEREBEE_TILES_VERSION__";
+
+/** Opaque token that changes whenever server/assets/tiles/basemap.pmtiles is replaced. */
+function tilesVersion(): string {
+  try {
+    const st = statSync(join(ASSETS_DIR, "tiles", "basemap.pmtiles"));
+    return `${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}`;
+  } catch {
+    return "0";
+  }
+}
+
 // --- rate limiting -------------------------------------------------------
 const RATE_TOKENS = 10; // burst
 const RATE_PER_SEC = 10; // sustained messages / second
@@ -246,7 +268,10 @@ function serveStyle(req: IncomingMessage, res: ServerResponse, lang: string): vo
     }
     styleCache.set(lang, raw);
   }
-  const body = Buffer.from(raw.split(ORIGIN_PLACEHOLDER).join(publicOrigin(req)), "utf8");
+  const body = Buffer.from(
+    raw.split(ORIGIN_PLACEHOLDER).join(publicOrigin(req)).split(TILES_VERSION_PLACEHOLDER).join(tilesVersion()),
+    "utf8"
+  );
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "public, max-age=300");
   res.setHeader("Vary", "Host, X-Forwarded-Proto");
