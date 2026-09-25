@@ -18,6 +18,7 @@ import '../../core/peer_state.dart';
 import '../../core/recent_rooms.dart';
 import '../../l10n/app_localizations.dart';
 import '../hud/hud.dart';
+import '../map/auto_fit.dart';
 import '../map/bee_marker.dart';
 import '../map/marker_menu.dart';
 import '../sheets/sheets.dart';
@@ -53,6 +54,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   String? _openMenuSeed;
   bool _welcomeShown = false;
 
+  final AutoFit _autoFit = AutoFit();
+
   RoomController get c => widget.controller;
 
   @override
@@ -85,6 +88,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   void _onControllerChange() {
     if (!mounted) return;
     setState(() {});
+    _maybeAutoFit();
 
     // The platform ended sharing without the user asking. Going quiet here would
     // look exactly like "nobody can see me and I don't know why".
@@ -148,6 +152,23 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     ));
   }
 
+  /// Fit everyone when a new bee appears (see AutoFit). Runs on every
+  /// controller tick and on map creation; AutoFit decides, this just moves.
+  void _maybeAutoFit() {
+    if (_map == null) return;
+    final should = _autoFit.shouldFit(
+      seeds: c.peers.entries.map((e) => e.seed).toSet(),
+      sharing: c.sharing,
+      following: c.followSeed != null,
+    );
+    if (should) _fitAll();
+  }
+
+  /// Two bees at the same spot must not zoom the map to street level: the
+  /// native fitBounds has no max zoom, so bounds are widened to at least this
+  /// many degrees (~400 m) instead.
+  static const double _minSpan = 0.004;
+
   void _fitAll() {
     final map = _map;
     final all = c.peers.entries.toList();
@@ -164,6 +185,16 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       minLng = e.position.lng < minLng ? e.position.lng : minLng;
       maxLng = e.position.lng > maxLng ? e.position.lng : maxLng;
     }
+    if (maxLat - minLat < _minSpan) {
+      final mid = (minLat + maxLat) / 2;
+      minLat = mid - _minSpan / 2;
+      maxLat = mid + _minSpan / 2;
+    }
+    if (maxLng - minLng < _minSpan) {
+      final mid = (minLng + maxLng) / 2;
+      minLng = mid - _minSpan / 2;
+      maxLng = mid + _minSpan / 2;
+    }
     unawaited(map.fitBounds(
       bounds: LngLatBounds(
         longitudeWest: minLng,
@@ -171,7 +202,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         longitudeEast: maxLng,
         latitudeNorth: maxLat,
       ),
-      padding: const EdgeInsets.all(72),
+      // Asymmetric on purpose: the roster sits under the status bar and the
+      // dock covers the bottom, so a symmetric inset puts bees behind them.
+      padding: const EdgeInsets.fromLTRB(56, 130, 56, 230),
       nativeDuration: const Duration(milliseconds: 700),
     ));
   }
@@ -183,7 +216,10 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         if (_openMenuSeed != null) setState(() => _openMenuSeed = null);
       case MapEventStartMoveCamera(:final reason):
         // Only a real gesture means "the user took the camera over".
-        if (reason == CameraChangeReason.apiGesture) c.dropFollow();
+        if (reason == CameraChangeReason.apiGesture) {
+          c.dropFollow();
+          _autoFit.cameraTaken();
+        }
       default:
         break;
     }
@@ -233,7 +269,13 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                 // canvas gesture-friendly and upright, like the web client.
                 gestures: const MapGestures(pan: true, zoom: true, rotate: false, pitch: false),
               ),
-              onMapCreated: (controller) => _map = controller,
+              onMapCreated: (controller) {
+                _map = controller;
+                // Peers may have arrived before the native view existed.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _maybeAutoFit();
+                });
+              },
               onEvent: _onMapEvent,
               children: [
                 WidgetLayer(markers: _markers(context), allowInteraction: true),
