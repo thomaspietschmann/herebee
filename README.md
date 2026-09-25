@@ -29,7 +29,8 @@ That word would be a lie.
   connected and vanish when the last person leaves. The server stores no
   coordinates, names, or room history. The native apps keep the last five
   rooms, including their keys, for three days in the device's secure storage
-  (Keychain or Keystore) so you can re-enter them. Each entry can be deleted at
+  (Keychain or Keystore) so you can re-enter them. On launch the app asks which
+  room to open; it never re-enters one on its own. Each entry can be deleted at
   any time.
 - **The link is the key.** Anyone with the full link can see the room for its
   lifetime. Share it deliberately. A leaked link cannot be revoked short of

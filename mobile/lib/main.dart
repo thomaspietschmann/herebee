@@ -2,9 +2,10 @@
 ///
 /// A room is identified solely by the 256-bit secret in the link fragment.
 ///
-/// Opened from a link, we join that room. Opened from the home screen, we return
-/// to the room entered last, if it is still remembered (see core/recent_rooms.dart),
-/// and otherwise mint a fresh one, exactly as the web client does for "/".
+/// Opened from a link, we join that room. Opened from the home screen, we ask
+/// which remembered room to return to, or whether to start a new one (see
+/// core/recent_rooms.dart); with nothing remembered we mint a fresh one
+/// directly, exactly as the web client does for "/".
 /// Opened from a room link whose secret is broken, we say so rather than
 /// quietly minting a different room, because the user came expecting a
 /// specific one.
@@ -20,10 +21,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/crypto.dart';
 import 'core/deep_links.dart';
+import 'core/names.dart';
 import 'core/recent_rooms.dart';
 import 'core/storage.dart';
 import 'features/room/room_controller.dart';
 import 'features/room/room_screen.dart';
+import 'features/start/start_screen.dart';
 import 'l10n/app_localizations.dart';
 
 const String _secretOverride = String.fromEnvironment('HEREBEE_SECRET');
@@ -92,6 +95,9 @@ class _RoomHostState extends State<_RoomHost> {
   /// A link arrived without a usable secret. Shown instead of a room.
   bool _brokenLink = false;
 
+  /// Plain launch with remembered rooms: ask before opening anything.
+  bool _choosing = false;
+
   /// The screen is not built until the room keys exist. Otherwise the entry
   /// gate can be tapped before `init()` resolves, and `enter()` would find no
   /// keys and silently do nothing — a room you can never actually join.
@@ -126,12 +132,23 @@ class _RoomHostState extends State<_RoomHost> {
       _onLink(initial);
       return;
     }
-    // Home-screen launch: back to where you were, or a fresh room. The entry
-    // gate still stands in front of either, so nothing connects on its own.
+    // Home-screen launch. With remembered rooms the user picks; the app never
+    // re-enters one on its own. Nothing connects before a room is open AND
+    // its entry gate has been passed.
     await widget.recent.load();
     if (!mounted || _secret != null) return; // a link arrived meanwhile
-    _openRoom(widget.recent.latest?.secret ?? generateSecret());
+    if (widget.recent.rooms.isEmpty) {
+      _openRoom(generateSecret());
+    } else {
+      setState(() => _choosing = true);
+    }
   }
+
+  /// Names for the start screen, before any room controller exists: the same
+  /// derivation the map uses, including names the user typed.
+  String _nameFor(String seed) =>
+      widget.storage.customName(seed) ??
+      nameFromSeed(seed, Localizations.localeOf(context).languageCode);
 
   void _onLink(Uri uri) {
     final secret = secretFromLink(uri);
@@ -181,6 +198,7 @@ class _RoomHostState extends State<_RoomHost> {
       _secret = secret;
       _controller = controller;
       _brokenLink = false;
+      _choosing = false;
       _ready = false;
     });
     controller.init().then((_) {
@@ -198,6 +216,13 @@ class _RoomHostState extends State<_RoomHost> {
   @override
   Widget build(BuildContext context) {
     if (_brokenLink) return const _BrokenLinkScreen();
+    if (_choosing) {
+      return StartScreen(
+        recent: widget.recent,
+        nameFor: _nameFor,
+        onChoose: (choice) => _openRoom(choice.secret ?? generateSecret()),
+      );
+    }
     final controller = _controller;
     if (controller == null || !_ready) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));

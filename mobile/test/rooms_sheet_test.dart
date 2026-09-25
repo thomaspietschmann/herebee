@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:herebee/core/recent_rooms.dart';
 import 'package:herebee/features/sheets/sheets.dart';
+import 'package:herebee/features/start/start_screen.dart';
 import 'package:herebee/l10n/app_localizations.dart';
 
 /// Opens the rooms sheet from a button and captures what it returns.
@@ -31,6 +32,8 @@ Widget host(RecentRooms recent, void Function(RoomsChoice?) onResult) => Materia
     );
 
 void main() {
+  startScreenTests();
+
   testWidgets('lists remembered rooms by the peers met there and marks the current one',
       (tester) async {
     final recent = RecentRooms(MemorySecretStore());
@@ -97,5 +100,41 @@ void main() {
     expect(recent.rooms, isEmpty);
     expect(find.text('Zuletzt betreten'), findsNothing);
     expect(find.text('Neuen Raum öffnen'), findsOneWidget);
+  });
+}
+
+Widget startHost(RecentRooms recent, void Function(RoomsChoice) onChoose) => MaterialApp(
+      locale: const Locale('de'),
+      localizationsDelegates: const [
+        L.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: L.supportedLocales,
+      home: StartScreen(recent: recent, nameFor: (seed) => 'Biene $seed', onChoose: onChoose),
+    );
+
+void startScreenTests() {
+  testWidgets('start screen offers the remembered rooms and a new one, and reports the pick',
+      (tester) async {
+    final recent = RecentRooms(MemorySecretStore());
+    await recent.load();
+    await recent.touch('a');
+    await recent.sawPeers('a', ['x']);
+    RoomsChoice? picked;
+
+    await tester.pumpWidget(startHost(recent, (c) => picked = c));
+    await tester.pumpAndSettle();
+    expect(find.text('Deine Räume'), findsOneWidget);
+    expect(find.text('Biene x'), findsOneWidget);
+    expect(find.textContaining('Du bist hier'), findsNothing,
+        reason: 'no room is open yet, so none is current');
+
+    await tester.tap(find.text('Biene x'));
+    expect(picked?.secret, 'a');
+    await tester.tap(find.text('Neuen Raum öffnen'));
+    expect(picked, isNotNull);
+    expect(picked!.secret, isNull);
   });
 }

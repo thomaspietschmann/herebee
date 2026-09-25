@@ -4,10 +4,11 @@
 ///   flutter test integration_test/recent_rooms_test.dart \
 ///     --dart-define=HEREBEE_ORIGIN=http://127.0.0.1:3100
 ///
-/// Walks: launch without a link, enter the minted room, check it is remembered
-/// and that a fresh store reads it back from secure storage; open the rooms
-/// sheet from the brand chip, start a new room, check the app switched and the
-/// list now holds both; relaunch the widget tree and check it opens the newest.
+/// Walks: launch without a link (nothing remembered, so a room is minted),
+/// enter it, check it is remembered and that a fresh store reads it back from
+/// secure storage; open the rooms sheet from the brand chip, start a new room,
+/// check the app switched and the list now holds both; relaunch the widget
+/// tree and check the app asks which room to open instead of picking one.
 library;
 
 import 'package:flutter/material.dart';
@@ -84,13 +85,20 @@ void main() {
     final second = recent.latest!.secret;
     expect(second, isNot(first));
 
-    // Relaunch without a link: lands in the newest room (gate up).
+    // Relaunch without a link: the app asks instead of re-entering anything.
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
     final again = RecentRooms(SecureSecretStore());
     await tester.pumpWidget(HereBeeApp(storage: storage, recent: again));
-    expect(await pumpUntil(tester, () => find.text('Enter room').evaluate().isNotEmpty), isTrue);
+    expect(await pumpUntil(tester, () => find.text('Recently entered').evaluate().isNotEmpty),
+        isTrue,
+        reason: 'with remembered rooms the start screen must ask');
+    expect(find.text('Enter room'), findsNothing, reason: 'no room may open on its own');
     expect(again.latest!.secret, second);
+    // Both rooms are offered; pick the newest by its position.
+    expect(find.byIcon(Icons.history), findsNWidgets(2));
+    await tapWhenOnScreen(tester, find.byIcon(Icons.history).first);
+    expect(await pumpUntil(tester, () => find.text('Enter room').evaluate().isNotEmpty), isTrue);
 
     // Forget from the sheet.
     await tapWhenOnScreen(tester, find.text('Enter room'));

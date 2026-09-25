@@ -371,10 +371,6 @@ class RoomsChoice {
 }
 
 /// Recent rooms and the way to a fresh one. Opened from the brand chip.
-///
-/// Entries are titled by the peers met there, named exactly as on the map
-/// (derived locally, in the current language), because a room has no name of
-/// its own and a bare date tells you nothing.
 Future<RoomsChoice?> showRoomsSheet(
   BuildContext context, {
   required RecentRooms recent,
@@ -383,53 +379,84 @@ Future<RoomsChoice?> showRoomsSheet(
 }) =>
     _sheet<RoomsChoice>(
       context,
-      builder: (context) {
-        final l = L.of(context);
-        return ListenableBuilder(
-          listenable: recent,
-          builder: (context, _) {
-            final rooms = recent.rooms;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l.roomsTitle, style: _h2),
-                const SizedBox(height: 14),
-                FilledButton.icon(
-                  onPressed: () => Navigator.of(context).pop(const RoomsChoice(null)),
-                  icon: const Icon(Icons.add),
-                  label: Text(l.roomsNew),
+      builder: (context) => RoomsPicker(
+        recent: recent,
+        currentSecret: currentSecret,
+        nameFor: nameFor,
+        onChoose: (choice) => Navigator.of(context).pop(choice),
+      ),
+    );
+
+/// The rooms list itself: a "new room" button, the remembered rooms, forget
+/// controls and the retention note. Shared by the rooms sheet and the start
+/// screen, so both offer exactly the same choices.
+///
+/// Entries are titled by the peers met there, named exactly as on the map
+/// (derived locally, in the current language), because a room has no name of
+/// its own and a bare date tells you nothing.
+class RoomsPicker extends StatelessWidget {
+  const RoomsPicker({
+    required this.recent,
+    required this.nameFor,
+    required this.onChoose,
+    this.currentSecret,
+    super.key,
+  });
+
+  final RecentRooms recent;
+  final String Function(String seed) nameFor;
+  final void Function(RoomsChoice choice) onChoose;
+
+  /// The room currently open, if any; marked in the list.
+  final String? currentSecret;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return ListenableBuilder(
+      listenable: recent,
+      builder: (context, _) {
+        final rooms = recent.rooms;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l.roomsTitle, style: _h2),
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              onPressed: () => onChoose(const RoomsChoice(null)),
+              icon: const Icon(Icons.add),
+              label: Text(l.roomsNew),
+            ),
+            if (rooms.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Text(l.roomsRecent,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 0.6)),
+              const SizedBox(height: 4),
+              for (final room in rooms)
+                _RoomTile(
+                  room: room,
+                  current: room.secret == currentSecret,
+                  nameFor: nameFor,
+                  onOpen: () => onChoose(RoomsChoice(room.secret)),
+                  onForget: () => recent.forget(room.secret),
                 ),
-                if (rooms.isNotEmpty) ...[
-                  const SizedBox(height: 18),
-                  Text(l.roomsRecent,
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 12, letterSpacing: 0.6)),
-                  const SizedBox(height: 4),
-                  for (final room in rooms)
-                    _RoomTile(
-                      room: room,
-                      current: room.secret == currentSecret,
-                      nameFor: nameFor,
-                      onOpen: () => Navigator.of(context).pop(RoomsChoice(room.secret)),
-                      onForget: () => recent.forget(room.secret),
-                    ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: recent.forgetAll,
-                      child: Text(l.roomsForgetAll),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                Text(l.roomsNote, style: _body.copyWith(fontSize: 12, color: Colors.white54)),
-              ],
-            );
-          },
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: recent.forgetAll,
+                  child: Text(l.roomsForgetAll),
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Text(l.roomsNote, style: _body.copyWith(fontSize: 12, color: Colors.white54)),
+          ],
         );
       },
     );
+  }
+}
 
 class _RoomTile extends StatelessWidget {
   const _RoomTile({
