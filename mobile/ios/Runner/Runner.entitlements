@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal Links for room links. Prepared, not yet active: the file is in
+	     the project but CODE_SIGN_ENTITLEMENTS is not set, because a free
+	     personal team cannot sign the Associated Domains capability and every
+	     device build would fail. Once the App ID is on the paid Apple Developer
+	     Program with that capability, set CODE_SIGN_ENTITLEMENTS to
+	     Runner/Runner.entitlements for the Runner target (or add the capability
+	     in Xcode, which does the same) and set APPLE_APP_IDS on the server so it
+	     serves /.well-known/apple-app-site-association. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:herebee.app</string>
+	</array>
+</dict>
+</plist>
