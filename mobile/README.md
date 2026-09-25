@@ -1,17 +1,24 @@
-# herebee
+# HereBee mobile
 
-Ephemeral, end-to-end-encrypted live location sharing.
+Flutter app for iOS and Android. See the [root README](../README.md) for what
+HereBee is, the privacy statement, deployment and releases, and
+[`docs/mobile-plan.md`](../docs/mobile-plan.md) for the design decisions.
 
-## Getting Started
+The app talks to one origin only, `https://herebee.app` by default. Override it
+with `--dart-define=HEREBEE_ORIGIN` for a local relay. All commands run from
+this directory.
 
-This project is a starting point for a Flutter application.
+| Command | Purpose |
+|---|---|
+| `flutter pub get` | Fetch dependencies and generate the localization classes from `lib/l10n/*.arb` |
+| `flutter run --dart-define=HEREBEE_ORIGIN=http://localhost:3100` | Run on the iOS simulator against a local relay |
+| `flutter run --dart-define=HEREBEE_ORIGIN=http://10.0.2.2:3100` | Run on the Android emulator against a local relay |
+| `... --dart-define=HEREBEE_SECRET=<secret>` | Open a known room instead of minting one |
+| `flutter analyze` | Static analysis, as in CI |
+| `flutter test` | Unit tests, including the conformance vectors from `../shared/vectors.json` |
+| `flutter test integration_test/room_flow_test.dart --dart-define=HEREBEE_ORIGIN=... --dart-define=HEREBEE_SECRET=...` | Room flow on a booted simulator or device, with `../scripts/fake-peer.ts` supplying the peer |
+| `flutter build apk --release` | Signed release APK when `android/key.properties` exists (gitignored); otherwise debug-signed |
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The ARB files are generated from the web client with `npm run i18n:arb` in the
+repository root. The interop test, `npm run test:interop` in the root, runs
+`tool/interop_app_peer.dart` against a live relay.
