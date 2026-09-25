@@ -87,7 +87,7 @@
   "@infoFact2": {
     "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
   },
-  "infoFact3": "Es gibt <strong>keine Datenbank</strong>; die App speichert nichts und führt keine eigenen Zugriffs-Logs. Räume leben nur, solange jemand da ist.",
+  "infoFact3": "Es gibt <strong>keine Datenbank</strong>; der Server speichert nichts und führt keine eigenen Zugriffs-Logs. Räume leben nur, solange jemand da ist.",
   "@infoFact3": {
     "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
   },
@@ -178,5 +178,32 @@
   "sharingStoppedServices": "Standortfreigabe beendet — Ortung ist ausgeschaltet",
   "bgNote": "Das Teilen läuft weiter, wenn du das Display sperrst. Wischst du die App weg, endet es.",
   "batteryWarning": "Dieses Gerät beendet Hintergrunddienste früh. Nimm HereBee von der Akku-Optimierung aus, damit das Teilen bei gesperrtem Display zuverlässig weiterläuft.",
-  "batteryOpen": "Akku-Einstellungen öffnen"
+  "batteryOpen": "Akku-Einstellungen öffnen",
+  "roomsTitle": "Deine Räume",
+  "roomsNew": "Neuen Raum öffnen",
+  "roomsRecent": "Zuletzt betreten",
+  "roomsUnnamed": "Noch niemanden getroffen",
+  "roomsCurrent": "Du bist hier",
+  "roomsForget": "Raum vergessen",
+  "roomsForgetAll": "Alle vergessen",
+  "roomsNote": "Räume verschwinden nach 3 Tagen von selbst. Ihre Schlüssel liegen nur in der sicheren Ablage dieses Geräts.",
+  "hoursAgo": "vor {n} h",
+  "@hoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "daysAgo": "vor {n} Tagen",
+  "@daysAgo": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "infoFactRecent": "Die App merkt sich die letzten fünf Räume samt Schlüssel für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore), damit du sie wieder betreten kannst. Jeder Eintrag lässt sich jederzeit löschen — tippe dafür oben links auf HereBee."
 }

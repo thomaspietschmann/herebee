@@ -76,7 +76,7 @@ const de = {
     "Der Server sieht <strong>weder Koordinaten noch Namen noch den Schlüssel</strong> — nur verschlüsselte Datenpakete.",
   infoFact2: "Der Schlüssel steckt im Link hinter <code>#</code> und wird nie an den Server gesendet.",
   infoFact3:
-    "Es gibt <strong>keine Datenbank</strong>; die App speichert nichts und führt keine eigenen Zugriffs-Logs. Räume leben nur, solange jemand da ist.",
+    "Es gibt <strong>keine Datenbank</strong>; der Server speichert nichts und führt keine eigenen Zugriffs-Logs. Räume leben nur, solange jemand da ist.",
   infoFact4:
     "Der HereBee-Server (Relay und selbst gehostete Karten) sieht deine <strong>IP</strong> für die Dauer der Verbindung und kann an den geladenen Kartenkacheln grob deine Region ablesen. Die App speichert das nicht, aber vorgelagerte Infrastruktur (Proxy/Hoster) kann Logs führen. Keine fremden Karten- oder CDN-Dienste; die eigene IP lässt sich im Browser generell nicht verbergen.",
   infoFact5:
@@ -115,6 +115,18 @@ const de = {
   bgNote: "Das Teilen läuft weiter, wenn du das Display sperrst. Wischst du die App weg, endet es.",
   batteryWarning: "Dieses Gerät beendet Hintergrunddienste früh. Nimm HereBee von der Akku-Optimierung aus, damit das Teilen bei gesperrtem Display zuverlässig weiterläuft.",
   batteryOpen: "Akku-Einstellungen öffnen",
+  // Recent rooms (apps only): the last few rooms kept on the device.
+  roomsTitle: "Deine Räume",
+  roomsNew: "Neuen Raum öffnen",
+  roomsRecent: "Zuletzt betreten",
+  roomsUnnamed: "Noch niemanden getroffen",
+  roomsCurrent: "Du bist hier",
+  roomsForget: "Raum vergessen",
+  roomsForgetAll: "Alle vergessen",
+  roomsNote: "Räume verschwinden nach 3 Tagen von selbst. Ihre Schlüssel liegen nur in der sicheren Ablage dieses Geräts.",
+  hoursAgo: "vor {n} h",
+  daysAgo: "vor {n} Tagen",
+  infoFactRecent: "Die App merkt sich die letzten fünf Räume samt Schlüssel für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore), damit du sie wieder betreten kannst. Jeder Eintrag lässt sich jederzeit löschen — tippe dafür oben links auf HereBee.",
 } as const;
 
 export type Key = keyof typeof de;
@@ -167,7 +179,7 @@ const en: Record<Key, string> = {
   infoFact1: "The server sees <strong>neither coordinates nor names nor the key</strong> — only encrypted packets.",
   infoFact2: "The key sits in the link after <code>#</code> and is never sent to the server.",
   infoFact3:
-    "There is <strong>no database</strong>; the app stores nothing and keeps no access logs of its own. Rooms exist only while someone is present.",
+    "There is <strong>no database</strong>; the server stores nothing and keeps no access logs of its own. Rooms exist only while someone is present.",
   infoFact4:
     "The HereBee server (relay and self-hosted maps) sees your <strong>IP</strong> for the duration of the connection and can roughly tell which area you're viewing from the map tiles you load. The app doesn't log this, but upstream infrastructure (proxy/host) may. No third-party map or CDN services; a browser generally can't hide your IP.",
   infoFact5:
@@ -202,6 +214,17 @@ const en: Record<Key, string> = {
   bgNote: "Sharing keeps running when you lock the screen. Swiping the app away ends it.",
   batteryWarning: "This device stops background services early. Exempt HereBee from battery optimisation so sharing keeps running with the screen locked.",
   batteryOpen: "Open battery settings",
+  roomsTitle: "Your rooms",
+  roomsNew: "Open a new room",
+  roomsRecent: "Recently entered",
+  roomsUnnamed: "Nobody met yet",
+  roomsCurrent: "You are here",
+  roomsForget: "Forget room",
+  roomsForgetAll: "Forget all",
+  roomsNote: "Rooms disappear on their own after 3 days. Their keys live only in this device's secure storage.",
+  hoursAgo: "{n} h ago",
+  daysAgo: "{n} days ago",
+  infoFactRecent: "The app keeps the last five rooms, including their keys, for three days in the device's secure storage (Keychain or Keystore) so you can re-enter them. Any entry can be deleted at any time: tap HereBee at the top left.",
 };
 
 const es: Record<Key, string> = {
@@ -252,7 +275,7 @@ const es: Record<Key, string> = {
   infoFact1: "El servidor no ve <strong>ni coordenadas, ni nombres, ni la clave</strong>: solo paquetes cifrados.",
   infoFact2: "La clave está en el enlace después de <code>#</code> y nunca se envía al servidor.",
   infoFact3:
-    "No hay <strong>base de datos</strong>; la app no guarda nada ni mantiene registros de acceso propios. Las salas existen solo mientras hay alguien.",
+    "No hay <strong>base de datos</strong>; el servidor no guarda nada ni mantiene registros de acceso propios. Las salas existen solo mientras hay alguien.",
   infoFact4:
     "El servidor de HereBee (relay y mapas alojados por nosotros mismos) ve tu <strong>IP</strong> mientras dura la conexión y, por las teselas del mapa que cargas, puede deducir aproximadamente qué zona miras. La app no lo registra, pero la infraestructura previa (proxy/hosting) sí puede. No hay servicios de mapas o CDN de terceros; el navegador no puede ocultar tu IP en general.",
   infoFact5:
@@ -287,6 +310,17 @@ const es: Record<Key, string> = {
   bgNote: "Se sigue compartiendo con la pantalla bloqueada. Si cierras la app deslizándola, se detiene.",
   batteryWarning: "Este dispositivo detiene pronto los servicios en segundo plano. Excluye HereBee de la optimización de batería para que siga compartiendo con la pantalla bloqueada.",
   batteryOpen: "Abrir ajustes de batería",
+  roomsTitle: "Tus salas",
+  roomsNew: "Abrir una sala nueva",
+  roomsRecent: "Entradas recientes",
+  roomsUnnamed: "Aún no te has encontrado con nadie",
+  roomsCurrent: "Estás aquí",
+  roomsForget: "Olvidar sala",
+  roomsForgetAll: "Olvidar todas",
+  roomsNote: "Las salas desaparecen solas a los 3 días. Sus claves solo están en el almacenamiento seguro de este dispositivo.",
+  hoursAgo: "hace {n} h",
+  daysAgo: "hace {n} días",
+  infoFactRecent: "La app conserva las últimas cinco salas, con sus claves, durante tres días en el almacenamiento seguro del dispositivo (Keychain o Keystore) para que puedas volver a entrar. Cualquier entrada se puede borrar en cualquier momento: toca HereBee arriba a la izquierda.",
 };
 
 const it: Record<Key, string> = {
@@ -337,7 +371,7 @@ const it: Record<Key, string> = {
   infoFact1: "Il server non vede <strong>né coordinate, né nomi, né la chiave</strong>: solo pacchetti cifrati.",
   infoFact2: "La chiave si trova nel link dopo <code>#</code> e non viene mai inviata al server.",
   infoFact3:
-    "Non c'è <strong>alcun database</strong>; l'app non memorizza nulla e non tiene log di accesso propri. Le stanze esistono solo finché c'è qualcuno.",
+    "Non c'è <strong>alcun database</strong>; il server non memorizza nulla e non tiene log di accesso propri. Le stanze esistono solo finché c'è qualcuno.",
   infoFact4:
     "Il server di HereBee (relay e mappe self-hosted) vede il tuo <strong>IP</strong> per la durata della connessione e, dalle tessere della mappa che carichi, può capire grossomodo quale zona stai guardando. L'app non lo registra, ma l'infrastruttura a monte (proxy/host) può farlo. Nessun servizio di mappe o CDN di terze parti; il browser in generale non può nascondere il tuo IP.",
   infoFact5:
@@ -372,6 +406,17 @@ const it: Record<Key, string> = {
   bgNote: "La condivisione continua a schermo bloccato. Se chiudi l'app scorrendo, si interrompe.",
   batteryWarning: "Questo dispositivo interrompe presto i servizi in background. Escludi HereBee dall'ottimizzazione della batteria perché la condivisione continui a schermo bloccato.",
   batteryOpen: "Apri le impostazioni batteria",
+  roomsTitle: "Le tue stanze",
+  roomsNew: "Apri una nuova stanza",
+  roomsRecent: "Entrate di recente",
+  roomsUnnamed: "Nessuno incontrato ancora",
+  roomsCurrent: "Sei qui",
+  roomsForget: "Dimentica stanza",
+  roomsForgetAll: "Dimentica tutte",
+  roomsNote: "Le stanze scompaiono da sole dopo 3 giorni. Le loro chiavi vivono solo nell'archivio sicuro di questo dispositivo.",
+  hoursAgo: "{n} h fa",
+  daysAgo: "{n} giorni fa",
+  infoFactRecent: "L'app conserva le ultime cinque stanze, chiavi comprese, per tre giorni nell'archivio sicuro del dispositivo (Keychain o Keystore), così puoi rientrarci. Ogni voce si può cancellare in qualsiasi momento: tocca HereBee in alto a sinistra.",
 };
 
 const fr: Record<Key, string> = {
@@ -424,7 +469,7 @@ const fr: Record<Key, string> = {
     "Le serveur ne voit <strong>ni les coordonnées, ni les noms, ni la clé</strong> — uniquement des paquets chiffrés.",
   infoFact2: "La clé se trouve dans le lien après <code>#</code> et n'est jamais envoyée au serveur.",
   infoFact3:
-    "Il n'y a <strong>aucune base de données</strong> ; l'application ne stocke rien et ne tient aucun journal d'accès propre. Les salons n'existent que tant que quelqu'un est présent.",
+    "Il n'y a <strong>aucune base de données</strong> ; le serveur ne stocke rien et ne tient aucun journal d'accès propre. Les salons n'existent que tant que quelqu'un est présent.",
   infoFact4:
     "Le serveur HereBee (relais et cartes auto-hébergées) voit ton <strong>IP</strong> pendant la durée de la connexion et peut, d'après les tuiles de carte que tu charges, deviner approximativement la zone que tu regardes. L'application ne l'enregistre pas, mais l'infrastructure en amont (proxy/hébergeur) le peut. Aucun service de cartes ou CDN tiers ; un navigateur ne peut généralement pas masquer ton IP.",
   infoFact5:
@@ -459,6 +504,17 @@ const fr: Record<Key, string> = {
   bgNote: "Le partage continue écran verrouillé. Si tu fermes l'app en la balayant, il s'arrête.",
   batteryWarning: "Cet appareil arrête tôt les services en arrière-plan. Exclus HereBee de l'optimisation de la batterie pour que le partage continue écran verrouillé.",
   batteryOpen: "Ouvrir les réglages de batterie",
+  roomsTitle: "Vos salons",
+  roomsNew: "Ouvrir un nouveau salon",
+  roomsRecent: "Rejoints récemment",
+  roomsUnnamed: "Personne rencontré pour l'instant",
+  roomsCurrent: "Vous êtes ici",
+  roomsForget: "Oublier le salon",
+  roomsForgetAll: "Tout oublier",
+  roomsNote: "Les salons disparaissent d'eux-mêmes après 3 jours. Leurs clés ne sont conservées que dans le stockage sécurisé de cet appareil.",
+  hoursAgo: "il y a {n} h",
+  daysAgo: "il y a {n} jours",
+  infoFactRecent: "L'application conserve les cinq derniers salons, clés comprises, pendant trois jours dans le stockage sécurisé de l'appareil (Keychain ou Keystore) pour que vous puissiez y revenir. Chaque entrée peut être supprimée à tout moment : touchez HereBee en haut à gauche.",
 };
 
 const pt: Record<Key, string> = {
@@ -509,7 +565,7 @@ const pt: Record<Key, string> = {
   infoFact1: "O servidor não vê <strong>nem coordenadas, nem nomes, nem a chave</strong> — apenas pacotes cifrados.",
   infoFact2: "A chave está no link depois de <code>#</code> e nunca é enviada ao servidor.",
   infoFact3:
-    "Não há <strong>base de dados</strong>; a app não guarda nada nem mantém registos de acesso próprios. As salas existem apenas enquanto alguém estiver presente.",
+    "Não há <strong>base de dados</strong>; o servidor não guarda nada nem mantém registos de acesso próprios. As salas existem apenas enquanto alguém estiver presente.",
   infoFact4:
     "O servidor do HereBee (relay e mapas alojados por nós) vê o teu <strong>IP</strong> durante a ligação e, pelos tiles do mapa que carregas, consegue perceber aproximadamente que zona estás a ver. A app não regista isto, mas a infraestrutura a montante (proxy/alojamento) pode. Não há serviços de mapas ou CDN de terceiros; o navegador em geral não consegue ocultar o teu IP.",
   infoFact5:
@@ -544,6 +600,17 @@ const pt: Record<Key, string> = {
   bgNote: "A partilha continua com o ecrã bloqueado. Se fechares a app deslizando, termina.",
   batteryWarning: "Este dispositivo termina cedo os serviços em segundo plano. Exclui o HereBee da otimização de bateria para a partilha continuar com o ecrã bloqueado.",
   batteryOpen: "Abrir definições de bateria",
+  roomsTitle: "As tuas salas",
+  roomsNew: "Abrir uma nova sala",
+  roomsRecent: "Entradas recentemente",
+  roomsUnnamed: "Ainda não encontraste ninguém",
+  roomsCurrent: "Estás aqui",
+  roomsForget: "Esquecer sala",
+  roomsForgetAll: "Esquecer todas",
+  roomsNote: "As salas desaparecem sozinhas após 3 dias. As suas chaves ficam apenas no armazenamento seguro deste dispositivo.",
+  hoursAgo: "há {n} h",
+  daysAgo: "há {n} dias",
+  infoFactRecent: "A app guarda as últimas cinco salas, incluindo as chaves, durante três dias no armazenamento seguro do dispositivo (Keychain ou Keystore) para poderes voltar a entrar. Qualquer entrada pode ser apagada a qualquer momento: toca em HereBee no canto superior esquerdo.",
 };
 
 /** Exported so scripts/i18n-to-arb.ts can export EVERY language to the native

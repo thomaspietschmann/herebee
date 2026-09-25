@@ -40,7 +40,7 @@
   "infoIntro": "HereBee shares locations <strong>ephemerally and end-to-end encrypted</strong> between active participants. It's deliberately data-minimal — but don't call it “fully anonymous”.",
   "infoFact1": "The server sees <strong>neither coordinates nor names nor the key</strong> — only encrypted packets.",
   "infoFact2": "The key sits in the link after <code>#</code> and is never sent to the server.",
-  "infoFact3": "There is <strong>no database</strong>; the app stores nothing and keeps no access logs of its own. Rooms exist only while someone is present.",
+  "infoFact3": "There is <strong>no database</strong>; the server stores nothing and keeps no access logs of its own. Rooms exist only while someone is present.",
   "infoFact4": "The HereBee server (relay and self-hosted maps) sees your <strong>IP</strong> for the duration of the connection and can roughly tell which area you're viewing from the map tiles you load. The app doesn't log this, but upstream infrastructure (proxy/host) may. No third-party map or CDN services; a browser generally can't hide your IP.",
   "infoFact5": "Anyone with the full link can see the room — and everyone in it shares the same key, so a participant could spoof another's marker. Share the link only with people you trust.",
   "mapCredits": "Map: {pm} © {osm} contributors",
@@ -71,5 +71,16 @@
   "sharingStoppedServices": "Location sharing ended — location is switched off",
   "bgNote": "Sharing keeps running when you lock the screen. Swiping the app away ends it.",
   "batteryWarning": "This device stops background services early. Exempt HereBee from battery optimisation so sharing keeps running with the screen locked.",
-  "batteryOpen": "Open battery settings"
+  "batteryOpen": "Open battery settings",
+  "roomsTitle": "Your rooms",
+  "roomsNew": "Open a new room",
+  "roomsRecent": "Recently entered",
+  "roomsUnnamed": "Nobody met yet",
+  "roomsCurrent": "You are here",
+  "roomsForget": "Forget room",
+  "roomsForgetAll": "Forget all",
+  "roomsNote": "Rooms disappear on their own after 3 days. Their keys live only in this device's secure storage.",
+  "hoursAgo": "{n} h ago",
+  "daysAgo": "{n} days ago",
+  "infoFactRecent": "The app keeps the last five rooms, including their keys, for three days in the device's secure storage (Keychain or Keystore) so you can re-enter them. Any entry can be deleted at any time: tap HereBee at the top left."
 }

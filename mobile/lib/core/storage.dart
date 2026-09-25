@@ -1,9 +1,10 @@
-/// The only thing this app persists: an identity seed, a reconnect token, and
-/// any names the user typed for other people.
+/// What this app persists in plain preferences: an identity seed, a reconnect
+/// token, and any names the user typed for other people.
 ///
-/// Deliberately nothing else. There is no "was sharing" flag, because the app
-/// never resumes sharing on its own — starting must always come from a tap in
-/// the foreground. No location history, no logs, no room list.
+/// Deliberately nothing else here. There is no "was sharing" flag, because the
+/// app never resumes sharing on its own — starting must always come from a tap
+/// in the foreground. No location history, no logs. The short list of recent
+/// rooms lives in secure storage instead, see core/recent_rooms.dart.
 /// See docs/mobile-plan.md §3.
 library;
 

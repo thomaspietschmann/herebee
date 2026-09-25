@@ -13,7 +13,9 @@ import 'package:herebee_location/herebee_location.dart';
 import 'package:maplibre/maplibre.dart';
 
 import '../../app_config.dart';
+import '../../core/crypto.dart';
 import '../../core/peer_state.dart';
+import '../../core/recent_rooms.dart';
 import '../../l10n/app_localizations.dart';
 import '../hud/hud.dart';
 import '../map/bee_marker.dart';
@@ -26,9 +28,18 @@ const Geographic _initialCenter = Geographic(lon: 10.5, lat: 50.6);
 const double _initialZoom = 5.2;
 
 class RoomScreen extends StatefulWidget {
-  const RoomScreen({required this.controller, super.key});
+  const RoomScreen({
+    required this.controller,
+    required this.recent,
+    required this.onOpenRoom,
+    super.key,
+  });
 
   final RoomController controller;
+  final RecentRooms recent;
+
+  /// Switch to another room (a remembered one, or a freshly minted secret).
+  final void Function(String secret) onOpenRoom;
 
   @override
   State<RoomScreen> createState() => _RoomScreenState();
@@ -102,6 +113,17 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     await showWelcomeSheet(context);
     if (!mounted) return;
     await c.enter();
+  }
+
+  Future<void> _openRooms() async {
+    final choice = await showRoomsSheet(
+      context,
+      recent: widget.recent,
+      currentSecret: c.secret,
+      nameFor: c.resolveName,
+    );
+    if (!mounted || choice == null) return;
+    widget.onOpenRoom(choice.secret ?? generateSecret());
   }
 
   void _panTo(String seed) {
@@ -243,6 +265,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
             onShareLink: () => shareRoomLink(context, c.roomLink),
             onToggleShare: _toggleShare,
             onInfo: () => showInfoSheet(context),
+            onRooms: _openRooms,
           ),
           if (c.fatal != null)
             Positioned(

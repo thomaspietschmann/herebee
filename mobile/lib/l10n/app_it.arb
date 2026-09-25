@@ -40,7 +40,7 @@
   "infoIntro": "HereBee condivide le posizioni <strong>in modo effimero e cifrato end-to-end</strong> tra i partecipanti attivi. Raccoglie il minimo dei dati, ma non chiamarlo «completamente anonimo».",
   "infoFact1": "Il server non vede <strong>né coordinate, né nomi, né la chiave</strong>: solo pacchetti cifrati.",
   "infoFact2": "La chiave si trova nel link dopo <code>#</code> e non viene mai inviata al server.",
-  "infoFact3": "Non c'è <strong>alcun database</strong>; l'app non memorizza nulla e non tiene log di accesso propri. Le stanze esistono solo finché c'è qualcuno.",
+  "infoFact3": "Non c'è <strong>alcun database</strong>; il server non memorizza nulla e non tiene log di accesso propri. Le stanze esistono solo finché c'è qualcuno.",
   "infoFact4": "Il server di HereBee (relay e mappe self-hosted) vede il tuo <strong>IP</strong> per la durata della connessione e, dalle tessere della mappa che carichi, può capire grossomodo quale zona stai guardando. L'app non lo registra, ma l'infrastruttura a monte (proxy/host) può farlo. Nessun servizio di mappe o CDN di terze parti; il browser in generale non può nascondere il tuo IP.",
   "infoFact5": "Chiunque abbia il link completo vede la stanza, e tutti al suo interno condividono la stessa chiave, quindi un partecipante potrebbe falsificare il segnaposto di un altro. Condividi il link solo con persone fidate.",
   "mapCredits": "Mappa: {pm} © contributori di {osm}",
@@ -71,5 +71,16 @@
   "sharingStoppedServices": "Condivisione terminata — la localizzazione è disattivata",
   "bgNote": "La condivisione continua a schermo bloccato. Se chiudi l'app scorrendo, si interrompe.",
   "batteryWarning": "Questo dispositivo interrompe presto i servizi in background. Escludi HereBee dall'ottimizzazione della batteria perché la condivisione continui a schermo bloccato.",
-  "batteryOpen": "Apri le impostazioni batteria"
+  "batteryOpen": "Apri le impostazioni batteria",
+  "roomsTitle": "Le tue stanze",
+  "roomsNew": "Apri una nuova stanza",
+  "roomsRecent": "Entrate di recente",
+  "roomsUnnamed": "Nessuno incontrato ancora",
+  "roomsCurrent": "Sei qui",
+  "roomsForget": "Dimentica stanza",
+  "roomsForgetAll": "Dimentica tutte",
+  "roomsNote": "Le stanze scompaiono da sole dopo 3 giorni. Le loro chiavi vivono solo nell'archivio sicuro di questo dispositivo.",
+  "hoursAgo": "{n} h fa",
+  "daysAgo": "{n} giorni fa",
+  "infoFactRecent": "L'app conserva le ultime cinque stanze, chiavi comprese, per tre giorni nell'archivio sicuro del dispositivo (Keychain o Keystore), così puoi rientrarci. Ogni voce si può cancellare in qualsiasi momento: tocca HereBee in alto a sinistra."
 }

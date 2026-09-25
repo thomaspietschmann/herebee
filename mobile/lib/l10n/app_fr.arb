@@ -40,7 +40,7 @@
   "infoIntro": "HereBee partage les positions <strong>de façon éphémère et chiffrée de bout en bout</strong> entre participants actifs. C'est volontairement minimal en données — mais ne parle pas d'« anonymat total ».",
   "infoFact1": "Le serveur ne voit <strong>ni les coordonnées, ni les noms, ni la clé</strong> — uniquement des paquets chiffrés.",
   "infoFact2": "La clé se trouve dans le lien après <code>#</code> et n'est jamais envoyée au serveur.",
-  "infoFact3": "Il n'y a <strong>aucune base de données</strong> ; l'application ne stocke rien et ne tient aucun journal d'accès propre. Les salons n'existent que tant que quelqu'un est présent.",
+  "infoFact3": "Il n'y a <strong>aucune base de données</strong> ; le serveur ne stocke rien et ne tient aucun journal d'accès propre. Les salons n'existent que tant que quelqu'un est présent.",
   "infoFact4": "Le serveur HereBee (relais et cartes auto-hébergées) voit ton <strong>IP</strong> pendant la durée de la connexion et peut, d'après les tuiles de carte que tu charges, deviner approximativement la zone que tu regardes. L'application ne l'enregistre pas, mais l'infrastructure en amont (proxy/hébergeur) le peut. Aucun service de cartes ou CDN tiers ; un navigateur ne peut généralement pas masquer ton IP.",
   "infoFact5": "Quiconque possède le lien complet voit le salon — et tout le monde y partage la même clé, donc un participant pourrait falsifier le marqueur d'un autre. Ne partage le lien qu'avec des personnes de confiance.",
   "mapCredits": "Carte : {pm} © contributeurs d'{osm}",
@@ -71,5 +71,16 @@
   "sharingStoppedServices": "Partage arrêté — la localisation est désactivée",
   "bgNote": "Le partage continue écran verrouillé. Si tu fermes l'app en la balayant, il s'arrête.",
   "batteryWarning": "Cet appareil arrête tôt les services en arrière-plan. Exclus HereBee de l'optimisation de la batterie pour que le partage continue écran verrouillé.",
-  "batteryOpen": "Ouvrir les réglages de batterie"
+  "batteryOpen": "Ouvrir les réglages de batterie",
+  "roomsTitle": "Vos salons",
+  "roomsNew": "Ouvrir un nouveau salon",
+  "roomsRecent": "Rejoints récemment",
+  "roomsUnnamed": "Personne rencontré pour l'instant",
+  "roomsCurrent": "Vous êtes ici",
+  "roomsForget": "Oublier le salon",
+  "roomsForgetAll": "Tout oublier",
+  "roomsNote": "Les salons disparaissent d'eux-mêmes après 3 jours. Leurs clés ne sont conservées que dans le stockage sécurisé de cet appareil.",
+  "hoursAgo": "il y a {n} h",
+  "daysAgo": "il y a {n} jours",
+  "infoFactRecent": "L'application conserve les cinq derniers salons, clés comprises, pendant trois jours dans le stockage sécurisé de l'appareil (Keychain ou Keystore) pour que vous puissiez y revenir. Chaque entrée peut être supprimée à tout moment : touchez HereBee en haut à gauche."
 }

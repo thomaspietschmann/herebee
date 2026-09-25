@@ -60,8 +60,13 @@ class RoomController extends ChangeNotifier {
     required this.storage,
     required this.languageCode,
     required this.youSuffix,
+    this.onEntered,
     NetClientFactory? netClientFactory,
   }) : _newNetClient = netClientFactory ?? _defaultNetClient;
+
+  /// Fired once, when the user actually enters the room. That, not merely
+  /// opening a link, is what makes a room worth remembering.
+  final VoidCallback? onEntered;
 
   static NetClient _defaultNetClient({
     required String endpoint,
@@ -207,6 +212,7 @@ class RoomController extends ChangeNotifier {
     if (_keys == null) return;
     _entered = true;
     notifyListeners();
+    onEntered?.call();
 
     final net = _newNetClient(
       endpoint: AppConfig.wsUrl,

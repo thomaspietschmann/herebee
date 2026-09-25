@@ -2,10 +2,12 @@
 ///
 /// A room is identified solely by the 256-bit secret in the link fragment.
 ///
-/// Opened from a link, we join that room. Opened from the home screen, we mint a
-/// fresh one, exactly as the web client does for "/". Opened from a room link
-/// whose secret is broken, we say so rather than quietly minting a different
-/// room, because the user came expecting a specific one.
+/// Opened from a link, we join that room. Opened from the home screen, we return
+/// to the room entered last, if it is still remembered (see core/recent_rooms.dart),
+/// and otherwise mint a fresh one, exactly as the web client does for "/".
+/// Opened from a room link whose secret is broken, we say so rather than
+/// quietly minting a different room, because the user came expecting a
+/// specific one.
 ///
 /// `--dart-define=HEREBEE_SECRET=…` forces a room for testing.
 library;
@@ -18,6 +20,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/crypto.dart';
 import 'core/deep_links.dart';
+import 'core/recent_rooms.dart';
 import 'core/storage.dart';
 import 'features/room/room_controller.dart';
 import 'features/room/room_screen.dart';
@@ -28,13 +31,18 @@ const String _secretOverride = String.fromEnvironment('HEREBEE_SECRET');
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final storage = await Storage.open();
-  runApp(HereBeeApp(storage: storage));
+  runApp(HereBeeApp(storage: storage, recent: RecentRooms(SecureSecretStore())));
 }
 
 class HereBeeApp extends StatelessWidget {
-  const HereBeeApp({required this.storage, super.key});
+  HereBeeApp({required this.storage, RecentRooms? recent, super.key})
+      : recent = recent ?? RecentRooms(MemorySecretStore());
 
   final Storage storage;
+
+  /// Defaults to a memory-only list, which is what tests and the widget harness
+  /// want. Production passes the secure-storage-backed one.
+  final RecentRooms recent;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +65,7 @@ class HereBeeApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: _RoomHost(storage: storage),
+      home: _RoomHost(storage: storage, recent: recent),
     );
   }
 }
@@ -65,9 +73,10 @@ class HereBeeApp extends StatelessWidget {
 /// Builds the controller once the locale is known — the locale decides which
 /// nickname set peers are shown under, so it is not a detail we can defer.
 class _RoomHost extends StatefulWidget {
-  const _RoomHost({required this.storage});
+  const _RoomHost({required this.storage, required this.recent});
 
   final Storage storage;
+  final RecentRooms recent;
 
   @override
   State<_RoomHost> createState() => _RoomHostState();
@@ -117,7 +126,11 @@ class _RoomHostState extends State<_RoomHost> {
       _onLink(initial);
       return;
     }
-    _openRoom(generateSecret());
+    // Home-screen launch: back to where you were, or a fresh room. The entry
+    // gate still stands in front of either, so nothing connects on its own.
+    await widget.recent.load();
+    if (!mounted || _secret != null) return; // a link arrived meanwhile
+    _openRoom(widget.recent.latest?.secret ?? generateSecret());
   }
 
   void _onLink(Uri uri) {
@@ -149,12 +162,21 @@ class _RoomHostState extends State<_RoomHost> {
     // Switching rooms is a full teardown: the old socket, its peers and its
     // sharing state must not bleed into the new room.
     _controller?.dispose();
+    final recent = widget.recent;
     final controller = RoomController(
       secret: secret,
       storage: widget.storage,
       languageCode: Localizations.localeOf(context).languageCode,
       youSuffix: L.of(context).youSuffix,
+      onEntered: () => unawaited(recent.touch(secret)),
     );
+    // Remember who was met here, so the rooms list can say more than a date.
+    // sawPeers() is a no-op unless something is new, so a listener that fires
+    // on every tick is fine.
+    controller.addListener(() {
+      final seeds = controller.peers.entries.where((e) => !e.isSelf).map((e) => e.seed);
+      unawaited(recent.sawPeers(secret, seeds));
+    });
     setState(() {
       _secret = secret;
       _controller = controller;
@@ -182,7 +204,14 @@ class _RoomHostState extends State<_RoomHost> {
     }
     // Keyed by secret so switching rooms rebuilds the screen from scratch
     // rather than reusing state that belongs to the previous room.
-    return RoomScreen(key: ValueKey(_secret), controller: controller);
+    return RoomScreen(
+      key: ValueKey(_secret),
+      controller: controller,
+      recent: widget.recent,
+      onOpenRoom: (secret) {
+        if (secret != _secret) _openRoom(secret);
+      },
+    );
   }
 }
 

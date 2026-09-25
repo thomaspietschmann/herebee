@@ -17,6 +17,7 @@ class Hud extends StatelessWidget {
     required this.onShareLink,
     required this.onToggleShare,
     required this.onInfo,
+    required this.onRooms,
     super.key,
   });
 
@@ -27,6 +28,9 @@ class Hud extends StatelessWidget {
   final VoidCallback onToggleShare;
   final VoidCallback onInfo;
 
+  /// Opens the rooms sheet: recent rooms and a fresh one.
+  final VoidCallback onRooms;
+
   @override
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
@@ -35,7 +39,7 @@ class Hud extends StatelessWidget {
         Positioned(
           top: padding.top + 10,
           left: 14,
-          child: _ConnChip(state: controller.connection),
+          child: _ConnChip(state: controller.connection, onTap: onRooms),
         ),
         if (controller.entered)
           Positioned(
@@ -62,8 +66,9 @@ class Hud extends StatelessWidget {
 }
 
 class _ConnChip extends StatelessWidget {
-  const _ConnChip({required this.state});
+  const _ConnChip({required this.state, required this.onTap});
   final LinkState state;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -73,12 +78,19 @@ class _ConnChip extends StatelessWidget {
       LinkState.off => (const Color(0xFFF87171), l.connOff),
       LinkState.connecting => (const Color(0xFFFBBF24), l.connConnecting),
     };
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xCC0E1116),
+    // The brand chip doubles as the way to your rooms. A dedicated button
+    // would cost HUD space; the chip is already the one fixed landmark.
+    return Material(
+      color: const Color(0xCC0E1116),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        key: const ValueKey('rooms-chip'),
         borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
+        onTap: onTap,
+        child: Semantics(
+          button: true,
+          label: l.roomsTitle,
+          child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -106,6 +118,8 @@ class _ConnChip extends StatelessWidget {
               style: TextStyle(color: Colors.white, fontSize: 15, letterSpacing: 0.2),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

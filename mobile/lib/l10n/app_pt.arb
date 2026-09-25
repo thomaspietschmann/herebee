@@ -40,7 +40,7 @@
   "infoIntro": "O HereBee partilha localizações <strong>de forma efémera e cifrada de ponta a ponta</strong> entre participantes ativos. Recolhe o mínimo de dados — mas não lhe chames «totalmente anónimo».",
   "infoFact1": "O servidor não vê <strong>nem coordenadas, nem nomes, nem a chave</strong> — apenas pacotes cifrados.",
   "infoFact2": "A chave está no link depois de <code>#</code> e nunca é enviada ao servidor.",
-  "infoFact3": "Não há <strong>base de dados</strong>; a app não guarda nada nem mantém registos de acesso próprios. As salas existem apenas enquanto alguém estiver presente.",
+  "infoFact3": "Não há <strong>base de dados</strong>; o servidor não guarda nada nem mantém registos de acesso próprios. As salas existem apenas enquanto alguém estiver presente.",
   "infoFact4": "O servidor do HereBee (relay e mapas alojados por nós) vê o teu <strong>IP</strong> durante a ligação e, pelos tiles do mapa que carregas, consegue perceber aproximadamente que zona estás a ver. A app não regista isto, mas a infraestrutura a montante (proxy/alojamento) pode. Não há serviços de mapas ou CDN de terceiros; o navegador em geral não consegue ocultar o teu IP.",
   "infoFact5": "Qualquer pessoa com o link completo vê a sala — e todos nela partilham a mesma chave, por isso um participante poderia falsificar o marcador de outro. Partilha o link apenas com pessoas de confiança.",
   "mapCredits": "Mapa: {pm} © colaboradores do {osm}",
@@ -71,5 +71,16 @@
   "sharingStoppedServices": "Partilha terminada — a localização está desligada",
   "bgNote": "A partilha continua com o ecrã bloqueado. Se fechares a app deslizando, termina.",
   "batteryWarning": "Este dispositivo termina cedo os serviços em segundo plano. Exclui o HereBee da otimização de bateria para a partilha continuar com o ecrã bloqueado.",
-  "batteryOpen": "Abrir definições de bateria"
+  "batteryOpen": "Abrir definições de bateria",
+  "roomsTitle": "As tuas salas",
+  "roomsNew": "Abrir uma nova sala",
+  "roomsRecent": "Entradas recentemente",
+  "roomsUnnamed": "Ainda não encontraste ninguém",
+  "roomsCurrent": "Estás aqui",
+  "roomsForget": "Esquecer sala",
+  "roomsForgetAll": "Esquecer todas",
+  "roomsNote": "As salas desaparecem sozinhas após 3 dias. As suas chaves ficam apenas no armazenamento seguro deste dispositivo.",
+  "hoursAgo": "há {n} h",
+  "daysAgo": "há {n} dias",
+  "infoFactRecent": "A app guarda as últimas cinco salas, incluindo as chaves, durante três dias no armazenamento seguro do dispositivo (Keychain ou Keystore) para poderes voltar a entrar. Qualquer entrada pode ser apagada a qualquer momento: toca em HereBee no canto superior esquerdo."
 }

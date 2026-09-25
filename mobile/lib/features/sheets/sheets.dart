@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../core/recent_rooms.dart';
 import '../../l10n/app_localizations.dart';
 import '../../util/markup.dart';
 
@@ -138,6 +139,7 @@ Future<void> showInfoSheet(BuildContext context) => _sheet<void>(
             _fact(l.infoFact1),
             _fact(l.infoFact2),
             _fact(l.infoFact3),
+            _fact(l.infoFactRecent),
             _fact(l.infoFact4, warn: true),
             _fact(l.infoFact5, warn: true),
             const SizedBox(height: 6),
@@ -359,4 +361,121 @@ Future<void> shareRoomLink(BuildContext context, String link) async {
       SnackBar(content: Text(l.linkCopied), behavior: SnackBarBehavior.floating),
     );
   }
+}
+
+/// What the user picked in the rooms sheet: a remembered room's secret, or
+/// null for "open a new room".
+class RoomsChoice {
+  const RoomsChoice(this.secret);
+  final String? secret;
+}
+
+/// Recent rooms and the way to a fresh one. Opened from the brand chip.
+///
+/// Entries are titled by the peers met there, named exactly as on the map
+/// (derived locally, in the current language), because a room has no name of
+/// its own and a bare date tells you nothing.
+Future<RoomsChoice?> showRoomsSheet(
+  BuildContext context, {
+  required RecentRooms recent,
+  required String currentSecret,
+  required String Function(String seed) nameFor,
+}) =>
+    _sheet<RoomsChoice>(
+      context,
+      builder: (context) {
+        final l = L.of(context);
+        return ListenableBuilder(
+          listenable: recent,
+          builder: (context, _) {
+            final rooms = recent.rooms;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l.roomsTitle, style: _h2),
+                const SizedBox(height: 14),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(context).pop(const RoomsChoice(null)),
+                  icon: const Icon(Icons.add),
+                  label: Text(l.roomsNew),
+                ),
+                if (rooms.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  Text(l.roomsRecent,
+                      style: const TextStyle(
+                          color: Colors.white54, fontSize: 12, letterSpacing: 0.6)),
+                  const SizedBox(height: 4),
+                  for (final room in rooms)
+                    _RoomTile(
+                      room: room,
+                      current: room.secret == currentSecret,
+                      nameFor: nameFor,
+                      onOpen: () => Navigator.of(context).pop(RoomsChoice(room.secret)),
+                      onForget: () => recent.forget(room.secret),
+                    ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: recent.forgetAll,
+                      child: Text(l.roomsForgetAll),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Text(l.roomsNote, style: _body.copyWith(fontSize: 12, color: Colors.white54)),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+class _RoomTile extends StatelessWidget {
+  const _RoomTile({
+    required this.room,
+    required this.current,
+    required this.nameFor,
+    required this.onOpen,
+    required this.onForget,
+  });
+
+  final RecentRoom room;
+  final bool current;
+  final String Function(String seed) nameFor;
+  final VoidCallback onOpen;
+  final VoidCallback onForget;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final title = room.seeds.isEmpty ? l.roomsUnnamed : room.seeds.map(nameFor).join(', ');
+    final when = relativeTime(l, DateTime.now().difference(room.lastEntered));
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      onTap: onOpen,
+      leading: Icon(current ? Icons.place : Icons.history,
+          color: current ? const Color(0xFFF5B301) : Colors.white54),
+      title: Text(title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white, fontSize: 15)),
+      subtitle: Text(current ? '$when · ${l.roomsCurrent}' : when,
+          style: const TextStyle(color: Colors.white54, fontSize: 12)),
+      trailing: IconButton(
+        tooltip: l.roomsForget,
+        icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+        onPressed: onForget,
+      ),
+    );
+  }
+}
+
+/// "just now" up to "n days ago", in the app's own words. Placeholders are
+/// strings on purpose, matching the web (see scripts/i18n-to-arb.ts).
+String relativeTime(L l, Duration d) {
+  if (d.inSeconds < 60) return l.justNow;
+  if (d.inMinutes < 60) return l.minsAgo('${d.inMinutes}');
+  if (d.inHours < 48) return l.hoursAgo('${d.inHours}');
+  return l.daysAgo('${d.inDays}');
 }

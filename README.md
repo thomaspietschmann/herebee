@@ -26,8 +26,11 @@ That word would be a lie.
   page load. That is the normal hard limit of browser-based end-to-end
   encryption. The native apps bundle their code and do not have this caveat.
 - **No database. Room state is RAM-only.** Rooms exist while someone is
-  connected and vanish when the last person leaves. Nothing stores coordinates,
-  names, or room history.
+  connected and vanish when the last person leaves. The server stores no
+  coordinates, names, or room history. The native apps keep the last five
+  rooms, including their keys, for three days in the device's secure storage
+  (Keychain or Keystore) so you can re-enter them. Each entry can be deleted at
+  any time.
 - **The link is the key.** Anyone with the full link can see the room for its
   lifetime. Share it deliberately. A leaked link cannot be revoked short of
   ending the room.

@@ -73,6 +73,7 @@ void main() {
       onShareLink: () {},
       onToggleShare: () {},
       onInfo: () {},
+      onRooms: () {},
     )));
     await tester.pump();
 
