@@ -132,7 +132,23 @@ function safeJoin(base: string, urlPath: string): string | null {
   return full === base || full.startsWith(base + sep) ? full : null;
 }
 
-function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, immutable = false): void {
+/**
+ * How long a served file may be reused without asking again.
+ *  - "immutable": content-hashed build output, never changes under its URL.
+ *  - "week": map assets. Their URLs are fixed but the files get replaced when
+ *    the basemap is rebuilt, so caches must come back eventually; the ETag
+ *    makes that a cheap 304, and If-Range keeps stale byte ranges of an old
+ *    archive from being stitched onto a new one.
+ *  - "none": no Cache-Control at all.
+ */
+type CachePolicy = "immutable" | "week" | "none";
+const CACHE_CONTROL: Record<CachePolicy, string | null> = {
+  immutable: "public, max-age=31536000, immutable",
+  week: "public, max-age=604800",
+  none: null,
+};
+
+function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, cache: CachePolicy = "none"): void {
   let st;
   try {
     st = statSync(filePath);
@@ -144,10 +160,26 @@ function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, 
   const type = MIME[extname(filePath).toLowerCase()] ?? "application/octet-stream";
   res.setHeader("Content-Type", type);
   res.setHeader("Accept-Ranges", "bytes");
-  if (immutable) res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  const cacheControl = CACHE_CONTROL[cache];
+  if (cacheControl) res.setHeader("Cache-Control", cacheControl);
+  // Strong validator from size + mtime: replacing the file changes it, and it
+  // must be strong for If-Range to accept it.
+  const etag = `"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
+  res.setHeader("ETag", etag);
+  const lastModified = st.mtime.toUTCString();
+  res.setHeader("Last-Modified", lastModified);
+
+  const inm = req.headers["if-none-match"];
+  if (inm && inm.split(",").some((t) => t.trim() === etag || t.trim() === "*")) {
+    res.writeHead(304).end();
+    return;
+  }
 
   // Range support — required for MapLibre reading .pmtiles via byte ranges.
-  const range = req.headers.range;
+  // A range is only valid against the version it was taken from: if If-Range
+  // names another one, the file changed and the client gets all of it instead.
+  const ifRange = req.headers["if-range"];
+  const range = ifRange && ifRange !== etag && ifRange !== lastModified ? undefined : req.headers.range;
   if (range) {
     const m = /^bytes=(\d*)-(\d*)$/.exec(range);
     if (m) {
@@ -362,11 +394,11 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
-  // Self-hosted map assets (tiles, glyphs, sprites) — immutable, cacheable.
+  // Self-hosted map assets (tiles, glyphs, sprites): cached for a week, then revalidated.
   if (path.startsWith("/tiles/") || path.startsWith("/basemaps/")) {
     const file = safeJoin(ASSETS_DIR, path);
     if (!file) return void res.writeHead(400).end("Bad path");
-    serveFile(req, res, file, true);
+    serveFile(req, res, file, "week");
     return;
   }
 
@@ -376,7 +408,7 @@ const httpServer = createServer((req, res) => {
   const candidate = safeJoin(CLIENT_DIST, path === "/" ? "/index.html" : path);
   if (candidate && existsSync(candidate) && statSync(candidate).isFile()) {
     if (extname(candidate) === ".html") serveIndexHtml(req, res, candidate);
-    else serveFile(req, res, candidate, true);
+    else serveFile(req, res, candidate, "immutable");
     return;
   }
   const indexHtml = join(CLIENT_DIST, "index.html");
