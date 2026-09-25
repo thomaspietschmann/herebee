@@ -67,6 +67,14 @@ void main() {
     expect(store.value, isNull, reason: 'an empty list must not leave a keychain item behind');
   });
 
+  test('forgetAll keeps the room that is still open', () async {
+    await rooms.load();
+    await rooms.touch('a');
+    await rooms.touch('b');
+    await rooms.forgetAll(keep: 'b');
+    expect(rooms.rooms.map((r) => r.secret), ['b']);
+  });
+
   test('remembers peers met, newest first, without duplicates, capped', () async {
     await rooms.load();
     await rooms.touch('a');

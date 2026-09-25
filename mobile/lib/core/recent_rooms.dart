@@ -161,7 +161,10 @@ class RecentRooms extends ChangeNotifier {
 
   Future<void> forget(String secret) => _replace(rooms.where((r) => r.secret != secret).toList());
 
-  Future<void> forgetAll() => _replace(const []);
+  /// Forgets every room except [keep], the one currently open, which the user
+  /// is still in and would lose the way back to.
+  Future<void> forgetAll({String? keep}) =>
+      _replace(rooms.where((r) => r.secret == keep).toList());
 
   Future<void> _replace(List<RecentRoom> next) async {
     _rooms = next.take(maxRooms).toList();

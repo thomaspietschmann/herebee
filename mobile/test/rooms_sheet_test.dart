@@ -101,6 +101,32 @@ void main() {
     expect(find.text('Zuletzt betreten'), findsNothing);
     expect(find.text('Neuen Raum öffnen'), findsOneWidget);
   });
+
+  testWidgets('the open room is marked, cannot be forgotten and survives forget-all',
+      (tester) async {
+    final recent = RecentRooms(MemorySecretStore());
+    await recent.load();
+    await recent.touch('a');
+    await recent.sawPeers('a', ['x']);
+    await recent.touch('current');
+    await recent.sawPeers('current', ['me']);
+
+    await tester.pumpWidget(host(recent, (_) {}));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Du bist hier'), findsOneWidget);
+    expect(find.byTooltip('Raum vergessen'), findsOneWidget,
+        reason: 'only the other room has a close button');
+
+    await tester.tap(find.text('Alle vergessen'));
+    await tester.pumpAndSettle();
+    expect(recent.rooms.map((r) => r.secret), ['current']);
+    expect(find.text('Biene me'), findsOneWidget);
+    expect(find.text('Biene x'), findsNothing);
+    expect(find.text('Alle vergessen'), findsNothing,
+        reason: 'nothing left that could be forgotten');
+  });
 }
 
 Widget startHost(RecentRooms recent, void Function(RoomsChoice) onChoose) => MaterialApp(

@@ -422,6 +422,7 @@ class RoomsPicker extends StatelessWidget {
       listenable: recent,
       builder: (context, _) {
         final rooms = recent.rooms;
+        final forgettable = rooms.any((r) => r.secret != currentSecret);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -446,13 +447,14 @@ class RoomsPicker extends StatelessWidget {
                   onOpen: () => onChoose(RoomsChoice(room.secret)),
                   onForget: () => recent.forget(room.secret),
                 ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: recent.forgetAll,
-                  child: Text(l.roomsForgetAll),
+              if (forgettable)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => recent.forgetAll(keep: currentSecret),
+                    child: Text(l.roomsForgetAll),
+                  ),
                 ),
-              ),
             ],
             const SizedBox(height: 8),
             Text(l.roomsNote, style: _body.copyWith(fontSize: 12, color: Colors.white54)),
@@ -483,25 +485,50 @@ class _RoomTile extends StatelessWidget {
     final l = L.of(context);
     final title = room.seeds.isEmpty ? l.roomsUnnamed : room.seeds.map(nameFor).join(', ');
     final when = relativeTime(l, DateTime.now().difference(room.lastEntered));
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
+    final tile = ListTile(
+      contentPadding: current ? const EdgeInsets.only(left: 12, right: 8) : EdgeInsets.zero,
       onTap: onOpen,
       leading: Icon(current ? Icons.place : Icons.history,
-          color: current ? const Color(0xFFF5B301) : Colors.white54),
+          color: current ? _honey : Colors.white54),
       title: Text(title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Colors.white, fontSize: 15)),
-      subtitle: Text(current ? '$when · ${l.roomsCurrent}' : when,
-          style: const TextStyle(color: Colors.white54, fontSize: 12)),
-      trailing: IconButton(
-        tooltip: l.roomsForget,
-        icon: const Icon(Icons.close, color: Colors.white54, size: 20),
-        onPressed: onForget,
+          style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: current ? FontWeight.w600 : FontWeight.normal)),
+      subtitle: Text(when, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+      // The open room cannot be forgotten from here, so it carries a badge
+      // where the others have their close button.
+      trailing: current
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: _honey, borderRadius: BorderRadius.circular(999)),
+              child: Text(l.roomsCurrent,
+                  style: const TextStyle(
+                      color: _sheetBg, fontSize: 11, fontWeight: FontWeight.w700)),
+            )
+          : IconButton(
+              tooltip: l.roomsForget,
+              icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+              onPressed: onForget,
+            ),
+    );
+    if (!current) return tile;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: _honey.withValues(alpha: 0.12),
+        border: Border.all(color: _honey.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(12),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(type: MaterialType.transparency, child: tile),
     );
   }
 }
+
+const Color _honey = Color(0xFFF5B301);
 
 /// "just now" up to "n days ago", in the app's own words. Placeholders are
 /// strings on purpose, matching the web (see scripts/i18n-to-arb.ts).
