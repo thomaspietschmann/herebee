@@ -200,6 +200,7 @@ class RoomController extends ChangeNotifier {
       return;
     }
     _selfSeed = await storage.seed();
+    await storage.dropLegacyOwnName(_selfSeed!);
     notifyListeners();
   }
 
@@ -529,7 +530,7 @@ class RoomController extends ChangeNotifier {
       hdg: pos.hdg,
       spd: pos.spd,
       at: DateTime.now().millisecondsSinceEpoch,
-      name: storage.sharesName ? storage.customName(seed) : null,
+      name: storage.sharesName(_keys!.roomId) ? storage.ownName(_keys!.roomId) : null,
     )));
   }
 
@@ -540,9 +541,13 @@ class RoomController extends ChangeNotifier {
   int colorIndexFor(String seed) =>
       _colorIndex.putIfAbsent(seed, () => _colorIndex.length);
 
+  /// The name the user typed for [seed]; for themselves, the one for this room.
+  String? customName(String seed) =>
+      seed == _selfSeed ? storage.ownName(_keys!.roomId) : storage.customName(seed);
+
   /// Our own name for someone always wins over what they call themselves.
   String resolveName(String seed) {
-    final name = storage.customName(seed) ??
+    final name = customName(seed) ??
         peers[seed]?.sharedName ??
         nameFromSeed(seed, languageCode);
     return seed == _selfSeed ? '$name $youSuffix' : name;
@@ -552,7 +557,11 @@ class RoomController extends ChangeNotifier {
       identityFromSeed(seed, resolveName(seed), hueFromIndex(colorIndexFor(seed)));
 
   Future<void> rename(String seed, String? name) async {
-    await storage.setCustomName(seed, name);
+    if (seed == _selfSeed) {
+      await storage.setOwnName(_keys!.roomId, name);
+    } else {
+      await storage.setCustomName(seed, name);
+    }
     // Resetting our own name also stops sharing it.
     if (seed == _selfSeed && name == null) await setSharesName(false);
     notifyListeners();
@@ -561,7 +570,7 @@ class RoomController extends ChangeNotifier {
   /// Whether our own name goes out with our position. Sent right away, so the
   /// others see the change now rather than with the next fix.
   Future<void> setSharesName(bool on) async {
-    await storage.setSharesName(on);
+    await storage.setSharesName(_keys!.roomId, on);
     _flushSend();
   }
 

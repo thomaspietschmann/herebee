@@ -128,8 +128,10 @@ async function main(): Promise<void> {
   // The map always renders first, so an unusable link never leaves a blank page.
   const map = initMap(document.getElementById("map")!);
 
-  // Local, client-only custom names (never sent anywhere).
-  const nameKey = (seed: string) => "herebee.name." + seed;
+  // Local, client-only custom names (never sent anywhere). Our own name is kept
+  // per room, so a new room never knows what we called ourselves elsewhere.
+  let roomId = ""; // set once the room keys are derived, before anything renders
+  const nameKey = (s: string) => (s === seed ? `herebee.ownName.${roomId}` : "herebee.name." + s);
   const customName = (seed: string): string | null => {
     try {
       return localStorage.getItem(nameKey(seed));
@@ -144,19 +146,19 @@ async function main(): Promise<void> {
   const resolveName = (seed: string) => customName(seed) || sharedNames.get(seed) || nameFromSeed(seed);
 
   // Whether our own custom name goes out with our position. Off unless the user
-  // said yes when naming themselves.
-  const shareNameKey = "herebee.shareName";
+  // said yes when naming themselves in this room.
+  const shareNameKey = () => `herebee.shareName.${roomId}`;
   const sharesName = (): boolean => {
     try {
-      return localStorage.getItem(shareNameKey) === "1";
+      return localStorage.getItem(shareNameKey()) === "1";
     } catch {
       return false;
     }
   };
   const setSharesName = (on: boolean): void => {
     try {
-      if (on) localStorage.setItem(shareNameKey, "1");
-      else localStorage.removeItem(shareNameKey);
+      if (on) localStorage.setItem(shareNameKey(), "1");
+      else localStorage.removeItem(shareNameKey());
     } catch {
       /* private mode: the answer just won't persist */
     }
@@ -223,6 +225,14 @@ async function main(): Promise<void> {
   } catch {
     ui.openInvalidLink();
     return;
+  }
+  roomId = keys.roomId;
+  try {
+    // Older builds kept our own name and its sharing choice across all rooms.
+    localStorage.removeItem("herebee.name." + seed);
+    localStorage.removeItem("herebee.shareName");
+  } catch {
+    /* private mode */
   }
 
   // Remember (per room) whether we were sharing, and restore it after a reload.
