@@ -40,7 +40,19 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   generate: true
+
+# App icons for both platforms from one source. Regenerate after changing
+# assets/icon/*.png with `dart run flutter_launcher_icons`. The Android
+# adaptive icon keeps the bee inside the safe zone so no launcher mask clips it.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/icon.png
+  adaptive_icon_background: "#0e1116"
+  adaptive_icon_foreground: assets/icon/icon-foreground.png
+  remove_alpha_ios: true
