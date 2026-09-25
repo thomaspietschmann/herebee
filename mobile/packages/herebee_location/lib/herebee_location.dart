@@ -173,6 +173,18 @@ class HereBeeLocation {
 
   static Future<void> stop() => _methods.invokeMethod<void>('stop');
 
+  /// Change how eagerly the platform reports while sharing continues: a
+  /// larger [distanceFilterMeters] and [intervalMs] let the radio and the GPS
+  /// rest while the device does. No-op when not sharing.
+  static Future<void> reconfigure({
+    required double distanceFilterMeters,
+    required int intervalMs,
+  }) =>
+      _methods.invokeMethod<void>('reconfigure', {
+        'distanceFilter': distanceFilterMeters,
+        'intervalMs': intervalMs,
+      });
+
   /// True while the platform is actively producing fixes.
   static Future<bool> isSharing() async =>
       await _methods.invokeMethod<bool>('isSharing') ?? false;

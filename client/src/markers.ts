@@ -1,7 +1,7 @@
 /**
  * Marker manager. Renders one avatar marker per peer and expresses "freshness"
  * purely visually from the last-fix timestamp:
- *   fresh (<15s): full colour + pulse · stale (15s–2min): fading + "no signal" ·
+ *   fresh (<45s): full colour + pulse · stale (45s–2min): fading + "no signal" ·
  *   ghost (>2min): greyed at last known spot, "no signal for a while".
  * Separately, a marker can be flagged `offline` when the peer's relay
  * connection is known to have actually dropped (see main.ts's onLeft), which
@@ -18,7 +18,10 @@ import type { Identity } from "./avatar.js";
 import type { Position } from "./types.js";
 import { t } from "./i18n.js";
 
-const FRESH_MS = 15_000;
+// 45 s, not 15: the native apps send only every 30 s while resting in the
+// background, and one missed heartbeat must not read as "no signal". Keep in
+// sync with freshFor in mobile/lib/core/peer_state.dart.
+const FRESH_MS = 45_000;
 const STALE_MS = 120_000;
 const LINGER_MS = 20 * 60_000; // keep a silent peer this long after its last fix
 

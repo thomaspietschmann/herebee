@@ -73,6 +73,15 @@ public class HerebeeLocationPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
         case "stop":
             stop()
             result(nil)
+        case "reconfigure":
+            // Only the distance filter matters on iOS; there is no interval.
+            // Core Location keeps delivering in the background as long as
+            // updates stay on, a larger filter just lets it report less.
+            if sharing, let args = call.arguments as? [String: Any],
+               let filter = (args["distanceFilter"] as? NSNumber)?.doubleValue {
+                manager.distanceFilter = filter
+            }
+            result(nil)
         case "isSharing":
             result(sharing)
         case "isBatteryOptimized":

@@ -14,7 +14,10 @@ library;
 
 import 'types.dart';
 
-const Duration freshFor = Duration(seconds: 15);
+// 45 s, not 15: a sharer resting in the background sends only every 30 s
+// (see send_policy.dart), and one missed heartbeat must not read as "no signal".
+// Keep in sync with FRESH_MS in client/src/markers.ts.
+const Duration freshFor = Duration(seconds: 45);
 const Duration staleFor = Duration(minutes: 2);
 const Duration lingerFor = Duration(minutes: 20);
 

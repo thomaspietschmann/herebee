@@ -117,6 +117,13 @@ class HerebeeLocationPlugin :
                 context.stopService(Intent(context, LocationForegroundService::class.java))
                 result.success(null)
             }
+            "reconfigure" -> {
+                LocationForegroundService.current?.reconfigure(
+                    (call.argument<Number>("intervalMs")?.toLong() ?: 1000L),
+                    (call.argument<Number>("distanceFilter")?.toFloat() ?: 3f),
+                )
+                result.success(null)
+            }
             "isSharing" -> result.success(LocationForegroundService.isRunning)
             "isBatteryOptimized" -> result.success(isBatteryOptimized())
             "openBatterySettings" -> {

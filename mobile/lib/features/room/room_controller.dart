@@ -20,6 +20,7 @@ import '../../core/crypto.dart';
 import '../../core/names.dart';
 import '../../core/net.dart';
 import '../../core/peer_state.dart';
+import '../../core/send_policy.dart';
 import '../../core/storage.dart';
 import '../../core/types.dart';
 
@@ -170,11 +171,12 @@ class RoomController extends ChangeNotifier {
   bool _batteryRisk = false;
   bool get batteryRisk => _batteryRisk;
 
-  /// Outbound updates are capped at one per second, matching the web client.
-  /// Our own marker still moves with every fix; only what leaves the device is
+  /// Outbound updates are capped (one per second in the foreground, matching
+  /// the web client; less often in the background, see SendPolicy). Our own
+  /// marker still moves with every fix; only what leaves the device is
   /// throttled.
-  static const Duration _minSendInterval = Duration(seconds: 1);
-  static const Duration _stationaryHeartbeat = Duration(seconds: 10);
+  final SendPolicy _policy = SendPolicy();
+  SendProfile _applied = SendPolicy.foregroundProfile;
   DateTime _lastSendAt = DateTime.fromMillisecondsSinceEpoch(0);
   Timer? _pendingSend;
 
@@ -326,6 +328,8 @@ class RoomController extends ChangeNotifier {
     // rather than overwriting it, so no subscription can be orphaned.
     await _fixSub?.cancel();
     await _stopSub?.cancel();
+    _policy.reset();
+    _applied = _policy.profile;
     _fixSub = HereBeeLocation.updates.listen(_onFix);
     _stopSub = HereBeeLocation.stops.listen((reason) {
       // The platform pulled the plug: permission revoked, location switched
@@ -339,6 +343,8 @@ class RoomController extends ChangeNotifier {
         notificationTitle: notificationTitle,
         notificationBody: notificationBody,
         notificationStopLabel: notificationStopLabel,
+        distanceFilterMeters: _applied.distanceFilterMeters,
+        intervalMs: _applied.intervalMs,
       );
     } catch (_) {
       // Do not leave listeners attached for a session that never began.
@@ -363,9 +369,23 @@ class RoomController extends ChangeNotifier {
     // Desktop-style static fixes and a stationary phone both mean the provider
     // may go quiet. Re-send the last position on a heartbeat so peers see us as
     // live and the relay's cached blob stays current for newcomers.
+    _startHeartbeat();
+
+    _batteryRisk = await HereBeeLocation.isBatteryOptimized();
+    if (_disposed) return;
+    _sharing = true;
+    _toggling = false;
+    notifyListeners();
+  }
+
+  /// The heartbeat also drives the policy clock: at rest in the background the
+  /// coarse native filter delivers no fixes at all, so only time can move the
+  /// policy from "moving" to "still".
+  void _startHeartbeat() {
     _heartbeat?.cancel();
-    _heartbeat = Timer.periodic(_stationaryHeartbeat, (_) {
+    _heartbeat = Timer.periodic(_applied.heartbeat, (_) {
       if (!_sharing || _lastPos == null) return;
+      if (_applyPolicy()) return; // the change already flushed
       // Refresh our OWN last-seen too, not just the peers'. The web does this
       // (renderSelf before flushSend); without it a stationary sharer watches
       // their own bee decay to "no signal" and vanish after the linger window,
@@ -373,12 +393,6 @@ class RoomController extends ChangeNotifier {
       _touchSelf();
       _flushSend();
     });
-
-    _batteryRisk = await HereBeeLocation.isBatteryOptimized();
-    if (_disposed) return;
-    _sharing = true;
-    _toggling = false;
-    notifyListeners();
   }
 
   /// Re-stamp our own marker with the current time, without a new fix.
@@ -431,12 +445,43 @@ class RoomController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  /// The screen reports lifecycle changes here. Coming back to the foreground
+  /// restores the live cadence and sends at once, so the others never wait for
+  /// a background timer to expire.
+  void setForeground(bool foreground) {
+    _policy.setForeground(foreground);
+    _applyPolicy();
+  }
+
+  /// Apply the policy's current profile if it changed: reconfigure the
+  /// platform request, restart the heartbeat at the new period, and send
+  /// immediately so the transition itself is visible to peers. Returns whether
+  /// anything changed.
+  bool _applyPolicy() {
+    final next = _policy.profile;
+    if (next == _applied) return false;
+    _applied = next;
+    if (!_sharing) return true;
+    unawaited(HereBeeLocation.reconfigure(
+      distanceFilterMeters: next.distanceFilterMeters,
+      intervalMs: next.intervalMs,
+    ));
+    _startHeartbeat();
+    if (_lastPos != null) {
+      _touchSelf();
+      _flushSend();
+    }
+    return true;
+  }
+
   void _onFix(LocationFix fix) {
     final seed = _selfSeed;
     // A fix can arrive after stop: the platform stop is asynchronous on both
     // sides, and a straggler must not resurrect us for our peers.
     if (seed == null || !_sharing || _disposed) return;
     _lastPos = Position(lat: fix.lat, lng: fix.lng, acc: fix.acc, hdg: fix.hdg, spd: fix.spd);
+    _policy.onFix(lat: fix.lat, lng: fix.lng, speed: fix.spd);
+    _applyPolicy();
 
     // Render our own marker from every fix, unthrottled: the throttle exists to
     // spare the network, not to make our own dot stutter.
@@ -459,12 +504,12 @@ class RoomController extends ChangeNotifier {
 
   void _scheduleSend() {
     final elapsed = DateTime.now().difference(_lastSendAt);
-    if (elapsed >= _minSendInterval) {
+    if (elapsed >= _applied.minSend) {
       _flushSend();
     } else {
       // A single trailing timer catches up with whatever the latest position is
       // by the time it fires, rather than queueing every fix.
-      _pendingSend ??= Timer(_minSendInterval - elapsed, () {
+      _pendingSend ??= Timer(_applied.minSend - elapsed, () {
         _pendingSend = null;
         _flushSend();
       });

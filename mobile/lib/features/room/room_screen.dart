@@ -80,6 +80,18 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     // Standby can leave the socket frozen; rebuilding it is cheap and the only
     // reliable way to notice.
     if (state == AppLifecycleState.resumed) c.resume();
+    // Sending slows down off screen (see SendPolicy). "inactive" is transient
+    // (control centre, an incoming call) and does not count as leaving.
+    switch (state) {
+      case AppLifecycleState.resumed:
+        c.setForeground(true);
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        c.setForeground(false);
+      case AppLifecycleState.inactive:
+        break;
+    }
   }
 
   LocationStopReason? _shownStopReason;

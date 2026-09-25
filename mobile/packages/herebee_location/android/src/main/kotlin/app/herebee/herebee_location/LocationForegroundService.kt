@@ -58,6 +58,11 @@ class LocationForegroundService : Service(), LocationListener {
         @Volatile
         var isRunning: Boolean = false
             private set
+
+        /** The running instance, so the plugin can change the request cadence. */
+        @Volatile
+        var current: LocationForegroundService? = null
+            private set
     }
 
     private var wakeLock: PowerManager.WakeLock? = null
@@ -98,6 +103,7 @@ class LocationForegroundService : Service(), LocationListener {
         }
 
         isRunning = true
+        current = this
         // NOT sticky: a restart by the system would resurrect sharing without
         // the user asking, and sharing a location must always be a deliberate act.
         return START_NOT_STICKY
@@ -109,6 +115,19 @@ class LocationForegroundService : Service(), LocationListener {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         } else {
             startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    /**
+     * Re-subscribe with a new cadence while sharing continues. A coarser
+     * filter and interval let the GPS rest while the device does; see the
+     * app's SendPolicy for who decides.
+     */
+    fun reconfigure(intervalMs: Long, distanceFilter: Float) {
+        locationManager?.removeUpdates(this)
+        if (!requestUpdates(intervalMs, distanceFilter)) {
+            onStopped?.invoke("servicesDisabled")
+            stopSelf()
         }
     }
 
@@ -206,6 +225,7 @@ class LocationForegroundService : Service(), LocationListener {
 
     override fun onDestroy() {
         isRunning = false
+        current = null
         try {
             locationManager?.removeUpdates(this)
         } catch (_: SecurityException) {
