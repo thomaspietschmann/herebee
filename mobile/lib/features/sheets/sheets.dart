@@ -28,10 +28,15 @@ Future<T?> _sheet<T>(
       constraints: const BoxConstraints(maxWidth: 640),
       builder: (context) => PopScope(
         canPop: dismissible,
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
-            child: SingleChildScrollView(child: builder(context)),
+        // The sheet does not avoid the keyboard on its own; lift it by the
+        // inset so a focused text field stays visible.
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
+              child: SingleChildScrollView(child: builder(context)),
+            ),
           ),
         ),
       ),
