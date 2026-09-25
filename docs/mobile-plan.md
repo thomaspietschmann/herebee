@@ -22,8 +22,9 @@ same rooms, same map, same privacy posture — is a constraint, not a goal.
 
 Production today: `https://herebee.app` on the owner's own Coolify instance
 (Traefik + Let's Encrypt, `TRUSTED_PROXY_HOPS=1`, auto-deploy on push to `main`).
-The basemap is a Europe PMTiles extract (`BBOX=-11,34,40,71`, `MAXZOOM=14`,
-~22 GB) on a persistent volume, never in the image. The apps read that same
+The basemap is a worldwide PMTiles extract (`BBOX=-180,-85,180,85`, `MAXZOOM=12`,
+~18 GB; was a Europe-only extract at `BBOX=-11,34,40,71`, `MAXZOOM=14`, ~22 GB)
+on a persistent volume, never in the image. The apps read that same
 archive over HTTP range requests, so its size is irrelevant to the client and the
 map stays free of any third-party tile service.
 

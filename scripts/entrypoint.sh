@@ -5,6 +5,12 @@
 # server always starts within seconds and the healthcheck passes immediately;
 # the map simply fills in once the (rare) download completes.
 #
+# When BBOX/MAXZOOM changed from the last extract, the old file is removed
+# before re-extracting rather than kept alongside the new one: a changed
+# region/zoom can be an arbitrarily different size, and the volume is not
+# guaranteed to have room for both at once. This trades a brief basemap gap
+# (until the new extract lands) for never filling the disk on a config change.
+#
 # Both the extract and the server run UNPRIVILEGED as the `node` user. The extract
 # pulls a remote planet file and writes the volume, so it must not run as root.
 set -e
@@ -12,8 +18,8 @@ set -e
 TILES_DIR="${ASSETS_DIR:-/app/server/assets}/tiles"
 TILE_FILE="$TILES_DIR/basemap.pmtiles"
 PARAMS_FILE="$TILES_DIR/.params"
-BBOX="${BBOX:-5.5,45.5,17.2,55.1}"
-MAXZOOM="${MAXZOOM:-14}"
+BBOX="${BBOX:--180,-85,180,85}"   # old default: 5.5,45.5,17.2,55.1 (DACH)
+MAXZOOM="${MAXZOOM:-12}"          # old default: 14
 WANT="$BBOX@$MAXZOOM"
 
 mkdir -p "$TILES_DIR"
@@ -25,6 +31,10 @@ HAVE=""
 [ -f "$PARAMS_FILE" ] && HAVE="$(cat "$PARAMS_FILE")"
 
 if [ ! -s "$TILE_FILE" ] || [ "$HAVE" != "$WANT" ]; then
+  if [ -n "$HAVE" ] && [ "$HAVE" != "$WANT" ] && [ -s "$TILE_FILE" ]; then
+    echo "[entrypoint] region/zoom changed ($HAVE -> $WANT) — removing old basemap to make room before re-extract"
+    rm -f "$TILE_FILE"
+  fi
   echo "[entrypoint] tiles need (re-)extract (bbox=$BBOX maxzoom=$MAXZOOM) — running in background as node…"
   export TILES_DIR TILE_FILE PARAMS_FILE BBOX MAXZOOM WANT
   # Drop root: the network fetch + extract runs as node and writes node-owned files.
@@ -37,7 +47,7 @@ if [ ! -s "$TILE_FILE" ] || [ "$HAVE" != "$WANT" ]; then
       echo "[entrypoint] basemap ready — region=$WANT"
       ls -lh "$TILE_FILE" || true
     else
-      echo "[entrypoint] extract FAILED; leaving any existing basemap in place"
+      echo "[entrypoint] extract FAILED; basemap stays missing/stale until the next successful start"
       rm -f "$TILE_FILE.tmp"
     fi
   ' &

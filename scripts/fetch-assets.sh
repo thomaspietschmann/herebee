@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # Fetch the self-hosted map assets:
-#   - a regional PMTiles extract (default: DACH, maxzoom 14) from the latest
-#     Protomaps planet build, read via HTTP range (the planet is never fully
-#     downloaded)
+#   - a worldwide PMTiles extract (default: whole world, maxzoom 12) from the
+#     latest Protomaps planet build, read via HTTP range (the planet is never
+#     fully downloaded)
 #   - the Protomaps basemap fonts (glyphs) and sprites, for zero third-party calls
 #
 # Env overrides:
-#   BBOX     minLon,minLat,maxLon,maxLat   (default DACH)
-#   MAXZOOM  max zoom level                (default 14; drop to 13 for a smaller file)
+#   BBOX     minLon,minLat,maxLon,maxLat   (default whole world)
+#   MAXZOOM  max zoom level                (default 12; was 14 for the old DACH-only extract)
 #   OUT      output pmtiles path           (default server/assets/tiles/dach.pmtiles)
 #   PLANET   explicit planet URL           (default: resolve latest build)
 set -euo pipefail
 
 PMTILES_VERSION="${PMTILES_VERSION:-1.30.3}"
-BBOX="${BBOX:-5.5,45.5,17.2,55.1}"
-MAXZOOM="${MAXZOOM:-14}"
+BBOX="${BBOX:--180,-85,180,85}"   # old default: 5.5,45.5,17.2,55.1 (DACH)
+MAXZOOM="${MAXZOOM:-12}"          # old default: 14
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${OUT:-$ROOT/server/assets/tiles/basemap.pmtiles}"
 ASSETS="$ROOT/server/assets/basemaps"

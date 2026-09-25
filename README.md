@@ -97,8 +97,8 @@ and clones the Protomaps fonts and sprites into `server/assets/basemaps/`.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BBOX` | `5.5,45.5,17.2,55.1` (DACH) | `minLon,minLat,maxLon,maxLat` of the extract |
-| `MAXZOOM` | `14` | Maximum zoom level in the extract |
+| `BBOX` | `-180,-85,180,85` (whole world; was `5.5,45.5,17.2,55.1` / DACH) | `minLon,minLat,maxLon,maxLat` of the extract |
+| `MAXZOOM` | `12` (was `14`) | Maximum zoom level in the extract |
 | `OUT` | `server/assets/tiles/basemap.pmtiles` | Output path |
 | `PLANET` | latest build | Explicit planet URL |
 
@@ -181,9 +181,11 @@ The PMTiles archive is not in the image. Mount a persistent volume at
 `/app/server/assets/tiles`. On start, the entrypoint extracts
 `basemap.pmtiles` from the latest Protomaps planet build in the background when
 the file is missing or when `BBOX` or `MAXZOOM` differ from the last extract.
-The server starts within seconds either way. The map fills in once the extract
-finishes. To refresh the basemap, delete `basemap.pmtiles` on the volume or
-change `BBOX`/`MAXZOOM` and restart.
+The server starts within seconds either way. When `BBOX`/`MAXZOOM` changed, the
+old file is deleted first (a different region/zoom can be a very different
+size, and the volume may not fit both at once) — so the basemap is briefly
+missing until the new extract lands. To refresh the basemap, delete
+`basemap.pmtiles` on the volume or change `BBOX`/`MAXZOOM` and restart.
 
 Run it as one container behind an HTTPS reverse proxy that forwards the
 WebSocket upgrade.
@@ -196,8 +198,8 @@ WebSocket upgrade.
 | `ALLOWED_ORIGINS` | unset | Comma list of browser origins allowed to open the WebSocket. When set, a browser `Origin` is required. Add `app://herebee` to admit the native apps. |
 | `PUBLIC_ORIGIN` | derived per request | Absolute origin written into `/style/{lang}.json`. Set it in production. |
 | `TRUSTED_PROXY_HOPS` | `0` | Number of reverse proxies in front of the process. `1` behind a single proxy, so the per-IP cap uses the real client IP. |
-| `BBOX` | `5.5,45.5,17.2,55.1` | Region of the tile extract |
-| `MAXZOOM` | `14` | Maximum zoom of the tile extract |
+| `BBOX` | `-180,-85,180,85` | Region of the tile extract (was `5.5,45.5,17.2,55.1`) |
+| `MAXZOOM` | `12` | Maximum zoom of the tile extract (was `14`) |
 | `PLANET_URL` | latest build | Explicit Protomaps planet URL for the extract |
 | `APPLE_APP_IDS` | unset | Comma list of `TEAMID.bundleId` for `apple-app-site-association` |
 | `ANDROID_PACKAGE` | unset | Android application id for `assetlinks.json` |
