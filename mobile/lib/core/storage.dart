@@ -1,5 +1,5 @@
 /// What this app persists in plain preferences: an identity seed, a reconnect
-/// token, and any names the user typed for other people.
+/// token, any names the user typed, and whether their own name is shared.
 ///
 /// Deliberately nothing else here. There is no "was sharing" flag, because the
 /// app never resumes sharing on its own — starting must always come from a tap
@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const String _seedKey = 'herebee.seed';
 const String _cidKey = 'herebee.cid';
 const String _namePrefix = 'herebee.name.';
+const String _shareNameKey = 'herebee.shareName';
 
 /// Matches the browser's token shape (see `mintToken` in client/src/main.ts).
 String mintToken() {
@@ -46,7 +47,8 @@ class Storage {
     return minted;
   }
 
-  /// A name the user typed for a peer. Local only, never transmitted.
+  /// A name the user typed for a peer or themselves. Local only; the user's own
+  /// name goes out, encrypted, only while [sharesName] is on.
   String? customName(String seed) => _prefs.getString('$_namePrefix$seed');
 
   Future<void> setCustomName(String seed, String? name) async {
@@ -54,6 +56,18 @@ class Storage {
       await _prefs.remove('$_namePrefix$seed');
     } else {
       await _prefs.setString('$_namePrefix$seed', name);
+    }
+  }
+
+  /// Whether our own custom name rides along with our position. Off unless the
+  /// user said yes when naming themselves.
+  bool get sharesName => _prefs.getBool(_shareNameKey) ?? false;
+
+  Future<void> setSharesName(bool on) async {
+    if (on) {
+      await _prefs.setBool(_shareNameKey, true);
+    } else {
+      await _prefs.remove(_shareNameKey);
     }
   }
 }

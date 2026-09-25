@@ -342,6 +342,47 @@ Future<String?> showRenameSheet(
   );
 }
 
+/// After naming yourself: may the others see it? Needs an answer, so the sheet
+/// can't be dismissed; the answer is true for "share".
+Future<bool> askShareName(BuildContext context, String name) async {
+  final share = await _sheet<bool>(
+    context,
+    dismissible: false,
+    builder: (context) {
+      final l = L.of(context);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 18),
+          Text(l.shareNameTitle, style: _h2),
+          const SizedBox(height: 8),
+          Text(l.shareNameBody(name), style: _body),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(l.shareNameNo),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(l.shareNameYes),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
+  return share ?? false;
+}
+
 /// Hands the room link to the system share sheet, which is how people actually
 /// pass it to one person in one messenger.
 ///

@@ -32,6 +32,22 @@ void main() {
     expect((u! as LocUpdate).acc, isNull);
   });
 
+  test('carries a shared name, cleaned, and drops only a bad one', () {
+    final named = validPeerUpdate({...loc(), 'name': ' \u202eAnna '})! as LocUpdate;
+    expect(named.name, 'Anna');
+    final bad = validPeerUpdate({...loc(), 'name': 42});
+    expect(bad, isA<LocUpdate>(), reason: 'a malformed name must not drop the position');
+    expect((bad! as LocUpdate).name, isNull);
+    expect((validPeerUpdate(loc())! as LocUpdate).name, isNull);
+  });
+
+  test('sends the name only when there is one', () {
+    const base = LocUpdate(seed: 's', lat: 1, lng: 2, acc: null, hdg: null, spd: null, at: 3);
+    expect(base.toJson().containsKey('name'), isFalse);
+    const named = LocUpdate(seed: 's', lat: 1, lng: 2, acc: null, hdg: null, spd: null, at: 3, name: 'Anna');
+    expect(named.toJson()['name'], 'Anna');
+  });
+
   test('accepts a stop update', () {
     expect(validPeerUpdate({'k': 'stop', 'seed': 'abc'}), isA<StopUpdate>());
   });

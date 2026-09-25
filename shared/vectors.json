@@ -629,5 +629,73 @@
       "hue": null,
       "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><defs><clipPath id=\"c8z6njr\"><ellipse cx=\"50\" cy=\"56\" rx=\"30\" ry=\"34\"/></clipPath></defs><g fill=\"rgba(253, 253, 251, 0.72)\" stroke=\"#17120d\" stroke-width=\"1.6\">\n    <ellipse cx=\"27\" cy=\"43\" rx=\"13\" ry=\"21\" transform=\"rotate(-27 27 43)\"/>\n    <ellipse cx=\"73\" cy=\"43\" rx=\"13\" ry=\"21\" transform=\"rotate(27 73 43)\"/></g><g stroke=\"#17120d\" stroke-width=\"3\" stroke-linecap=\"round\" fill=\"hsl(128 78% 59%)\">\n    <path d=\"M42 29 q-10 -9 -7 -20\" fill=\"none\"/><circle cx=\"35\" cy=\"9\" r=\"4.5\"/>\n    <path d=\"M58 29 q10 -9 7 -20\" fill=\"none\"/><circle cx=\"65\" cy=\"9\" r=\"4.5\"/></g><ellipse cx=\"50\" cy=\"56\" rx=\"30\" ry=\"34\" transform=\"rotate(-3 50 56)\" fill=\"hsl(45 96% 60%)\" stroke=\"#17120d\" stroke-width=\"3\"/><g clip-path=\"url(#c8z6njr)\" fill=\"#24170e\" opacity=\"0.92\" transform=\"rotate(0 50 56)\">\n    <rect x=\"13\" y=\"57\" width=\"74\" height=\"8\" rx=\"4\"/>\n    <rect x=\"13\" y=\"73\" width=\"74\" height=\"8\" rx=\"4\"/>\n    </g><g fill=\"#ff7f90\" opacity=\"0.68\"><ellipse cx=\"32\" cy=\"61\" rx=\"5\" ry=\"3.4\"/><ellipse cx=\"68\" cy=\"61\" rx=\"5\" ry=\"3.4\"/></g><circle cx=\"38\" cy=\"47\" r=\"9.5\" fill=\"#fdfdfb\" stroke=\"#17120d\" stroke-width=\"1.6\"/><circle cx=\"36.8\" cy=\"47.2\" r=\"4.7\" fill=\"#17120d\"/><circle cx=\"34.833333333333336\" cy=\"44\" r=\"1.5666666666666667\" fill=\"#fdfdfb\" opacity=\"0.9\"/><path d=\"M55 47 q6 5 13 0\" fill=\"none\" stroke=\"#17120d\" stroke-width=\"3\" stroke-linecap=\"round\"/><ellipse cx=\"50\" cy=\"67\" rx=\"4.5\" ry=\"5.5\" fill=\"#17120d\"/></svg>"
     }
+  ],
+  "sharedNames": [
+    {
+      "input": "Anna",
+      "output": "Anna"
+    },
+    {
+      "input": "  Anna   Lena  ",
+      "output": "Anna Lena"
+    },
+    {
+      "input": "Anna  Lena",
+      "output": "Anna Lena"
+    },
+    {
+      "input": "Tab\tand\nnewline",
+      "output": "Tab and newline"
+    },
+    {
+      "input": "‮anna‬",
+      "output": "anna"
+    },
+    {
+      "input": "zero​width﻿",
+      "output": "zerowidth"
+    },
+    {
+      "input": "👩‍💻 Coder",
+      "output": "👩‍💻 Coder"
+    },
+    {
+      "input": "line sep",
+      "output": "line sep"
+    },
+    {
+      "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "input": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+      "output": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+    },
+    {
+      "input": "   ",
+      "output": null
+    },
+    {
+      "input": "",
+      "output": null
+    },
+    {
+      "input": "​‮",
+      "output": null
+    },
+    {
+      "input": 42,
+      "output": null
+    },
+    {
+      "input": null,
+      "output": null
+    },
+    {
+      "input": [
+        "Anna"
+      ],
+      "output": null
+    }
   ]
 }

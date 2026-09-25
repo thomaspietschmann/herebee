@@ -2,6 +2,7 @@
 /// inbound validation in `client/src/net.ts`. See `shared/PROTOCOL.md`.
 library;
 
+import 'names.dart';
 import 'types.dart';
 
 const int roomIdLength = 32;
@@ -131,5 +132,7 @@ PeerUpdate? validPeerUpdate(Object? raw) {
     hdg: hdg,
     spd: spd,
     at: at.toInt(),
+    // A malformed name drops only the name, not the position.
+    name: sanitizeSharedName(raw['name']),
   );
 }

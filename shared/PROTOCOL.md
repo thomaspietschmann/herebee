@@ -65,7 +65,8 @@ The server never sees these shapes. Reference: `client/src/types.ts`.
   "acc": 12.5,   // accuracy in metres, or null
   "hdg": 180,    // heading in degrees, or null
   "spd": 1.4,    // speed in m/s, or null — gates whether hdg is shown
-  "at": 1700000000000 }   // client clock, ms
+  "at": 1700000000000,    // client clock, ms
+  "name": "Anna" }        // optional: the sender's own name, only if they opted in
 
 { "k": "stop", "seed": "<string>" }
 ```
@@ -81,6 +82,22 @@ the map (`validPeerUpdate` in `client/src/net.ts`):
 - `lat` ∈ [−90, 90], `lng` ∈ [−180, 180], both finite.
 - `acc`, `hdg`, `spd`: finite number or `null`.
 - `at`: finite number.
+- `name` (optional): run through `sanitizeSharedName` (`client/src/names.ts`):
+  anything but a string is ignored; whitespace of any kind (space separators,
+  line/paragraph separators, tab, CR, LF, VT, FF, NEL) becomes a space; other
+  control, format (except ZWNJ/ZWJ) and surrogate characters are removed; runs
+  of spaces collapse to one; the result is trimmed and capped at 40 code points. Empty → no name. A bad `name` drops only the name, never the frame.
+  Render it as text only. `sharedNames` in `shared/vectors.json` pins the output.
+
+### Shared names
+
+A name leaves the device only inside the ciphertext, and only if the user said
+yes when naming themselves; the relay never sees it. It rides on every `loc`, so
+the relay's last-blob replay carries it to newcomers, and a `loc` *without* it
+means "no longer shared": fall back to the generated name. Receivers keep it in
+memory only. A name the receiver typed for that peer always wins, and avatar
+and colour stay derived from the seed, so a chosen name cannot pose as another
+bee. Old clients ignore the field.
 
 Anything malformed is dropped silently.
 

@@ -6,6 +6,7 @@
 import { decryptJson, encryptJson, type RoomKeys } from "./crypto.js";
 import type { ServerMessage } from "../../shared/messages.js";
 import type { PeerUpdate } from "./types.js";
+import { sanitizeSharedName } from "./names.js";
 
 // Liveness: send a ping this often; consider the link dead if nothing at all has
 // arrived from the server within STALE_LIMIT (covers a silently dropped network
@@ -36,7 +37,11 @@ function validPeerUpdate(u: unknown): PeerUpdate | null {
   if (!inRange(o.lat, -90, 90) || !inRange(o.lng, -180, 180)) return null;
   if (!optNum(o.acc) || !optNum(o.hdg) || !optNum(o.spd)) return null;
   if (typeof o.at !== "number" || !Number.isFinite(o.at)) return null;
-  return { k: "loc", seed: o.seed, lat: o.lat, lng: o.lng, acc: o.acc, hdg: o.hdg, spd: o.spd, at: o.at };
+  const update: PeerUpdate = { k: "loc", seed: o.seed, lat: o.lat, lng: o.lng, acc: o.acc, hdg: o.hdg, spd: o.spd, at: o.at };
+  // A malformed name drops only the name, not the position.
+  const name = sanitizeSharedName(o.name);
+  if (name) update.name = name;
+  return update;
 }
 
 export interface NetHandlers {

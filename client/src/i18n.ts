@@ -65,6 +65,11 @@ const de = {
   renamePlaceholder: "z. B. Anna",
   save: "Speichern",
   renameReset: "Auf Zufallsnamen zurücksetzen",
+  shareNameTitle: "Namen teilen?",
+  shareNameBody:
+    "Alle mit dem Raum-Link sehen dich dann als „{name}“, solange du deinen Standort teilst, in jedem Raum. Der Name ist Ende-zu-Ende-verschlüsselt, der Server sieht ihn nicht.",
+  shareNameYes: "Teilen",
+  shareNameNo: "Nur für mich",
   invalidTitle: "Dieser Link führt nirgendwo hin",
   invalidBody:
     "Der Raum-Schlüssel im Link fehlt oder ist unvollständig. Raum-Links werden automatisch erzeugt — man kann sie nicht von Hand eintippen.",
@@ -169,6 +174,11 @@ const en: Record<Key, string> = {
   renamePlaceholder: "e.g. Anna",
   save: "Save",
   renameReset: "Reset to random name",
+  shareNameTitle: "Share your name?",
+  shareNameBody:
+    "Everyone with the room link will then see you as “{name}” while you share your location, in every room. The name is end-to-end encrypted; the server never sees it.",
+  shareNameYes: "Share",
+  shareNameNo: "Just for me",
   invalidTitle: "This link leads nowhere",
   invalidBody:
     "The room key in the link is missing or incomplete. Room links are generated automatically — you can't type them by hand.",
@@ -265,6 +275,11 @@ const es: Record<Key, string> = {
   renamePlaceholder: "p. ej. Anna",
   save: "Guardar",
   renameReset: "Restablecer al nombre aleatorio",
+  shareNameTitle: "¿Compartir tu nombre?",
+  shareNameBody:
+    "Todos los que tengan el enlace de la sala te verán como «{name}» mientras compartas tu ubicación, en todas las salas. El nombre se cifra de extremo a extremo; el servidor no lo ve.",
+  shareNameYes: "Compartir",
+  shareNameNo: "Solo para mí",
   invalidTitle: "Este enlace no lleva a ninguna parte",
   invalidBody:
     "Falta la clave de la sala en el enlace o está incompleta. Los enlaces de sala se generan automáticamente: no se pueden escribir a mano.",
@@ -361,6 +376,11 @@ const it: Record<Key, string> = {
   renamePlaceholder: "es. Anna",
   save: "Salva",
   renameReset: "Ripristina il nome casuale",
+  shareNameTitle: "Condividere il tuo nome?",
+  shareNameBody:
+    "Chiunque abbia il link della stanza ti vedrà come «{name}» finché condividi la tua posizione, in ogni stanza. Il nome è cifrato end-to-end; il server non lo vede.",
+  shareNameYes: "Condividi",
+  shareNameNo: "Solo per me",
   invalidTitle: "Questo link non porta da nessuna parte",
   invalidBody:
     "La chiave della stanza nel link manca o è incompleta. I link delle stanze vengono generati automaticamente: non si possono digitare a mano.",
@@ -458,6 +478,11 @@ const fr: Record<Key, string> = {
   renamePlaceholder: "p. ex. Anna",
   save: "Enregistrer",
   renameReset: "Rétablir le nom aléatoire",
+  shareNameTitle: "Partager ton nom ?",
+  shareNameBody:
+    "Toute personne ayant le lien du salon te verra comme « {name} » tant que tu partages ta position, dans chaque salon. Le nom est chiffré de bout en bout ; le serveur ne le voit pas.",
+  shareNameYes: "Partager",
+  shareNameNo: "Juste pour moi",
   invalidTitle: "Ce lien ne mène nulle part",
   invalidBody:
     "La clé du salon dans le lien est absente ou incomplète. Les liens de salon sont générés automatiquement — impossible de les saisir à la main.",
@@ -555,6 +580,11 @@ const pt: Record<Key, string> = {
   renamePlaceholder: "ex.: Anna",
   save: "Guardar",
   renameReset: "Repor o nome aleatório",
+  shareNameTitle: "Partilhar o teu nome?",
+  shareNameBody:
+    "Todos com o link da sala vão ver-te como «{name}» enquanto partilhas a tua localização, em todas as salas. O nome é cifrado de ponta a ponta; o servidor não o vê.",
+  shareNameYes: "Partilhar",
+  shareNameNo: "Só para mim",
   invalidTitle: "Este link não leva a lado nenhum",
   invalidBody:
     "A chave da sala no link está em falta ou incompleta. Os links de sala são gerados automaticamente — não é possível escrevê-los à mão.",

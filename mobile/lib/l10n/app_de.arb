@@ -71,6 +71,17 @@
   "renamePlaceholder": "z. B. Anna",
   "save": "Speichern",
   "renameReset": "Auf Zufallsnamen zurücksetzen",
+  "shareNameTitle": "Namen teilen?",
+  "shareNameBody": "Alle mit dem Raum-Link sehen dich dann als „{name}“, solange du deinen Standort teilst, in jedem Raum. Der Name ist Ende-zu-Ende-verschlüsselt, der Server sieht ihn nicht.",
+  "@shareNameBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareNameYes": "Teilen",
+  "shareNameNo": "Nur für mich",
   "invalidTitle": "Dieser Link führt nirgendwo hin",
   "invalidBody": "Der Raum-Schlüssel im Link fehlt oder ist unvollständig. Raum-Links werden automatisch erzeugt — man kann sie nicht von Hand eintippen.",
   "invalidCta": "Neuen Raum öffnen",

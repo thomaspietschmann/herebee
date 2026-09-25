@@ -21,6 +21,7 @@ class LocUpdate extends PeerUpdate {
     required this.hdg,
     required this.spd,
     required this.at,
+    this.name,
   }) : super(seed);
 
   final double lat;
@@ -38,6 +39,10 @@ class LocUpdate extends PeerUpdate {
   /// Client timestamp (ms) of this fix.
   final int at;
 
+  /// The sender's own name, present only if they chose to share it. Lives
+  /// inside the ciphertext like everything else here; the relay never sees it.
+  final String? name;
+
   @override
   Map<String, dynamic> toJson() => {
         'k': 'loc',
@@ -48,6 +53,7 @@ class LocUpdate extends PeerUpdate {
         'hdg': hdg,
         'spd': spd,
         'at': at,
+        if (name != null) 'name': name,
       };
 }
 

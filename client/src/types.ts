@@ -14,6 +14,9 @@ export type PeerUpdate =
       hdg: number | null; // heading in degrees, if moving
       spd: number | null; // speed in m/s, if moving — gates whether hdg is shown
       at: number; // client timestamp (ms) of this fix
+      // The sender's own name, present only if they chose to share it. Lives
+      // inside the ciphertext like everything else here; the relay never sees it.
+      name?: string;
     }
   | { k: "stop"; seed: string };
 

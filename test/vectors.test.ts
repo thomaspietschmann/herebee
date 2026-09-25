@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { b64urlToBytes, decryptJson, deriveRoomKeys, encryptJson } from "../client/src/crypto.js";
 import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
-import { englishName, germanName } from "../client/src/names.js";
+import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
 import { isValidRoomId } from "../server/src/roomId.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -111,6 +111,10 @@ async function main(): Promise<void> {
   }
   for (const s of vectors.svgSamples) {
     check(creatureSvg(s.seed) === s.svg, `bee SVG sample matches verbatim for "${s.seed}"`);
+  }
+
+  for (const n of vectors.sharedNames) {
+    check(sanitizeSharedName(n.input) === n.output, `sanitizeSharedName(${JSON.stringify(n.input)})`);
   }
 
   console.log(

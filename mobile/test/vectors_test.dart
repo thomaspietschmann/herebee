@@ -133,6 +133,14 @@ void main() {
       });
     }
   });
+
+  group('shared names', () {
+    for (final v in vectors['sharedNames'] as List<dynamic>) {
+      test('sanitizes ${jsonEncode(v['input'])}', () {
+        expect(sanitizeSharedName(v['input']), v['output']);
+      });
+    }
+  });
 }
 
 String _hex(List<int> bytes) =>

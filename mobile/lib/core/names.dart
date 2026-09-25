@@ -70,3 +70,30 @@ String englishName(String seed) {
 /// Persona sets exist for German and English; other locales use the English set.
 String nameFromSeed(String seed, String languageCode) =>
     languageCode == 'de' ? germanName(seed) : englishName(seed);
+
+/// Longest shared name, in code points. Matches the rename field's maxLength.
+const int sharedNameMax = 40;
+
+// Whitespace of any kind, which becomes a single space.
+final RegExp _nameSpace = RegExp(r'[\p{Zs}\p{Zl}\p{Zp}\t\n\x0B\f\r\u0085]+', unicode: true);
+// Other control, format and surrogate characters, except ZWNJ/ZWJ
+// (U+200C/U+200D), which real scripts and emoji sequences need. This is what
+// strips bidi overrides and invisible characters a malicious member could use
+// to disguise a name.
+final RegExp _nameStrip = RegExp(r'\p{Cc}|\p{Cs}|(?![‌‍])\p{Cf}', unicode: true);
+
+/// Clean a name a peer chose to share, or null if nothing usable is left.
+///
+/// Every room member holds the key, so this is untrusted input. Port of
+/// `sanitizeSharedName` in `client/src/names.ts`; shared/vectors.json pins the
+/// output so both sides show the same name.
+String? sanitizeSharedName(Object? raw) {
+  if (raw is! String) return null;
+  final cleaned = raw
+      .replaceAll(_nameSpace, ' ')
+      .replaceAll(_nameStrip, '')
+      .replaceAll(RegExp(r' {2,}'), ' ')
+      .trim();
+  final capped = String.fromCharCodes(cleaned.runes.take(sharedNameMax)).trim();
+  return capped.isEmpty ? null : capped;
+}

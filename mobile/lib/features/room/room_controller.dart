@@ -529,6 +529,7 @@ class RoomController extends ChangeNotifier {
       hdg: pos.hdg,
       spd: pos.spd,
       at: DateTime.now().millisecondsSinceEpoch,
+      name: storage.sharesName ? storage.customName(seed) : null,
     )));
   }
 
@@ -539,8 +540,11 @@ class RoomController extends ChangeNotifier {
   int colorIndexFor(String seed) =>
       _colorIndex.putIfAbsent(seed, () => _colorIndex.length);
 
+  /// Our own name for someone always wins over what they call themselves.
   String resolveName(String seed) {
-    final name = storage.customName(seed) ?? nameFromSeed(seed, languageCode);
+    final name = storage.customName(seed) ??
+        peers[seed]?.sharedName ??
+        nameFromSeed(seed, languageCode);
     return seed == _selfSeed ? '$name $youSuffix' : name;
   }
 
@@ -549,7 +553,16 @@ class RoomController extends ChangeNotifier {
 
   Future<void> rename(String seed, String? name) async {
     await storage.setCustomName(seed, name);
+    // Resetting our own name also stops sharing it.
+    if (seed == _selfSeed && name == null) await setSharesName(false);
     notifyListeners();
+  }
+
+  /// Whether our own name goes out with our position. Sent right away, so the
+  /// others see the change now rather than with the next fix.
+  Future<void> setSharesName(bool on) async {
+    await storage.setSharesName(on);
+    _flushSend();
   }
 
   /// Sharers currently on the map, online first then alphabetical — the same

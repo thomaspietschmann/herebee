@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 import { b64urlToBytes, bytesToB64url, deriveRoomKeys, encryptJson } from "../client/src/crypto.js";
 import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
-import { englishName, germanName } from "../client/src/names.js";
+import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
 import type { PeerUpdate } from "../client/src/types.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -117,6 +117,26 @@ function corruptChecksum(roomId: string): string {
   return bytesToB64url(raw);
 }
 
+/** What a malicious or careless peer might put in `name`; see sanitizeSharedName. */
+const SHARED_NAME_INPUTS: unknown[] = [
+  "Anna",
+  "  Anna   Lena  ",
+  "Anna\u00a0\u2003Lena", // no-break and em space
+  "Tab\tand\nnewline",
+  "\u202eanna\u202c", // right-to-left override
+  "zero\u200bwidth\ufeff",
+  "👩\u200d💻 Coder", // ZWJ sequence survives
+  "line\u2028sep",
+  "x".repeat(50),
+  "😀".repeat(45), // capped in code points, not UTF-16 units
+  "   ",
+  "",
+  "\u200b\u202e",
+  42,
+  null,
+  ["Anna"],
+];
+
 async function main(): Promise<void> {
   // Guard: the salt is the one thing here that is a literal copy of crypto.ts.
   const probeRoom = await deriveRoomKeys(SECRETS[0]);
@@ -182,6 +202,8 @@ async function main(): Promise<void> {
     svg: creatureSvg(seed),
   }));
 
+  const sharedNames = SHARED_NAME_INPUTS.map((input) => ({ input, output: sanitizeSharedName(input) }));
+
   const doc = {
     $schema: "https://herebee.app/schemas/vectors-v1",
     version: 1,
@@ -202,6 +224,7 @@ async function main(): Promise<void> {
     rng,
     identity,
     svgSamples,
+    sharedNames,
   };
 
   writeFileSync(OUT, JSON.stringify(doc, null, 2) + "\n", "utf8");

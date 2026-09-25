@@ -54,6 +54,10 @@ class PeerEntry {
   /// the moment a fresh "loc" arrives, which can only happen over a live link.
   bool offline;
 
+  /// The name this peer chose to share, from its latest update. In memory
+  /// only: it is theirs to show while they share, not ours to keep.
+  String? sharedName;
+
   Duration ageAt(DateTime now) =>
       Duration(milliseconds: now.millisecondsSinceEpoch - at);
 
@@ -86,13 +90,18 @@ class PeerStore {
           :final acc,
           :final hdg,
           :final spd,
-          :final at
+          :final at,
+          :final name
         ):
         final position = Position(lat: lat, lng: lng, acc: acc, hdg: hdg, spd: spd);
         final existing = _entries[seed];
         if (existing == null) {
-          _entries[seed] = PeerEntry(seed: seed, position: position, at: at, isSelf: isSelf);
+          _entries[seed] = PeerEntry(seed: seed, position: position, at: at, isSelf: isSelf)
+            ..sharedName = name;
         } else {
+          // Every update carries the name or not, so a peer who stops sharing
+          // theirs falls back to the generated one with their next position.
+          existing.sharedName = name;
           existing.position = position;
           existing.at = at;
           existing.isSelf = isSelf || existing.isSelf;

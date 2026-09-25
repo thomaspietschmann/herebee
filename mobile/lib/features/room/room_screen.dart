@@ -307,7 +307,12 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                   current: c.resolveName(openEntry.seed),
                   hasCustom: c.storage.customName(openEntry.seed) != null,
                 );
-                if (name != null) await c.rename(openEntry.seed, name.isEmpty ? null : name);
+                if (name == null) return;
+                await c.rename(openEntry.seed, name.isEmpty ? null : name);
+                // Our own name is never shared without asking.
+                if (openEntry.seed == c.selfSeed && name.isNotEmpty && context.mounted) {
+                  await c.setSharesName(await askShareName(context, name));
+                }
               },
               onToggleFollow: () => c.toggleFollow(openEntry.seed),
               onClose: () => setState(() => _openMenuSeed = null),

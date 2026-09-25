@@ -99,6 +99,7 @@ function ownCid(): string {
  */
 type PeerSnap = {
   seed: string;
+  name?: string;
   lat: number;
   lng: number;
   acc: number | null;
@@ -136,7 +137,30 @@ async function main(): Promise<void> {
       return null;
     }
   };
-  const resolveName = (seed: string) => customName(seed) || nameFromSeed(seed);
+  // Names peers chose to share, from their latest update. In memory only: a
+  // name is theirs to show while they share, not ours to keep.
+  const sharedNames = new Map<string, string>();
+  // Our own name for someone always wins over what they call themselves.
+  const resolveName = (seed: string) => customName(seed) || sharedNames.get(seed) || nameFromSeed(seed);
+
+  // Whether our own custom name goes out with our position. Off unless the user
+  // said yes when naming themselves.
+  const shareNameKey = "herebee.shareName";
+  const sharesName = (): boolean => {
+    try {
+      return localStorage.getItem(shareNameKey) === "1";
+    } catch {
+      return false;
+    }
+  };
+  const setSharesName = (on: boolean): void => {
+    try {
+      if (on) localStorage.setItem(shareNameKey, "1");
+      else localStorage.removeItem(shareNameKey);
+    } catch {
+      /* private mode: the answer just won't persist */
+    }
+  };
 
   const seed = ownSeed();
   const cid = ownCid();
@@ -222,11 +246,18 @@ async function main(): Promise<void> {
     if (update.k === "stop") {
       markers.remove(update.seed); // active stop -> disappear now
       roster.delete(update.seed);
+      sharedNames.delete(update.seed);
       if (followSeed === update.seed) followSeed = null;
       refreshRoster();
       return;
     }
+    // Every update carries the name or not, so a peer who stops sharing theirs
+    // falls back to the generated one with their next position.
+    const before = sharedNames.get(update.seed);
+    if (update.name) sharedNames.set(update.seed, update.name);
+    else sharedNames.delete(update.seed);
     const peer = identityFromSeed(update.seed, rosterName(update.seed), hueFromIndex(colorIndexFor(update.seed)));
+    if (before !== update.name) markers.rename(update.seed, peer.name);
     markers.upsert(
       update.seed,
       peer,
@@ -273,8 +304,26 @@ async function main(): Promise<void> {
         entry.name = rosterName(s);
         refreshRoster();
       }
-      coord.post({ t: "rename", seed: s } satisfies Bus); // reflect it in sibling tabs
+      const announce = () => {
+        coord.post({ t: "rename", seed: s } satisfies Bus); // reflect it in sibling tabs
+        if (s === seed) resendName();
+      };
+      if (s !== seed) return announce();
+      // Our own name: never shared without asking, and a reset stops sharing.
+      if (!name) {
+        setSharesName(false);
+        return announce();
+      }
+      ui.askShareName(name, (share) => {
+        setSharesName(share);
+        announce();
+      });
     });
+  }
+
+  /** Our own name or sharing choice changed: let peers see it now, not with the next fix. */
+  function resendName(): void {
+    if (coord.isLeader() && lastPos) flushSend();
   }
 
   // ---- avatar action menu (bubbles + info box) and follow mode ----------
@@ -374,7 +423,10 @@ async function main(): Promise<void> {
   }
 
   function locUpdate(pos: Position): PeerUpdate {
-    return { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, spd: pos.spd, at: Date.now() };
+    const update: PeerUpdate = { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, spd: pos.spd, at: Date.now() };
+    const name = sharesName() ? customName(seed) : null;
+    if (name) update.name = name;
+    return update;
   }
 
   // Cap outbound position updates (bus + network) at ~1/s. GPS can fire far
@@ -475,6 +527,7 @@ async function main(): Promise<void> {
       .filter((e) => !e.self)
       .map((e) => ({
         seed: e.id,
+        name: sharedNames.get(e.id),
         lat: e.pos.lat,
         lng: e.pos.lng,
         acc: e.pos.acc,
@@ -565,7 +618,7 @@ async function main(): Promise<void> {
         browserEntered = true;
         ui.dismissWelcome();
         for (const p of m.peers) {
-          renderPeer({ k: "loc", seed: p.seed, lat: p.lat, lng: p.lng, acc: p.acc, hdg: p.hdg, spd: p.spd, at: p.at });
+          renderPeer({ k: "loc", seed: p.seed, name: p.name, lat: p.lat, lng: p.lng, acc: p.acc, hdg: p.hdg, spd: p.spd, at: p.at });
         }
         renderSelf(m.self);
         ui.setSharing(m.sharing);
@@ -599,8 +652,10 @@ async function main(): Promise<void> {
         }
         break;
       case "rename": {
-        // A custom name changed in some tab. Re-resolve it everywhere.
+        // A custom name changed in some tab. Re-resolve it everywhere, and if
+        // it was ours, the leader tells the room.
         markers.rename(m.seed, rosterName(m.seed));
+        if (m.seed === seed) resendName();
         const e = roster.get(m.seed);
         if (e) {
           e.name = rosterName(m.seed);

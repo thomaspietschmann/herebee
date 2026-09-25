@@ -74,3 +74,29 @@ export function nameFromSeed(seed: string): string {
   // Persona sets exist for German and English; other locales use the English set.
   return lang === "de" ? germanName(seed) : englishName(seed);
 }
+
+/** Longest shared name, in code points. Matches the rename input's maxlength. */
+export const SHARED_NAME_MAX = 40;
+
+// Whitespace of any kind, which becomes a single space.
+const NAME_SPACE = /[\p{Zs}\p{Zl}\p{Zp}\t\n\v\f\r\u0085]+/gu;
+// Other control, format and surrogate characters, except ZWNJ/ZWJ
+// (U+200C/U+200D), which real scripts and emoji sequences need. This is what
+// strips bidi overrides and invisible characters a malicious member could use
+// to disguise a name.
+const NAME_STRIP = /\p{Cc}|\p{Cs}|(?![\u200C\u200D])\p{Cf}/gu;
+
+/**
+ * Clean a name a peer chose to share, or null if nothing usable is left.
+ *
+ * Every room member holds the key, so this is untrusted input: strip invisible
+ * and direction-changing characters, collapse whitespace, cap the length. The
+ * result is only ever rendered as text. The native apps must produce exactly the
+ * same output; shared/vectors.json pins it.
+ */
+export function sanitizeSharedName(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const cleaned = raw.replace(NAME_SPACE, " ").replace(NAME_STRIP, "").replace(/ {2,}/g, " ").trim();
+  const capped = Array.from(cleaned).slice(0, SHARED_NAME_MAX).join("").trim();
+  return capped.length ? capped : null;
+}

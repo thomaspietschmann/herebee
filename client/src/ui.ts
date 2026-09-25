@@ -232,19 +232,40 @@ export class UI {
     const input = document.getElementById("rename-input") as HTMLInputElement;
     input.focus();
     input.select();
+    // Close first: onSave may open the next sheet (the share question).
     const save = () => {
       const v = input.value.trim();
-      onSave(v.length ? v : null);
       this.closeSheet();
+      onSave(v.length ? v : null);
     };
     document.getElementById("rename-save")!.addEventListener("click", save);
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") save();
     });
     document.getElementById("rename-reset")?.addEventListener("click", () => {
-      onSave(null);
       this.closeSheet();
+      onSave(null);
     });
+  }
+
+  /** After naming yourself: may the others see it? Needs an answer, so it can't be dismissed. */
+  askShareName(name: string, onAnswer: (share: boolean) => void): void {
+    this.sheetBody.innerHTML = `
+      <h2>${t("shareNameTitle")}</h2>
+      <p>${t("shareNameBody", { name: this.esc(name) })}</p>
+      <div class="linkbox" style="margin-top:16px">
+        <button class="btn btn-ghost" id="share-name-no" style="flex:1">${t("shareNameNo")}</button>
+        <button class="btn btn-primary" id="share-name-yes" style="flex:1">${t("shareNameYes")}</button>
+      </div>`;
+    this.gated = true;
+    this.openSheet();
+    document.getElementById("sheet-close")!.style.display = "none";
+    const answer = (share: boolean) => {
+      this.closeSheet();
+      onAnswer(share);
+    };
+    document.getElementById("share-name-yes")!.addEventListener("click", () => answer(true));
+    document.getElementById("share-name-no")!.addEventListener("click", () => answer(false));
   }
 
   /** Shown when the room link's secret is missing or malformed. */
