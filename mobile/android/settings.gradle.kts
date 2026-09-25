@@ -19,7 +19,7 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "9.0.1" apply false
+    id("com.android.application") version "9.1.1" apply false
     id("org.jetbrains.kotlin.android") version "2.3.20" apply false
     // Upstream bug: maplibre_android 0.3.6 applies the ktlint Gradle plugin in
     // its own build.gradle.kts without a version. Its standalone settings.gradle
@@ -27,7 +27,7 @@ plugins {
     // a subproject, so the consumer build has to declare it. Build-time only —
     // nothing from it ends up in the APK. Remove once the plugin stops leaking
     // its lint configuration into consumers.
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.1" apply false
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0" apply false
 }
 
 include(":app")
