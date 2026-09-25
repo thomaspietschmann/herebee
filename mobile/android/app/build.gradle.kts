@@ -58,6 +58,13 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            // Flutter turns R8 on for release builds by default. That renames
+            // classes the MapLibre platform view is created through, and the map
+            // then dies with a NullPointerException on first use (blank screen,
+            // only in release builds). Nothing here is worth obfuscating and the
+            // APK is native libraries by weight, so shrinking buys nothing.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

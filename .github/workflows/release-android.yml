@@ -86,7 +86,9 @@ jobs:
           name: "HereBee Android ${{ steps.version.outputs.name }}"
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
-          prerelease: true
+          # Not marked as a pre-release: Obtainium and similar updaters skip
+          # pre-releases by default and would report "no compatible release".
+          # The README carries the development-status warning instead.
           files: mobile/build/app/outputs/flutter-apk/HereBee-${{ steps.version.outputs.name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
