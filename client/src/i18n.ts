@@ -29,7 +29,7 @@ export const lang: Lang = detectLang();
 // German is the source of truth and defines the key set.
 const de = {
   title: "HereBee — flüchtig zusammenfinden",
-  hint: "Nur aktive Teilnehmer sehen dich. Standorte werden Ende-zu-Ende verschlüsselt und nicht gespeichert.",
+  hint: "Jeder mit dem Link sieht, wo du bist, solange du teilst. Standorte werden Ende-zu-Ende verschlüsselt und nicht gespeichert.",
   shareLink: "Link teilen",
   shareLocation: "Standort teilen",
   stopSharing: "Teilen stoppen",
@@ -133,7 +133,7 @@ export type Key = keyof typeof de;
 
 const en: Record<Key, string> = {
   title: "HereBee — meet up, fleetingly",
-  hint: "Only active participants can see you. Locations are end-to-end encrypted and never stored.",
+  hint: "Anyone with the link can see where you are while you share. Locations are end-to-end encrypted and never stored.",
   shareLink: "Share link",
   shareLocation: "Share location",
   stopSharing: "Stop sharing",
@@ -229,7 +229,7 @@ const en: Record<Key, string> = {
 
 const es: Record<Key, string> = {
   title: "HereBee — encontrarse al instante",
-  hint: "Solo los participantes activos te ven. Las ubicaciones se cifran de extremo a extremo y no se guardan.",
+  hint: "Cualquiera con el enlace ve dónde estás mientras compartes. Las ubicaciones se cifran de extremo a extremo y no se guardan.",
   shareLink: "Compartir enlace",
   shareLocation: "Compartir ubicación",
   stopSharing: "Dejar de compartir",
@@ -325,7 +325,7 @@ const es: Record<Key, string> = {
 
 const it: Record<Key, string> = {
   title: "HereBee — ritrovarsi al volo",
-  hint: "Solo i partecipanti attivi ti vedono. Le posizioni sono cifrate end-to-end e non vengono memorizzate.",
+  hint: "Chiunque abbia il link vede dove sei finché condividi. Le posizioni sono cifrate end-to-end e non vengono memorizzate.",
   shareLink: "Condividi link",
   shareLocation: "Condividi posizione",
   stopSharing: "Interrompi condivisione",
@@ -421,7 +421,7 @@ const it: Record<Key, string> = {
 
 const fr: Record<Key, string> = {
   title: "HereBee — se retrouver en un instant",
-  hint: "Seuls les participants actifs te voient. Les positions sont chiffrées de bout en bout et ne sont pas conservées.",
+  hint: "Toute personne ayant le lien voit où tu es tant que tu partages. Les positions sont chiffrées de bout en bout et ne sont pas conservées.",
   shareLink: "Partager le lien",
   shareLocation: "Partager ma position",
   stopSharing: "Arrêter le partage",
@@ -519,7 +519,7 @@ const fr: Record<Key, string> = {
 
 const pt: Record<Key, string> = {
   title: "HereBee — encontrar-se num instante",
-  hint: "Só os participantes ativos te veem. As localizações são cifradas de ponta a ponta e não são guardadas.",
+  hint: "Qualquer pessoa com o link vê onde estás enquanto partilhas. As localizações são cifradas de ponta a ponta e não são guardadas.",
   shareLink: "Partilhar link",
   shareLocation: "Partilhar localização",
   stopSharing: "Parar de partilhar",

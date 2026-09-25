@@ -1,7 +1,7 @@
 {
   "@@locale": "fr",
   "title": "HereBee — se retrouver en un instant",
-  "hint": "Seuls les participants actifs te voient. Les positions sont chiffrées de bout en bout et ne sont pas conservées.",
+  "hint": "Toute personne ayant le lien voit où tu es tant que tu partages. Les positions sont chiffrées de bout en bout et ne sont pas conservées.",
   "shareLink": "Partager le lien",
   "shareLocation": "Partager ma position",
   "stopSharing": "Arrêter le partage",

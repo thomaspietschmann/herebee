@@ -1,7 +1,7 @@
 {
   "@@locale": "pt",
   "title": "HereBee — encontrar-se num instante",
-  "hint": "Só os participantes ativos te veem. As localizações são cifradas de ponta a ponta e não são guardadas.",
+  "hint": "Qualquer pessoa com o link vê onde estás enquanto partilhas. As localizações são cifradas de ponta a ponta e não são guardadas.",
   "shareLink": "Partilhar link",
   "shareLocation": "Partilhar localização",
   "stopSharing": "Parar de partilhar",

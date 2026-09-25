@@ -1,7 +1,7 @@
 {
   "@@locale": "de",
   "title": "HereBee — flüchtig zusammenfinden",
-  "hint": "Nur aktive Teilnehmer sehen dich. Standorte werden Ende-zu-Ende verschlüsselt und nicht gespeichert.",
+  "hint": "Jeder mit dem Link sieht, wo du bist, solange du teilst. Standorte werden Ende-zu-Ende verschlüsselt und nicht gespeichert.",
   "shareLink": "Link teilen",
   "shareLocation": "Standort teilen",
   "stopSharing": "Teilen stoppen",

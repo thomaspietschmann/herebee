@@ -1,7 +1,7 @@
 {
   "@@locale": "it",
   "title": "HereBee — ritrovarsi al volo",
-  "hint": "Solo i partecipanti attivi ti vedono. Le posizioni sono cifrate end-to-end e non vengono memorizzate.",
+  "hint": "Chiunque abbia il link vede dove sei finché condividi. Le posizioni sono cifrate end-to-end e non vengono memorizzate.",
   "shareLink": "Condividi link",
   "shareLocation": "Condividi posizione",
   "stopSharing": "Interrompi condivisione",

@@ -1,7 +1,7 @@
 {
   "@@locale": "es",
   "title": "HereBee — encontrarse al instante",
-  "hint": "Solo los participantes activos te ven. Las ubicaciones se cifran de extremo a extremo y no se guardan.",
+  "hint": "Cualquiera con el enlace ve dónde estás mientras compartes. Las ubicaciones se cifran de extremo a extremo y no se guardan.",
   "shareLink": "Compartir enlace",
   "shareLocation": "Compartir ubicación",
   "stopSharing": "Dejar de compartir",

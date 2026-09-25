@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
   "title": "HereBee — meet up, fleetingly",
-  "hint": "Only active participants can see you. Locations are end-to-end encrypted and never stored.",
+  "hint": "Anyone with the link can see where you are while you share. Locations are end-to-end encrypted and never stored.",
   "shareLink": "Share link",
   "shareLocation": "Share location",
   "stopSharing": "Stop sharing",
