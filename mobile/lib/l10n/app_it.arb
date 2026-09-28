@@ -63,6 +63,7 @@
   "offlineStatus": "offline",
   "menuRenameAria": "Cambia nome",
   "menuFollow": "Segui",
+  "menuZoomAria": "Ingrandisci",
   "menuUnfollow": "Smetti di seguire",
   "infoLastSeen": "Visto l'ultima volta: {t}",
   "infoDistance": "A {d} di distanza",

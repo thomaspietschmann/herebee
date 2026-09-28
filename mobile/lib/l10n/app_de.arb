@@ -163,6 +163,7 @@
   "offlineStatus": "offline",
   "menuRenameAria": "Namen ändern",
   "menuFollow": "Folgen",
+  "menuZoomAria": "Heranzoomen",
   "menuUnfollow": "Folgen beenden",
   "infoLastSeen": "Zuletzt gesehen: {t}",
   "@infoLastSeen": {

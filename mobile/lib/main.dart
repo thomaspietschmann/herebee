@@ -21,6 +21,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/crypto.dart';
 import 'core/deep_links.dart';
+import 'ui/tokens.dart' as tokens;
 import 'core/names.dart';
 import 'core/recent_rooms.dart';
 import 'core/storage.dart';
@@ -59,15 +60,7 @@ class HereBeeApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: L.supportedLocales,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0E1116),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF5B301),
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: _theme(),
       home: _RoomHost(storage: storage, recent: recent),
     );
   }
@@ -269,4 +262,68 @@ class _BrokenLinkScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+ThemeData _theme() {
+  const pill = StadiumBorder();
+  const label = TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: -0.15);
+  const size = Size(48, 48);
+  const padding = EdgeInsets.symmetric(horizontal: 22);
+  return ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: tokens.ink,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: tokens.signal,
+      brightness: Brightness.dark,
+    ).copyWith(
+      primary: tokens.signal,
+      onPrimary: tokens.onSignal,
+      surface: tokens.ink2,
+      onSurface: tokens.mist,
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: tokens.signal,
+        foregroundColor: tokens.onSignal,
+        minimumSize: size,
+        padding: const EdgeInsets.symmetric(horizontal: 26),
+        shape: pill,
+        textStyle: label,
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        backgroundColor: tokens.inkGlass,
+        foregroundColor: tokens.mist,
+        side: const BorderSide(color: tokens.hair),
+        minimumSize: size,
+        padding: padding,
+        shape: pill,
+        textStyle: label,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: tokens.mist, textStyle: label),
+    ),
+    snackBarTheme: const SnackBarThemeData(
+      backgroundColor: tokens.mist,
+      contentTextStyle: TextStyle(color: tokens.ink, fontSize: 13, fontWeight: FontWeight.w600),
+      actionTextColor: tokens.ink,
+      shape: pill,
+      elevation: 0,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: tokens.ink,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: tokens.hair),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: tokens.hair),
+      ),
+    ),
+  );
 }

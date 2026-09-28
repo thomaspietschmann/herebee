@@ -10,6 +10,7 @@ library;
 import 'dart:convert';
 import 'package:cryptography/cryptography.dart' show Sha256;
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cryptography/cryptography.dart';
@@ -17,6 +18,7 @@ import 'package:herebee/core/avatar.dart';
 import 'package:herebee/core/crypto.dart';
 import 'package:herebee/core/names.dart';
 import 'package:herebee/core/rng.dart';
+import 'package:herebee/features/map/menu_layout.dart';
 
 Map<String, dynamic> loadVectors() {
   final file = File('../shared/vectors.json');
@@ -140,6 +142,53 @@ void main() {
         expect(sanitizeSharedName(v['input']), v['output']);
       });
     }
+  });
+
+  group('bee menu layout', () {
+    Offset pt(dynamic p) => Offset((p['x'] as num).toDouble(), (p['y'] as num).toDouble());
+    MenuChoice? choiceOf(dynamic c) =>
+        c == null ? null : MenuChoice(c['dir'] as int, c['turn'] as int, c['dist'] as int);
+    for (final v in vectors['menuLayout'] as List<dynamic>) {
+      final input = v['input'];
+      test('places the menu for a bee at ${jsonEncode(input['anchor'])}, previous ${jsonEncode(input['previous'])}', () {
+        final b = input['bounds'];
+        final got = layoutMenu(
+          anchor: pt(input['anchor']),
+          bounds: Rect.fromLTRB((b['left'] as num).toDouble(), (b['top'] as num).toDouble(),
+              (b['right'] as num).toDouble(), (b['bottom'] as num).toDouble()),
+          beeRadius: (input['beeRadius'] as num).toDouble(),
+          bubble: (input['bubble'] as num).toDouble(),
+          box: Size((input['box']['w'] as num).toDouble(), (input['box']['h'] as num).toDouble()),
+          previous: choiceOf(input['previous']),
+        );
+        final want = v['output'];
+        final wantBubbles = [for (final p in want['bubbles'] as List<dynamic>) pt(p)];
+        for (var i = 0; i < 3; i++) {
+          expect((got.bubbles[i] - wantBubbles[i]).distance, lessThan(1e-6), reason: 'bubble $i');
+        }
+        expect((got.box - pt(want['box'])).distance, lessThan(1e-6), reason: 'box');
+        expect(got.choice, choiceOf(want['choice']), reason: 'choice');
+      });
+    }
+
+    test('springs towards its target exactly like the web', () {
+      final spring = vectors['menuSpring'];
+      final target = pt(spring['target']);
+      final dt = (spring['dt'] as num).toDouble();
+      var s = Spring.zero;
+      var i = 0;
+      for (final want in spring['states'] as List<dynamic>) {
+        while (i < (want['step'] as int)) {
+          s = springStep(s, target, dt);
+          i++;
+        }
+        expect((s.position - pt(want)).distance, lessThan(1e-6), reason: 'position #$i');
+        expect((Offset(s.vx, s.vy) - Offset((want['vx'] as num).toDouble(), (want['vy'] as num).toDouble())).distance,
+            lessThan(1e-6),
+            reason: 'velocity #$i');
+        expect(springSettled(s, target), want['settled'], reason: 'settled #$i');
+      }
+    });
   });
 }
 

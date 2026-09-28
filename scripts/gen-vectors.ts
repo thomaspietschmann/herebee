@@ -25,6 +25,7 @@ import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
 import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
 import type { PeerUpdate } from "../client/src/types.js";
+import { layoutMenu, springSettled, springStep, type MenuLayoutInput } from "../client/src/menu-layout.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, "..", "shared", "vectors.json");
@@ -33,6 +34,38 @@ const OUT = join(HERE, "..", "shared", "vectors.json");
 const SALT_TEXT = "localizer/v1";
 
 const sha256Hex = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
+
+const MENU_BOUNDS = { left: 8, top: 110, right: 382, bottom: 700 };
+const MENU_CASES: MenuLayoutInput[] = [
+  [195, 400], [195, 130], [195, 690], [20, 400], [370, 400],
+  [20, 125], [370, 125], [20, 690], [370, 690], [120, 150],
+].map(([x, y]) => ({ anchor: { x, y }, bounds: MENU_BOUNDS, beeRadius: 21, bubble: 38, box: { w: 150, h: 66 } }));
+MENU_CASES.push({
+  anchor: { x: 60, y: 60 },
+  bounds: { left: 0, top: 0, right: 120, bottom: 120 },
+  beeRadius: 26,
+  bubble: 38,
+  box: { w: 150, h: 66 },
+});
+const HYSTERESIS_BASE = { bounds: MENU_BOUNDS, beeRadius: 21, bubble: 38, box: { w: 150, h: 66 } };
+const turned = layoutMenu({ ...HYSTERESIS_BASE, anchor: { x: 195, y: 160 } }).choice;
+MENU_CASES.push(
+  { ...HYSTERESIS_BASE, anchor: { x: 195, y: 190 } },
+  { ...HYSTERESIS_BASE, anchor: { x: 195, y: 190 }, previous: turned },
+  { ...HYSTERESIS_BASE, anchor: { x: 195, y: 400 }, previous: turned }
+);
+const menuLayout = MENU_CASES.map((input) => ({ input, output: layoutMenu(input) }));
+
+const menuSpring = (() => {
+  const target = { x: 50, y: -30 };
+  let s = { x: 0, y: 0, vx: 0, vy: 0 };
+  const states = [];
+  for (let i = 1; i <= 40; i++) {
+    s = springStep(s, target, 1 / 60);
+    if (i % 5 === 0) states.push({ step: i, ...s, settled: springSettled(s, target) });
+  }
+  return { target, dt: 1 / 60, states };
+})();
 
 // --- fixed inputs ----------------------------------------------------------
 // Deliberately NOT random: the committed file must be reproducible. Secrets are
@@ -225,6 +258,8 @@ async function main(): Promise<void> {
     identity,
     svgSamples,
     sharedNames,
+    menuLayout,
+    menuSpring,
   };
 
   writeFileSync(OUT, JSON.stringify(doc, null, 2) + "\n", "utf8");

@@ -3,16 +3,60 @@
 /// `client/src/ui.ts`.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/deep_links.dart';
 import '../../core/recent_rooms.dart';
+import '../map/bee_marker.dart';
+import '../room/room_controller.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/tokens.dart' as tokens;
 import '../../util/markup.dart';
 
-const Color _sheetBg = Color(0xFF12161D);
+const Color _sheetBg = tokens.ink2;
+
+Widget _panel(BuildContext context, Widget child, {required bool closable, EdgeInsets? padding}) =>
+    DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(tokens.panelRadius),
+        boxShadow: tokens.shadow,
+      ),
+      child: Material(
+        color: tokens.ink2,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(tokens.panelRadius),
+          side: const BorderSide(color: tokens.hair),
+        ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: padding ?? const EdgeInsets.fromLTRB(22, 26, 22, 24),
+              child: child,
+            ),
+            if (closable)
+              Positioned(
+                top: 12,
+                right: 14,
+                child: SizedBox(
+                  width: 34,
+                  height: 34,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    tooltip: L.of(context).close,
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Text('×', style: TextStyle(color: tokens.muted, fontSize: 22, height: 1)),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
 
 Future<T?> _sheet<T>(
   BuildContext context, {
@@ -21,110 +65,148 @@ Future<T?> _sheet<T>(
 }) =>
     showModalBottomSheet<T>(
       context: context,
-      backgroundColor: _sheetBg,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      barrierColor: const Color(0x73000000),
       isScrollControlled: true,
       isDismissible: dismissible,
       enableDrag: dismissible,
-      showDragHandle: dismissible,
-      constraints: const BoxConstraints(maxWidth: 640),
+      showDragHandle: false,
+      constraints: const BoxConstraints(maxWidth: 544),
       builder: (context) => PopScope(
         canPop: dismissible,
-        // The sheet does not avoid the keyboard on its own; lift it by the
-        // inset so a focused text field stays visible.
         child: Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
-              child: SingleChildScrollView(child: builder(context)),
+              padding: const EdgeInsets.all(12),
+              child: _panel(context, builder(context), closable: dismissible),
             ),
           ),
         ),
       ),
     );
 
-TextStyle get _body => const TextStyle(color: Colors.white70, fontSize: 14, height: 1.45);
-TextStyle get _h2 =>
-    const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w700);
-
-Widget _fact(String markup, {bool warn = false}) => Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 6, right: 10),
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: warn ? const Color(0xFFFBBF24) : const Color(0xFF4ADE80),
-                shape: BoxShape.circle,
+Future<void> _splash(BuildContext context, {required WidgetBuilder builder}) => showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: const Color(0x80000000),
+      transitionDuration: const Duration(milliseconds: 280),
+      transitionBuilder: (context, animation, _, child) {
+        final t = const Cubic(0.16, 1, 0.3, 1).transform(animation.value);
+        return Opacity(
+          opacity: animation.value,
+          child: Transform.translate(offset: Offset(0, 20 * (1 - t)), child: child),
+        );
+      },
+      pageBuilder: (context, _, _) => PopScope(
+        canPop: false,
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: _panel(context, builder(context),
+                      closable: false, padding: const EdgeInsets.fromLTRB(22, 30, 22, 24)),
+                ),
               ),
             ),
           ),
-          Expanded(child: MarkupText(markup, style: _body)),
-        ],
+        ),
+      ),
+    );
+
+TextStyle get _body => const TextStyle(color: tokens.muted, fontSize: 13.5, height: 1.55);
+TextStyle get _h2 => const TextStyle(
+    color: tokens.mist, fontSize: 19, fontWeight: FontWeight.w700, letterSpacing: -0.38);
+
+Widget _fact(String markup, {bool warn = false}) => DecoratedBox(
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: tokens.hair))),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 2, top: 6, right: 12),
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: warn ? tokens.signal : tokens.beacon,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Expanded(
+              child: MarkupText(markup,
+                  style: const TextStyle(color: tokens.mist, fontSize: 13, height: 1.5)),
+            ),
+          ],
+        ),
       ),
     );
 
 /// The entry gate. Nothing has touched the network when this opens, and it
 /// cannot be dismissed without a decision: becoming present is visible to the
 /// whole room, so it must be deliberate.
-Future<void> showWelcomeSheet(BuildContext context) async {
-  await _sheet<void>(
-    context,
-    dismissible: false,
-    builder: (context) {
-      final l = L.of(context);
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 14),
-          Text(l.welcomeTitle, style: _h2),
-          const SizedBox(height: 10),
-          Text(l.welcomeIntro, style: _body),
-          const SizedBox(height: 16),
-          _fact(l.welcomeFact1),
-          _fact(l.welcomeFact2),
-          _fact(l.welcomeFact3),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: const Color(0xFFF5B301),
-                foregroundColor: const Color(0xFF17120D),
+Future<void> showWelcomeSheet(BuildContext context) => _splash(
+      context,
+      builder: (context) {
+        final l = L.of(context);
+        final logo = math.min(220.0, MediaQuery.sizeOf(context).width * 0.54);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: logo,
+                height: logo,
+                margin: const EdgeInsets.only(bottom: 18),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x6B000000), blurRadius: 50, offset: Offset(0, 18)),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset('assets/brand/herebee-logo.png', fit: BoxFit.cover),
               ),
-              child: Text(l.welcomeCta,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
             ),
-          ),
-        ],
-      );
-    },
-  );
-}
+            Text(l.welcomeTitle, style: _h2, textAlign: TextAlign.center),
+            const SizedBox(height: 4),
+            Text(l.welcomeIntro, style: _body, textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            _fact(l.welcomeFact1),
+            _fact(l.welcomeFact2),
+            _fact(l.welcomeFact3),
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l.welcomeCta),
+            ),
+          ],
+        );
+      },
+    );
 
 /// A hand-edited or truncated link. Room links are generated; they cannot be
 /// typed, so there is nothing for the user to correct.
-Future<void> showInvalidLinkSheet(BuildContext context) => _sheet<void>(
+Future<void> showInvalidLinkSheet(BuildContext context) => _splash(
       context,
-      dismissible: false,
       builder: (context) {
         final l = L.of(context);
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 14),
-            Text(l.invalidTitle, style: _h2),
-            const SizedBox(height: 10),
-            Text(l.invalidBody, style: _body),
-            const SizedBox(height: 18),
+            Text(l.invalidTitle, style: _h2, textAlign: TextAlign.center),
+            const SizedBox(height: 4),
+            Text(l.invalidBody, style: _body, textAlign: TextAlign.center),
           ],
         );
       },
@@ -151,7 +233,7 @@ Future<void> showInfoSheet(BuildContext context) => _sheet<void>(
             const SizedBox(height: 6),
             Text(
               l.mapCredits('Protomaps', 'OpenStreetMap'),
-              style: const TextStyle(color: Colors.white38, fontSize: 12),
+              style: const TextStyle(color: tokens.muted, fontSize: 12),
             ),
             const SizedBox(height: 14),
             TextButton(
@@ -193,7 +275,7 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(text,
                   style: const TextStyle(
-                      color: Color(0xFFFBBF24), fontSize: 13, fontStyle: FontStyle.italic)),
+                      color: tokens.signal, fontSize: 13, fontStyle: FontStyle.italic)),
             );
 
         return Column(
@@ -315,11 +397,10 @@ Future<String?> showRenameSheet(
             controller: controller,
             autofocus: true,
             maxLength: 40,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: tokens.mist),
             decoration: InputDecoration(
               hintText: l.renamePlaceholder,
-              hintStyle: const TextStyle(color: Colors.white30),
-              border: const OutlineInputBorder(),
+              hintStyle: const TextStyle(color: tokens.muted),
             ),
             onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
           ),
@@ -481,7 +562,7 @@ class RoomsPicker extends StatelessWidget {
             if (rooms.isNotEmpty) ...[
               const SizedBox(height: 18),
               Text(l.roomsRecent,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 0.6)),
+                  style: const TextStyle(color: tokens.muted, fontSize: 12, letterSpacing: 0.6)),
               const SizedBox(height: 4),
               for (final room in rooms)
                 _RoomTile(
@@ -501,7 +582,7 @@ class RoomsPicker extends StatelessWidget {
                 ),
             ],
             const SizedBox(height: 8),
-            Text(l.roomsNote, style: _body.copyWith(fontSize: 12, color: Colors.white54)),
+            Text(l.roomsNote, style: _body.copyWith(fontSize: 12, color: tokens.muted)),
           ],
         );
       },
@@ -557,7 +638,7 @@ class _RoomLinkFieldState extends State<_RoomLinkField> {
     final l = L.of(context);
     return TextField(
       controller: _controller,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: tokens.mist),
       keyboardType: TextInputType.url,
       autocorrect: false,
       textInputAction: TextInputAction.go,
@@ -567,11 +648,10 @@ class _RoomLinkFieldState extends State<_RoomLinkField> {
           ? SystemContextMenu.editableText(editableTextState: state)
           : AdaptiveTextSelectionToolbar.editableText(editableTextState: state),
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.link, color: Colors.white54),
+        prefixIcon: const Icon(Icons.link, color: tokens.muted),
         hintText: l.roomsLinkHint,
-        hintStyle: const TextStyle(color: Colors.white30),
+        hintStyle: const TextStyle(color: tokens.muted),
         errorText: _invalid ? l.roomsLinkInvalid : null,
-        border: const OutlineInputBorder(),
       ),
     );
   }
@@ -601,15 +681,15 @@ class _RoomTile extends StatelessWidget {
       contentPadding: current ? const EdgeInsets.only(left: 12, right: 8) : EdgeInsets.zero,
       onTap: onOpen,
       leading: Icon(current ? Icons.place : Icons.history,
-          color: current ? _honey : Colors.white54),
+          color: current ? _honey : tokens.muted),
       title: Text(title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-              color: Colors.white,
+              color: tokens.mist,
               fontSize: 15,
               fontWeight: current ? FontWeight.w600 : FontWeight.normal)),
-      subtitle: Text(when, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+      subtitle: Text(when, style: const TextStyle(color: tokens.muted, fontSize: 12)),
       // The open room cannot be forgotten from here, so it carries a badge
       // where the others have their close button.
       trailing: current
@@ -622,7 +702,7 @@ class _RoomTile extends StatelessWidget {
             )
           : IconButton(
               tooltip: l.roomsForget,
-              icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+              icon: const Icon(Icons.close, color: tokens.muted, size: 20),
               onPressed: onForget,
             ),
     );
@@ -640,7 +720,7 @@ class _RoomTile extends StatelessWidget {
   }
 }
 
-const Color _honey = Color(0xFFF5B301);
+const Color _honey = tokens.beacon;
 
 /// "just now" up to "n days ago", in the app's own words. Placeholders are
 /// strings on purpose, matching the web (see scripts/i18n-to-arb.ts).
@@ -650,3 +730,90 @@ String relativeTime(L l, Duration d) {
   if (d.inHours < 48) return l.hoursAgo('${d.inHours}');
   return l.daysAgo('${d.inDays}');
 }
+
+Future<void> showParticipantsSheet(
+  BuildContext context,
+  RoomController controller,
+  void Function(String seed) onGoTo,
+) =>
+    _sheet<void>(
+      context,
+      builder: (context) {
+        final l = L.of(context);
+        final roster = controller.roster();
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.participantsTitle, style: _h2),
+            const SizedBox(height: 4),
+            Text(
+              controller.offlineSharers > 0
+                  ? l.hereActiveOffline('${controller.presence}', '${controller.offlineSharers}')
+                  : l.here('${controller.presence}'),
+              style: _body,
+            ),
+            const SizedBox(height: 8),
+            if (roster.isEmpty)
+              Text(l.noSharers, style: _body)
+            else
+              for (final r in roster)
+                DecoratedBox(
+                  decoration: const BoxDecoration(border: Border(top: BorderSide(color: tokens.hair))),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onGoTo(r.seed);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 2),
+                      child: Row(
+                        children: [
+                          Opacity(
+                            opacity: r.offline ? 0.5 : 1,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: r.offline
+                                    ? Color.lerp(colorFromHue(r.identity.hue), tokens.muted, 0.85)
+                                    : colorFromHue(r.identity.hue),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              r.identity.name,
+                              style: TextStyle(
+                                color: r.offline ? tokens.muted : tokens.mist,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (r.offline)
+                            Text(
+                              l.offlineStatus.toUpperCase(),
+                              style: const TextStyle(
+                                color: tokens.signal,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.35,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            if (controller.watchers > 0) ...[
+              const SizedBox(height: 12),
+              Text(l.watchingLine('${controller.watchers}'),
+                  style: const TextStyle(color: tokens.muted, fontSize: 13)),
+            ],
+          ],
+        );
+      },
+    );

@@ -56,6 +56,10 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
 
   final AutoFit _autoFit = AutoFit();
 
+  final GlobalKey _brandKey = GlobalKey();
+  final GlobalKey _hintKey = GlobalKey();
+  final GlobalKey _controlsKey = GlobalKey();
+
   RoomController get c => widget.controller;
 
   @override
@@ -244,11 +248,13 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       return Marker(
         point: Geographic(lon: entry.position.lng, lat: entry.position.lat),
         size: beeMarkerSize,
+        alignment: beeMarkerAlignment,
         child: BeeMarker(
           identity: identity,
           entry: entry,
           now: now,
           isSelf: entry.isSelf,
+          menuOpen: entry.seed == _openMenuSeed,
           onTap: () => setState(
             () => _openMenuSeed = _openMenuSeed == entry.seed ? null : entry.seed,
           ),
@@ -291,32 +297,16 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
               onEvent: _onMapEvent,
               children: [
                 WidgetLayer(markers: _markers(context), allowInteraction: true),
+                MarkerMenu(
+                  data: openEntry == null ? null : _menuData(openEntry),
+                  bounds: _menuBounds(context),
+                  onClose: () {
+                    if (mounted && _openMenuSeed != null) setState(() => _openMenuSeed = null);
+                  },
+                ),
               ],
             ),
           ),
-          if (openEntry != null)
-            MarkerMenu(
-              identity: c.identityFor(openEntry.seed),
-              entry: openEntry,
-              following: c.followSeed == openEntry.seed,
-              referenceEntry: _selfOrNull(),
-              onRename: () async {
-                setState(() => _openMenuSeed = null);
-                final name = await showRenameSheet(
-                  context,
-                  current: c.resolveName(openEntry.seed),
-                  hasCustom: c.customName(openEntry.seed) != null,
-                );
-                if (name == null) return;
-                await c.rename(openEntry.seed, name.isEmpty ? null : name);
-                // Our own name is never shared without asking.
-                if (openEntry.seed == c.selfSeed && name.isNotEmpty && context.mounted) {
-                  await c.setSharesName(await askShareName(context, name));
-                }
-              },
-              onToggleFollow: () => c.toggleFollow(openEntry.seed),
-              onClose: () => setState(() => _openMenuSeed = null),
-            ),
           Hud(
             controller: c,
             onFitAll: _fitAll,
@@ -325,6 +315,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
             onToggleShare: _toggleShare,
             onInfo: () => showInfoSheet(context),
             onRooms: _openRooms,
+            brandKey: _brandKey,
+            hintKey: _hintKey,
+            controlsKey: _controlsKey,
           ),
           if (c.fatal != null)
             Positioned(
@@ -338,6 +331,45 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  MarkerMenuData _menuData(PeerEntry entry) => MarkerMenuData(
+        identity: c.identityFor(entry.seed),
+        entry: entry,
+        following: c.followSeed == entry.seed,
+        connected: c.connection == LinkState.on,
+        referenceEntry: _selfOrNull(),
+        onRename: () async {
+          setState(() => _openMenuSeed = null);
+          final name = await showRenameSheet(
+            context,
+            current: c.resolveName(entry.seed),
+            hasCustom: c.customName(entry.seed) != null,
+          );
+          if (name == null) return;
+          await c.rename(entry.seed, name.isEmpty ? null : name);
+          // Our own name is never shared without asking.
+          if (entry.seed == c.selfSeed && name.isNotEmpty && mounted) {
+            await c.setSharesName(await askShareName(context, name));
+          }
+        },
+        onZoom: () => _goTo(entry.seed),
+        onToggleFollow: () => c.toggleFollow(entry.seed),
+      );
+
+  Rect _menuBounds(BuildContext context) {
+    const inset = 8.0;
+    final size = MediaQuery.sizeOf(context);
+    final padding = MediaQuery.paddingOf(context);
+    Rect? rectOf(GlobalKey key) {
+      final box = key.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) return null;
+      return box.localToGlobal(Offset.zero) & box.size;
+    }
+
+    final top = rectOf(_brandKey)?.bottom ?? padding.top + 56;
+    final dock = rectOf(c.sharing ? _controlsKey : _hintKey)?.top ?? size.height - 160;
+    return Rect.fromLTRB(inset, top + inset, size.width - inset, dock - inset);
   }
 
   /// Our own marker, present only while sharing. Until then the info box simply

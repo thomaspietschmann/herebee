@@ -20,6 +20,7 @@ import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
 import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
 import { isValidRoomId } from "../server/src/roomId.js";
+import { layoutMenu, springSettled, springStep } from "../client/src/menu-layout.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const vectors = JSON.parse(readFileSync(join(HERE, "..", "shared", "vectors.json"), "utf8"));
@@ -115,6 +116,27 @@ async function main(): Promise<void> {
 
   for (const n of vectors.sharedNames) {
     check(sanitizeSharedName(n.input) === n.output, `sanitizeSharedName(${JSON.stringify(n.input)})`);
+  }
+
+  const near = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6;
+  for (const c of vectors.menuLayout) {
+    const got = layoutMenu(c.input);
+    const where = `layoutMenu(${JSON.stringify(c.input.anchor)}, previous ${JSON.stringify(c.input.previous ?? null)})`;
+    check(got.bubbles.every((b, i) => near(b, c.output.bubbles[i])), `${where} bubbles`);
+    check(near(got.box, c.output.box), `${where} box`);
+    check(JSON.stringify(got.choice) === JSON.stringify(c.output.choice), `${where} choice`);
+  }
+  {
+    const { target, dt, states } = vectors.menuSpring;
+    let s = { x: 0, y: 0, vx: 0, vy: 0 };
+    for (let i = 1, j = 0; j < states.length; i++) {
+      s = springStep(s, target, dt);
+      if (i !== states[j].step) continue;
+      const want = states[j++];
+      check(near(s, want) && near({ x: s.vx, y: s.vy }, { x: want.vx, y: want.vy }), `springStep #${i}`);
+      check(springSettled(s, target) === want.settled, `springSettled #${i}`);
+    }
   }
 
   console.log(

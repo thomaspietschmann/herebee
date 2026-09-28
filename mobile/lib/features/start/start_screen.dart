@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/recent_rooms.dart';
 import '../sheets/sheets.dart';
+import '../../ui/tokens.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({
@@ -24,7 +25,7 @@ class StartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E1116),
+      backgroundColor: ink,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -40,9 +41,9 @@ class StartScreen extends StatelessWidget {
                     child: Text.rich(
                       TextSpan(children: [
                         TextSpan(text: 'Here'),
-                        TextSpan(text: 'Bee', style: TextStyle(fontWeight: FontWeight.w800)),
+                        TextSpan(text: 'Bee', style: TextStyle(fontWeight: FontWeight.w800, color: beacon)),
                       ]),
-                      style: TextStyle(color: Colors.white, fontSize: 26, letterSpacing: 0.2),
+                      style: TextStyle(color: mist, fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                     ),
                   ),
                   RoomsPicker(recent: recent, nameFor: nameFor, onChoose: onChoose),

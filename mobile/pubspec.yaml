@@ -45,6 +45,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/brand/herebee-pill-mark.svg
+    - assets/brand/herebee-logo.png
 
 # App icons for both platforms from one source. Regenerate after changing
 # assets/icon/*.png with `dart run flutter_launcher_icons`. The Android

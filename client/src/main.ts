@@ -200,7 +200,11 @@ async function main(): Promise<void> {
     ui.setRoster(sharers, watchers, presence, offlineCount);
   };
 
-  const markers = new MarkerManager(map, (s) => onSelect(s));
+  const markers = new MarkerManager(
+    map,
+    (s) => onSelect(s),
+    () => ui.menuBounds()
+  );
   const fitAll = () => {
     const b = markers.bounds();
     if (b) map.fitBounds(b, { padding: 80, maxZoom: 16, duration: 700 });
@@ -387,6 +391,7 @@ async function main(): Promise<void> {
         markers.closeMenu();
         onRename(s);
       },
+      onZoom: () => goTo(s),
       onToggleFollow: () => toggleFollow(s),
     };
   }

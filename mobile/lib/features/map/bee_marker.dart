@@ -14,15 +14,17 @@ import '../../core/avatar.dart';
 import '../../core/peer_state.dart';
 import '../../l10n/app_localizations.dart';
 import '../../util/format.dart';
+import '../../ui/tokens.dart';
 
-/// Logical size of the whole marker widget, label included. WidgetLayer needs
-/// this up front to place the marker, so it is a constant rather than measured:
-/// it must fit the disc, its pulse ring, and TWO lines of label. Names like
-/// "Cheeky Nectar Hunter" wrap, and a height that only fits one line clips the
-/// second without any other symptom.
-const Size beeMarkerSize = Size(148, 124);
+const Size beeMarkerSize = Size(240, 110);
 
-const double _discSize = 52;
+const double _discSize = 42;
+
+const double _center = 38;
+
+const double beeDiscRadius = _discSize / 2;
+
+const Alignment beeMarkerAlignment = Alignment(0, _center / (110 / 2) - 1);
 
 Color colorFromHue(int hue) => HSLColor.fromAHSL(1, hue.toDouble(), 0.72, 0.56).toColor();
 
@@ -42,6 +44,7 @@ class BeeMarker extends StatelessWidget {
     required this.now,
     required this.onTap,
     this.isSelf = false,
+    this.menuOpen = false,
     super.key,
   });
 
@@ -51,90 +54,119 @@ class BeeMarker extends StatelessWidget {
   final VoidCallback onTap;
   final bool isSelf;
 
+  final bool menuOpen;
+
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
     final tier = entry.tierAt(now);
     final color = colorFromHue(identity.hue);
 
-    // Ghosts and dropped links fade out; a live peer stays fully saturated.
-    final opacity = entry.offline
-        ? 0.45
-        : switch (tier) { Tier.fresh => 1.0, Tier.stale => 0.75, Tier.ghost => 0.5 };
+    final (opacity, grey) = entry.offline
+        ? (0.5, 0.85)
+        : switch (tier) { Tier.fresh => (1.0, 0.0), Tier.stale => (0.75, 0.0), Tier.ghost => (0.5, 0.9) };
 
     final suffix = statusSuffix(entry, now, l);
     final label = suffix == null ? identity.name : '${identity.name} · $suffix';
 
+    final disc = Container(
+      width: _discSize,
+      height: _discSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: ink2,
+        border: Border.all(color: entry.offline ? signal : color, width: isSelf ? 3 : 2.5),
+        boxShadow: const [
+          BoxShadow(color: Color(0x66000000), blurRadius: 14, offset: Offset(0, 4)),
+          BoxShadow(color: Color(0x4D000000), spreadRadius: 1),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SvgPicture.string(identity.svg),
+    );
+
+    final tag = DecoratedBox(
+      decoration: BoxDecoration(
+        color: isSelf ? mist : inkGlass,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: hair),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: isSelf ? ink : mist,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+
     return SizedBox.fromSize(
       size: beeMarkerSize,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: _discSize + 24,
-              height: _discSize + 24,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (tier == Tier.fresh && !entry.offline) _PulseRing(color: color),
-                  if (entry.showsHeading())
-                    Transform.rotate(
-                      angle: entry.position.hdg! * 3.141592653589793 / 180,
-                      child: _HeadingArrow(color: color),
-                    ),
-                  Opacity(
-                    opacity: opacity,
-                    child: Container(
-                      width: _discSize,
-                      height: _discSize,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF0E1116),
-                        border: Border.all(color: color, width: isSelf ? 4 : 3),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 2)),
-                        ],
+      child: Opacity(
+        opacity: opacity,
+        child: ColorFiltered(
+          colorFilter: ColorFilter.matrix(_greyscale(grey)),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: beeMarkerSize.width / 2 - _center,
+                top: 0,
+                width: _center * 2,
+                height: _center * 2,
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (tier == Tier.fresh && !entry.offline) _PulseRing(color: color),
+                    if (entry.showsHeading())
+                      Transform.rotate(
+                        angle: entry.position.hdg! * 3.141592653589793 / 180,
+                        child: _HeadingArrow(color: color),
                       ),
-                      padding: const EdgeInsets.all(3),
-                      child: SvgPicture.string(identity.svg),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 2),
-            Flexible(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xCC0E1116),
-                  borderRadius: BorderRadius.circular(10),
+                    GestureDetector(onTap: onTap, child: disc),
+                  ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  child: Text(
-                    label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: opacity),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      height: 1.15,
+              ),
+              Positioned(
+                top: _center + 25,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: IgnorePointer(
+                    ignoring: menuOpen,
+                    child: AnimatedOpacity(
+                      opacity: menuOpen ? 0 : 1,
+                      duration: const Duration(milliseconds: 180),
+                      child: GestureDetector(onTap: onTap, child: tag),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+List<double> _greyscale(double amount) {
+  final a = 1 - amount;
+  const r = 0.2126, g = 0.7152, b = 0.0722;
+  return [
+    r + a * (1 - r), g - a * g, b - a * b, 0, 0,
+    r - a * r, g + a * (1 - g), b - a * b, 0, 0,
+    r - a * r, g - a * g, b + a * (1 - b), 0, 0,
+    0, 0, 0, 1, 0,
+  ];
 }
 
 /// Slow breathing ring behind a fresh marker. Honours the platform's
@@ -150,7 +182,7 @@ class _PulseRing extends StatefulWidget {
 class _PulseRingState extends State<_PulseRing> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1800),
+    duration: const Duration(milliseconds: 2400),
   );
 
   @override
@@ -167,26 +199,25 @@ class _PulseRingState extends State<_PulseRing> with SingleTickerProviderStateMi
 
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.disableAnimationsOf(context)) {
-      return _ring(widget.color, 1.15, 0.35);
-    }
+    if (MediaQuery.disableAnimationsOf(context)) return const SizedBox.shrink();
     return AnimatedBuilder(
       animation: _c,
-      builder: (context, _) => _ring(widget.color, 1 + _c.value * 0.45, (1 - _c.value) * 0.45),
+      builder: (context, _) {
+        final t = const Cubic(0, 0, 0.2, 1).transform((_c.value / 0.8).clamp(0.0, 1.0));
+        return Transform.scale(
+          scale: 0.6 + 1.5 * t,
+          child: Container(
+            width: _discSize,
+            height: _discSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.color.withValues(alpha: 0.5 * (1 - t)),
+            ),
+          ),
+        );
+      },
     );
   }
-
-  Widget _ring(Color color, double scale, double opacity) => Transform.scale(
-        scale: scale,
-        child: Container(
-          width: _discSize,
-          height: _discSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: color.withValues(alpha: opacity), width: 2),
-          ),
-        ),
-      );
 }
 
 class _HeadingArrow extends StatelessWidget {
@@ -194,12 +225,30 @@ class _HeadingArrow extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: _discSize + 22,
-        height: _discSize + 22,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Icon(Icons.navigation, size: 16, color: color),
-        ),
+  Widget build(BuildContext context) => CustomPaint(
+        size: const Size.square(_center * 2),
+        painter: _ArrowPainter(color),
       );
+}
+
+class _ArrowPainter extends CustomPainter {
+  _ArrowPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final top = size.height / 2 - 33;
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx, top)
+        ..lineTo(cx + 6, top + 9)
+        ..lineTo(cx - 6, top + 9)
+        ..close(),
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ArrowPainter old) => old.color != color;
 }

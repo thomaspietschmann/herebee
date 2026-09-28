@@ -136,6 +136,21 @@ export class UI {
     });
   }
 
+  menuBounds(): { left: number; top: number; right: number; bottom: number } {
+    const inset = 8;
+    const hud = document.querySelector<HTMLElement>(".hud")!.getBoundingClientRect();
+    const roster = this.rosterGroup.hidden ? hud : this.rosterGroup.getBoundingClientRect();
+    const dockTop = this.hint.classList.contains("is-hidden")
+      ? document.querySelector<HTMLElement>(".controls")!.getBoundingClientRect().top
+      : this.hint.getBoundingClientRect().top;
+    return {
+      left: inset,
+      top: Math.max(hud.bottom, roster.bottom) + inset,
+      right: window.innerWidth - inset,
+      bottom: dockTop - inset,
+    };
+  }
+
   hideHint(): void {
     this.hint.classList.add("is-hidden");
   }

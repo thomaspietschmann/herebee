@@ -17,6 +17,15 @@ import maplibregl, { type Map as MlMap, type Marker } from "maplibre-gl";
 import type { Identity } from "./avatar.js";
 import type { Position } from "./types.js";
 import { t } from "./i18n.js";
+import {
+  layoutMenu,
+  springSettled,
+  springStep,
+  type Bounds,
+  type MenuChoice,
+  type Point,
+  type Spring,
+} from "./menu-layout.js";
 
 // 45 s, not 15: the native apps send only every 30 s while resting in the
 // background, and one missed heartbeat must not read as "no signal". Keep in
@@ -73,7 +82,61 @@ export interface MenuActions {
   following: boolean;
   infoHtml: string;
   onRename: () => void;
+  onZoom: () => void;
   onToggleFollow: () => void;
+}
+
+const DISC_RADIUS = 21;
+const BUBBLE_SIZE = 38;
+
+class MenuMotion {
+  private springs: Spring[];
+  private targets: Point[];
+  private frame = 0;
+  private last = 0;
+
+  constructor(
+    private readonly nodes: HTMLElement[],
+    private readonly instant: boolean
+  ) {
+    this.springs = nodes.map(() => ({ x: 0, y: 0, vx: 0, vy: 0 }));
+    this.targets = nodes.map(() => ({ x: 0, y: 0 }));
+    this.apply();
+  }
+
+  aim(targets: Point[]): void {
+    this.targets = targets;
+    if (this.instant) {
+      this.springs = targets.map((p) => ({ x: p.x, y: p.y, vx: 0, vy: 0 }));
+      this.apply();
+      return;
+    }
+    if (this.frame) return;
+    this.last = performance.now();
+    this.frame = requestAnimationFrame(this.tick);
+  }
+
+  stop(): void {
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
+  }
+
+  private tick = (now: number): void => {
+    const dt = (now - this.last) / 1000;
+    this.last = now;
+    this.springs = this.springs.map((s, i) => springStep(s, this.targets[i], dt));
+    const settled = this.springs.every((s, i) => springSettled(s, this.targets[i]));
+    if (settled) this.springs = this.targets.map((p) => ({ x: p.x, y: p.y, vx: 0, vy: 0 }));
+    this.apply();
+    this.frame = settled ? 0 : requestAnimationFrame(this.tick);
+  };
+
+  private apply(): void {
+    this.nodes.forEach((node, i) => {
+      node.style.setProperty("--x", `${this.springs[i].x}px`);
+      node.style.setProperty("--y", `${this.springs[i].y}px`);
+    });
+  }
 }
 
 export class MarkerManager {
@@ -83,6 +146,8 @@ export class MarkerManager {
   // map for free; we just track a reference to remove/animate it.
   private menuEl: HTMLElement | null = null;
   private menuSeed: string | null = null;
+  private menuMotion: MenuMotion | null = null;
+  private menuChoice: MenuChoice | null = null;
   // MapLibre stacks marker elements by DOM order; without an explicit z-index a
   // bee (and its fanned-out menu) can sit behind an overlapping neighbour. We
   // bump the active one with a monotonically increasing z-index so the most
@@ -91,8 +156,12 @@ export class MarkerManager {
 
   constructor(
     private readonly map: MlMap,
-    private readonly onSelect?: (seed: string) => void
-  ) {}
+    private readonly onSelect?: (seed: string) => void,
+    private readonly menuBounds?: () => Bounds
+  ) {
+    map.on("move", () => this.layoutOpenMenu());
+    window.addEventListener("resize", () => this.layoutOpenMenu());
+  }
 
   private build(
     identity: Identity,
@@ -130,6 +199,7 @@ export class MarkerManager {
       e.at = at;
       e.offline = false; // a fresh fix only arrives over a live connection
       e.marker.setLngLat([pos.lng, pos.lat]);
+      if (this.menuSeed === id) this.layoutOpenMenu();
     }
     const moving = pos.spd != null && !Number.isNaN(pos.spd) && pos.spd >= MIN_ARROW_SPEED_MS;
     if (moving && pos.hdg != null && !Number.isNaN(pos.hdg)) {
@@ -177,14 +247,23 @@ export class MarkerManager {
   closeMenu(): void {
     const el = this.menuEl;
     if (!el) return;
+    if (this.menuSeed) this.entries.get(this.menuSeed)?.el.classList.remove("has-menu");
+    const motion = this.menuMotion;
     this.menuEl = null;
     this.menuSeed = null;
+    this.menuMotion = null;
+    this.menuChoice = null;
     el.classList.remove("is-open");
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      motion?.stop();
       el.remove();
       return;
     }
-    const done = () => el.remove();
+    motion?.aim([0, 1, 2, 3].map(() => ({ x: 0, y: 0 })));
+    const done = () => {
+      motion?.stop();
+      el.remove();
+    };
     el.addEventListener("transitionend", done, { once: true });
     setTimeout(done, 300); // safety net if transitionend never fires
   }
@@ -200,21 +279,61 @@ export class MarkerManager {
     div.className = "mk-menu";
     div.innerHTML = `
       <button type="button" class="mk-bubble mk-bubble-rename" aria-label="${t("menuRenameAria")}">✏️</button>
+      <button type="button" class="mk-bubble mk-bubble-zoom" aria-label="${t("menuZoomAria")}">🔍</button>
       <button type="button" class="mk-bubble mk-bubble-follow${actions.following ? " is-following" : ""}" aria-label="${actions.following ? t("menuUnfollow") : t("menuFollow")}">📍</button>
-      <div class="mk-infobox">${actions.infoHtml}</div>`;
-    div.querySelector(".mk-bubble-rename")!.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      actions.onRename();
-    });
-    div.querySelector(".mk-bubble-follow")!.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      actions.onToggleFollow();
-    });
+      <div class="mk-infobox"><div class="mk-infobox-name"></div><div class="mk-infobox-lines">${actions.infoHtml}</div></div>`;
+    div.querySelector<HTMLElement>(".mk-infobox-name")!.textContent = e.identity.name;
+    const on = (sel: string, fn: () => void) =>
+      div.querySelector(sel)!.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        fn();
+      });
+    on(".mk-bubble-rename", actions.onRename);
+    on(".mk-bubble-zoom", actions.onZoom);
+    on(".mk-bubble-follow", actions.onToggleFollow);
     e.el.appendChild(div);
+    e.el.classList.add("has-menu");
     this.menuEl = div;
     this.menuSeed = seed;
+    this.menuMotion = new MenuMotion(
+      [...div.querySelectorAll<HTMLElement>(".mk-bubble, .mk-infobox")],
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
     this.raise(seed); // an active bee + its fanned-out menu must sit above neighbours
-    requestAnimationFrame(() => div.classList.add("is-open"));
+    requestAnimationFrame(() => {
+      div.classList.add("is-open");
+      this.layoutOpenMenu();
+    });
+  }
+
+  private layoutOpenMenu(): void {
+    const el = this.menuEl;
+    const e = this.menuSeed ? this.entries.get(this.menuSeed) : undefined;
+    if (!el || !e) return;
+    const rect = this.map.getContainer().getBoundingClientRect();
+    const p = this.map.project([e.pos.lng, e.pos.lat]);
+    const anchor = { x: rect.left + p.x, y: rect.top + p.y };
+    if (anchor.x < rect.left || anchor.x > rect.right || anchor.y < rect.top || anchor.y > rect.bottom) {
+      this.closeMenu();
+      return;
+    }
+    const box = el.querySelector<HTMLElement>(".mk-infobox")!;
+    const bounds = this.menuBounds?.() ?? {
+      left: rect.left + 8,
+      top: rect.top + 8,
+      right: rect.right - 8,
+      bottom: rect.bottom - 8,
+    };
+    const layout = layoutMenu({
+      anchor,
+      bounds,
+      beeRadius: DISC_RADIUS,
+      bubble: BUBBLE_SIZE,
+      box: { w: box.offsetWidth, h: box.offsetHeight },
+      previous: this.menuChoice,
+    });
+    this.menuChoice = layout.choice;
+    this.menuMotion?.aim([...layout.bubbles, layout.box]);
   }
 
   /** Lift a marker above any overlapping ones so it (and its menu) are on top
@@ -229,13 +348,14 @@ export class MarkerManager {
    *  No-op unless `seed` is the currently open menu. */
   updateMenu(seed: string, actions: Pick<MenuActions, "following" | "infoHtml">): void {
     if (this.menuSeed !== seed || !this.menuEl) return;
-    const info = this.menuEl.querySelector(".mk-infobox");
+    const info = this.menuEl.querySelector(".mk-infobox-lines");
     if (info) info.innerHTML = actions.infoHtml;
     const followBtn = this.menuEl.querySelector(".mk-bubble-follow");
     if (followBtn) {
       followBtn.classList.toggle("is-following", actions.following);
       followBtn.setAttribute("aria-label", t(actions.following ? "menuUnfollow" : "menuFollow"));
     }
+    this.layoutOpenMenu();
   }
 
   /** Called ~1×/s to age markers and drop peers silent longer than LINGER_MS. */
@@ -278,6 +398,10 @@ export class MarkerManager {
     if (!e) return;
     e.identity.name = name;
     this.refresh(seed, e);
+    if (this.menuSeed === seed) {
+      const nameEl = this.menuEl?.querySelector<HTMLElement>(".mk-infobox-name");
+      if (nameEl) nameEl.textContent = name;
+    }
   }
 
   remove(id: string): void {
@@ -286,8 +410,11 @@ export class MarkerManager {
     // Its DOM (including any open menu) is going away with the marker itself —
     // just drop our reference rather than animate a close.
     if (this.menuSeed === id) {
+      this.menuMotion?.stop();
       this.menuEl = null;
       this.menuSeed = null;
+      this.menuMotion = null;
+      this.menuChoice = null;
     }
     e.marker.remove();
     this.entries.delete(id);
