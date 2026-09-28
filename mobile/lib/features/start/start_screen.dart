@@ -19,7 +19,7 @@ class StartScreen extends StatelessWidget {
   });
 
   final RecentRooms recent;
-  final String Function(String seed) nameFor;
+  final String Function(RecentRoom room, String seed) nameFor;
   final void Function(RoomsChoice choice) onChoose;
 
   @override
@@ -36,6 +36,21 @@ class StartScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 160,
+                      height: 160,
+                      margin: const EdgeInsets.only(bottom: 18),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x6B000000), blurRadius: 50, offset: Offset(0, 18)),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset('assets/brand/herebee-logo.png', fit: BoxFit.cover),
+                    ),
+                  ),
                   const Padding(
                     padding: EdgeInsets.only(bottom: 26),
                     child: Text.rich(
@@ -43,6 +58,7 @@ class StartScreen extends StatelessWidget {
                         TextSpan(text: 'Here'),
                         TextSpan(text: 'Bee', style: TextStyle(fontWeight: FontWeight.w800, color: beacon)),
                       ]),
+                      textAlign: TextAlign.center,
                       style: TextStyle(color: mist, fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                     ),
                   ),

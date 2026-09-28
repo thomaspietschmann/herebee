@@ -141,3 +141,11 @@ Future<bool> isValidRoomId(String roomId) async {
   }
   return true;
 }
+
+Future<String> deriveRoomSeed(String deviceSecretB64, String roomId) async {
+  final mac = await Hmac.sha256().calculateMac(
+    utf8.encode('herebee/seed/$roomId'),
+    secretKey: SecretKey(b64urlToBytes(deviceSecretB64)),
+  );
+  return mac.bytes.sublist(0, 9).fold<String>('', (acc, b) => acc + b.toRadixString(36));
+}

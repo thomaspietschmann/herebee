@@ -93,3 +93,15 @@ export async function decryptJson<T>(key: CryptoKey, dataB64: string): Promise<T
     return null; // wrong key, tampered, or garbage — ignore
   }
 }
+
+export async function deriveRoomSeed(deviceSecretB64: string, roomId: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    b64urlToBytes(deviceSecretB64),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`herebee/seed/${roomId}`)));
+  return mac.subarray(0, 9).reduce((s, b) => s + b.toString(36), "");
+}

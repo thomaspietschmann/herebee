@@ -56,6 +56,12 @@ export class UI {
     });
   }
 
+  private paintPips(root: HTMLElement): void {
+    root.querySelectorAll<HTMLElement>(".pip[data-color]").forEach((el) => {
+      el.style.background = el.dataset.color!;
+    });
+  }
+
   private esc(s: string): string {
     return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
   }
@@ -98,7 +104,7 @@ export class UI {
       .slice(0, 5)
       .map(
         (m) =>
-          `<span class="pip${m.offline ? " pip-offline" : ""}" style="background:${m.color}" title="${this.esc(m.name)}"></span>`
+          `<span class="pip${m.offline ? " pip-offline" : ""}" data-color="${this.esc(m.color)}" title="${this.esc(m.name)}"></span>`
       );
     const hollowN = Math.min(watchers, Math.max(0, 5 - sharerPips.length));
     const hollow = Array.from(
@@ -106,6 +112,7 @@ export class UI {
       () => `<span class="pip pip-watcher" title="${t("watcher")}"></span>`
     );
     this.rosterStack.innerHTML = [...sharerPips, ...hollow].join("");
+    this.paintPips(this.rosterStack);
   }
 
   /** Participant list, opened by tapping the roster pill. "Fit everyone on
@@ -116,7 +123,7 @@ export class UI {
       ? `<ul class="party-list">${this.lastSharers
           .map(
             (m) =>
-              `<li><button type="button" class="party${m.offline ? " is-offline" : ""}" data-seed="${this.esc(m.seed)}"><span class="pip${m.offline ? " pip-offline" : ""}" style="background:${m.color}"></span><span class="party-name">${this.esc(m.name)}</span>${m.offline ? `<span class="party-status">${t("offlineStatus")}</span>` : ""}</button></li>`
+              `<li><button type="button" class="party${m.offline ? " is-offline" : ""}" data-seed="${this.esc(m.seed)}"><span class="pip${m.offline ? " pip-offline" : ""}" data-color="${this.esc(m.color)}"></span><span class="party-name">${this.esc(m.name)}</span>${m.offline ? `<span class="party-status">${t("offlineStatus")}</span>` : ""}</button></li>`
           )
           .join("")}</ul>`
       : `<p>${t("noSharers")}</p>`;
@@ -126,6 +133,7 @@ export class UI {
       <h2>${t("participantsTitle")}</h2>
       ${list}
       ${watching}`;
+    this.paintPips(this.sheetBody);
     this.openSheet();
     // Tap a participant to fly the map to their marker.
     this.sheetBody.querySelectorAll<HTMLElement>(".party[data-seed]").forEach((el) => {
@@ -208,8 +216,8 @@ export class UI {
         <li>${t("welcomeFact2")}</li>
         <li>${t("welcomeFact3")}</li>
       </ul>
-      <div class="linkbox" style="margin-top:18px">
-        <button class="btn btn-primary" id="welcome-ok" style="flex:1">${t("welcomeCta")}</button>
+      <div class="linkbox linkbox-gap-18">
+        <button class="btn btn-primary btn-fill" id="welcome-ok">${t("welcomeCta")}</button>
       </div>`;
     this.gated = true;
     this.openSheet("splash");
@@ -236,8 +244,8 @@ export class UI {
     if (!ios || !location.hash) return "";
     const href = this.esc(`herebee://r${location.hash}`);
     return `
-      <div class="linkbox" style="margin:0 0 18px">
-        <a class="btn" href="${href}" style="flex:1;text-align:center;text-decoration:none">${t("welcomeOpenApp")}</a>
+      <div class="linkbox linkbox-app">
+        <a class="btn btn-fill btn-anchor" href="${href}">${t("welcomeOpenApp")}</a>
       </div>`;
   }
 
@@ -263,7 +271,7 @@ export class UI {
         <input id="rename-input" maxlength="40" placeholder="${t("renamePlaceholder")}" value="${this.esc(currentName)}" />
         <button class="btn btn-primary" id="rename-save">${t("save")}</button>
       </div>
-      ${hasCustom ? `<button class="btn btn-ghost" id="rename-reset" style="margin-top:10px">${t("renameReset")}</button>` : ""}`;
+      ${hasCustom ? `<button class="btn btn-ghost btn-gap-10" id="rename-reset">${t("renameReset")}</button>` : ""}`;
     this.openSheet();
     const input = document.getElementById("rename-input") as HTMLInputElement;
     input.focus();
@@ -289,9 +297,9 @@ export class UI {
     this.sheetBody.innerHTML = `
       <h2>${t("shareNameTitle")}</h2>
       <p>${t("shareNameBody", { name: this.esc(name) })}</p>
-      <div class="linkbox" style="margin-top:16px">
-        <button class="btn btn-ghost" id="share-name-no" style="flex:1">${t("shareNameNo")}</button>
-        <button class="btn btn-primary" id="share-name-yes" style="flex:1">${t("shareNameYes")}</button>
+      <div class="linkbox linkbox-gap-16">
+        <button class="btn btn-ghost btn-fill" id="share-name-no">${t("shareNameNo")}</button>
+        <button class="btn btn-primary btn-fill" id="share-name-yes">${t("shareNameYes")}</button>
       </div>`;
     this.gated = true;
     this.openSheet();
@@ -309,8 +317,8 @@ export class UI {
     this.sheetBody.innerHTML = `
       <h2>${t("invalidTitle")}</h2>
       <p>${t("invalidBody")}</p>
-      <div class="linkbox" style="margin-top:16px">
-        <button class="btn btn-primary" id="invalid-new" style="flex:1">${t("invalidCta")}</button>
+      <div class="linkbox linkbox-gap-16">
+        <button class="btn btn-primary btn-fill" id="invalid-new">${t("invalidCta")}</button>
       </div>`;
     this.gated = true;
     this.openSheet();
@@ -366,7 +374,7 @@ export class UI {
       <p><strong>Kontakt:</strong><br />
       ${ph("[E-Mail – wird vor Veröffentlichung ergänzt]")}</p>
 
-      <h2 style="margin-top:22px">Datenschutzerklärung</h2>
+      <h2 class="sheet-section">Datenschutzerklärung</h2>
       <p><strong>Verantwortlicher</strong> im Sinne der DSGVO ist der im Impressum genannte
       Diensteanbieter.</p>
       <p><strong>Grundprinzip.</strong> HereBee ist bewusst datensparsam gebaut. Ein 256-Bit-Schlüssel
@@ -388,7 +396,7 @@ export class UI {
         letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine Historie, keine Speicherung von
         Koordinaten oder Namen.</li>
       </ul>
-      <p style="margin-top:12px"><strong>Standortfreigabe.</strong> Die App nutzt die
+      <p class="sheet-gap-12"><strong>Standortfreigabe.</strong> Die App nutzt die
       Geolocation-Funktion des Browsers. Der Zugriff erfolgt nur nach ausdrücklicher Erlaubnis über die
       Abfrage des Browsers (Einwilligung, Art. 6 Abs. 1 lit. a DSGVO) und ist jederzeit in den
       Browser-Einstellungen widerrufbar. Die Koordinaten sind Ende-zu-Ende-verschlüsselt und für den
@@ -403,14 +411,19 @@ export class UI {
       <p><strong>Keine Cookies, kein Tracking.</strong> HereBee setzt keine Cookies, nutzt keine
       Analyse- oder Tracking-Dienste und bindet keine fremden CDNs ein. Karten, Schriften und Symbole
       werden selbst gehostet.</p>
+      <p><strong>Räume sind streng getrennt.</strong> Deine Biene ist in jedem Raum eine andere: Die
+      Kennung wird im Browser aus einem geheimen Geräteschlüssel und dem Raum abgeleitet und lässt sich
+      ohne diesen Schlüssel keinem anderen Raum zuordnen. Auch Namen gelten immer nur in dem Raum, in
+      dem sie vergeben wurden. Wer dich in mehreren Räumen sieht, kann dich daher nicht an einer
+      Kennung oder einem Namen wiedererkennen – wohl aber an deinem Standort, wenn du in mehreren
+      Räumen teilst, oder an einem Namen, den du selbst in mehreren Räumen teilst.</p>
       <p><strong>Im Browser gespeichert.</strong> Im lokalen Speicher deines Browsers (localStorage)
-      liegen eine zufällige Kennung für deine Bienen-Identität, die Namen, die du anderen Teilnehmern
-      gegeben hast, sowie pro Raum dein eigener Name und ob du ihn teilst. Nur für den geöffneten Tab
+      liegen der geheime Geräteschlüssel sowie pro Raum die Namen, die du anderen Teilnehmern gegeben
+      hast, dein eigener Name und ob du ihn teilst. Nur für den geöffneten Tab
       (sessionStorage) kommen ein zufälliges Token für die Wiederverbindung und die Angabe hinzu, ob du
       gerade teilst. Das ist für die Funktion technisch erforderlich (§ 25 Abs. 2 TDDDG), verlässt den
       Browser nur verschlüsselt an die Teilnehmer bzw. als Token an den Server und lässt sich über die
-      Website-Daten des Browsers jederzeit löschen. Die Bienen-Kennung ist in allen Räumen dieselbe;
-      wer dich in mehreren Räumen trifft, kann deine Biene wiedererkennen.</p>
+      Website-Daten des Browsers jederzeit löschen.</p>
       <p><strong>Speicherdauer.</strong> Auf dem Server speichert die Anwendung über die aktive Sitzung
       hinaus nichts. Die Daten im Browser bleiben, bis du sie löschst. Für etwaige Infrastruktur-Logs
       gilt die Aufbewahrungsfrist des Hosting-Anbieters.</p>

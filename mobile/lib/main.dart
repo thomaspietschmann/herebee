@@ -139,8 +139,8 @@ class _RoomHostState extends State<_RoomHost> {
 
   /// Names for the start screen, before any room controller exists: the same
   /// derivation the map uses, including names the user typed.
-  String _nameFor(String seed) =>
-      widget.storage.customName(seed) ??
+  String _nameFor(RecentRoom room, String seed) =>
+      (room.roomId.isEmpty ? null : widget.storage.customName(room.roomId, seed)) ??
       nameFromSeed(seed, Localizations.localeOf(context).languageCode);
 
   void _onLink(Uri uri) {
@@ -178,7 +178,7 @@ class _RoomHostState extends State<_RoomHost> {
       storage: widget.storage,
       languageCode: Localizations.localeOf(context).languageCode,
       youSuffix: L.of(context).youSuffix,
-      onEntered: () => unawaited(recent.touch(secret)),
+      onEntered: (roomId) => unawaited(recent.touch(secret, roomId: roomId)),
     );
     // Remember who was met here, so the rooms list can say more than a date.
     // sawPeers() is a no-op unless something is new, so a listener that fires

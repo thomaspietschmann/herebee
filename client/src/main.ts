@@ -5,7 +5,7 @@
  * we mint one and put it in the hash, so opening "/" lands you in a fresh room
  * whose link you can share. The path is cosmetic; the hash is the capability.
  */
-import { deriveRoomKeys, generateSecret, type RoomKeys } from "./crypto.js";
+import { deriveRoomKeys, deriveRoomSeed, generateSecret, type RoomKeys } from "./crypto.js";
 import { NetClient } from "./net.js";
 import { createCoordinator } from "./coord.js";
 import { initMap } from "./map.js";
@@ -43,32 +43,33 @@ function ensureSecret(): string {
 
 const mintToken = () => crypto.getRandomValues(new Uint8Array(9)).reduce((s, b) => s + b.toString(36), "");
 
-function ownSeed(): string {
-  const KEY = "herebee.seed";
-  // localStorage (not sessionStorage): identity must be stable across reloads AND
-  // shared between tabs of the same browser. Otherwise every new tab is a different
-  // person (spawning phantom duplicates via the server's last-blob replay) and the
-  // per-seed custom names persisted in localStorage would never survive a session.
-  try {
-    let seed = localStorage.getItem(KEY);
-    if (!seed) {
-      seed = mintToken();
-      localStorage.setItem(KEY, seed);
-    }
-    return seed;
-  } catch {
-    // Private mode: localStorage throws. Keep at least a per-tab-stable identity in
-    // sessionStorage so a reload doesn't silently turn us into a brand-new person.
+function deviceSecret(): string {
+  const KEY = "herebee.device";
+  for (const store of [() => localStorage, () => sessionStorage]) {
     try {
-      let seed = sessionStorage.getItem(KEY);
-      if (!seed) {
-        seed = mintToken();
-        sessionStorage.setItem(KEY, seed);
+      let secret = store().getItem(KEY);
+      if (!secret || !/^[A-Za-z0-9_-]{43}$/.test(secret)) {
+        secret = generateSecret();
+        store().setItem(KEY, secret);
       }
-      return seed;
+      return secret;
     } catch {
-      return mintToken(); // truly no storage: ephemeral per-load identity
+      continue;
     }
+  }
+  return generateSecret();
+}
+
+function dropCrossRoomData(): void {
+  try {
+    localStorage.removeItem("herebee.seed");
+    localStorage.removeItem("herebee.shareName");
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && /^herebee\.name\.[^.]+$/.test(k)) localStorage.removeItem(k);
+    }
+  } catch {
+    return;
   }
 }
 
@@ -131,7 +132,7 @@ async function main(): Promise<void> {
   // Local, client-only custom names (never sent anywhere). Our own name is kept
   // per room, so a new room never knows what we called ourselves elsewhere.
   let roomId = ""; // set once the room keys are derived, before anything renders
-  const nameKey = (s: string) => (s === seed ? `herebee.ownName.${roomId}` : "herebee.name." + s);
+  const nameKey = (s: string) => (s === seed ? `herebee.ownName.${roomId}` : `herebee.name.${roomId}.${s}`);
   const customName = (seed: string): string | null => {
     try {
       return localStorage.getItem(nameKey(seed));
@@ -164,7 +165,7 @@ async function main(): Promise<void> {
     }
   };
 
-  const seed = ownSeed();
+  let seed = "";
   const cid = ownCid();
   const roster = new Map<string, { color: string; name: string }>();
   const rosterName = (s: string) => (s === seed ? `${resolveName(s)} ${t("youSuffix")}` : resolveName(s));
@@ -211,7 +212,7 @@ async function main(): Promise<void> {
   };
   const goTo = (s: string) => {
     const p = markers.positionOf(s);
-    if (p) map.easeTo({ center: p, zoom: Math.max(map.getZoom(), 15), duration: 700 });
+    if (p) map.easeTo({ center: p, zoom: Math.max(map.getZoom(), 16), duration: 700 });
     markers.raise(s); // bring it above any overlapping bee so it's clickable
   };
   const ui = new UI({
@@ -233,10 +234,9 @@ async function main(): Promise<void> {
     return;
   }
   roomId = keys.roomId;
+  seed = await deriveRoomSeed(deviceSecret(), roomId);
+  dropCrossRoomData();
   try {
-    // Older builds kept our own name and its sharing choice across all rooms.
-    localStorage.removeItem("herebee.name." + seed);
-    localStorage.removeItem("herebee.shareName");
     localStorage.removeItem("herebee.sharing." + keys.roomId);
   } catch {
     /* private mode */

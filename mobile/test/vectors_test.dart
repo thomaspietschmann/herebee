@@ -144,6 +144,14 @@ void main() {
     }
   });
 
+  group('per-room seeds', () {
+    for (final v in vectors['roomSeeds'] as List<dynamic>) {
+      test('derives the seed for room ${v['roomId']}', () async {
+        expect(await deriveRoomSeed(v['device'] as String, v['roomId'] as String), v['seed']);
+      });
+    }
+  });
+
   group('bee menu layout', () {
     Offset pt(dynamic p) => Offset((p['x'] as num).toDouble(), (p['y'] as num).toDouble());
     MenuChoice? choiceOf(dynamic c) =>

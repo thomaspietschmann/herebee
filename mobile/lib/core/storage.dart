@@ -1,5 +1,5 @@
-/// What this app persists in plain preferences: an identity seed, any names
-/// the user typed, and whether their own name is shared.
+/// What this app persists in plain preferences: any names the user typed, and
+/// whether their own name is shared.
 /// The user's own name and its sharing choice are kept per room, so a new room
 /// never knows what they called themselves elsewhere.
 ///
@@ -12,14 +12,16 @@ library;
 
 import 'dart:math';
 
+import 'crypto.dart';
+import 'recent_rooms.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String _seedKey = 'herebee.seed';
+const String _legacySeedKey = 'herebee.seed';
 const String _legacyCidKey = 'herebee.cid';
 const String _namePrefix = 'herebee.name.';
 const String _ownNamePrefix = 'herebee.ownName.';
 const String _shareNamePrefix = 'herebee.shareName.';
-// Older builds kept the user's own name and its sharing choice across rooms.
 const String _legacyShareNameKey = 'herebee.shareName';
 
 /// Matches the browser's token shape (see `mintToken` in client/src/main.ts).
@@ -30,19 +32,36 @@ String mintToken() {
 }
 
 class Storage {
-  Storage(this._prefs);
+  Storage(this._prefs, this._device);
 
-  static Future<Storage> open() async {
+  static Future<Storage> open({SecretStore? device}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_legacyCidKey);
-    return Storage(prefs);
+    await prefs.remove(_legacySeedKey);
+    await prefs.remove(_legacyShareNameKey);
+    for (final key in prefs.getKeys().toList()) {
+      if (RegExp(r'^herebee\.name\.[^.]+$').hasMatch(key)) await prefs.remove(key);
+    }
+    return Storage(prefs, device ?? SecureSecretStore('herebee.device'));
   }
 
   final SharedPreferences _prefs;
+  final SecretStore _device;
+  Future<String>? _deviceSecret;
 
-  /// Stable identity for this install. Never an account, never a device id;
-  /// clearing app data mints a new one and that is the intended escape hatch.
-  Future<String> seed() async => _getOrMint(_seedKey);
+  Future<String> roomSeed(String roomId) async => deriveRoomSeed(await (_deviceSecret ??= _loadDeviceSecret()), roomId);
+
+  Future<String> _loadDeviceSecret() async {
+    final existing = await _device.read();
+    if (existing != null && RegExp(r'^[A-Za-z0-9_-]{43}$').hasMatch(existing)) return existing;
+    final minted = generateSecret();
+    try {
+      await _device.write(minted);
+    } catch (_) {
+      return minted;
+    }
+    return minted;
+  }
 
   /// Ephemeral reconnect token. Lets the relay drop THIS client's own stale
   /// socket when it reconnects. Never an identity; see shared/PROTOCOL.md.
@@ -50,18 +69,11 @@ class Storage {
 
   static final String _processCid = mintToken();
 
-  Future<String> _getOrMint(String key) async {
-    final existing = _prefs.getString(key);
-    if (existing != null && existing.isNotEmpty) return existing;
-    final minted = mintToken();
-    await _prefs.setString(key, minted);
-    return minted;
-  }
-
   /// A name the user typed for a peer. Local only, never transmitted.
-  String? customName(String seed) => _prefs.getString('$_namePrefix$seed');
+  String? customName(String roomId, String seed) => _prefs.getString('$_namePrefix$roomId.$seed');
 
-  Future<void> setCustomName(String seed, String? name) => _setOrRemove('$_namePrefix$seed', name);
+  Future<void> setCustomName(String roomId, String seed, String? name) =>
+      _setOrRemove('$_namePrefix$roomId.$seed', name);
 
   /// The name the user gave themselves in one room. Goes out, encrypted, only
   /// while [sharesName] is on for that room.
@@ -79,12 +91,6 @@ class Storage {
     } else {
       await _prefs.remove('$_shareNamePrefix$roomId');
     }
-  }
-
-  /// Drop the room-independent own name and sharing flag older builds kept.
-  Future<void> dropLegacyOwnName(String seed) async {
-    await _prefs.remove('$_namePrefix$seed');
-    await _prefs.remove(_legacyShareNameKey);
   }
 
   Future<void> _setOrRemove(String key, String? name) async {

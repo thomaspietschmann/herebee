@@ -20,7 +20,7 @@ import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { b64urlToBytes, bytesToB64url, deriveRoomKeys, encryptJson } from "../client/src/crypto.js";
+import { b64urlToBytes, bytesToB64url, deriveRoomKeys, deriveRoomSeed, encryptJson } from "../client/src/crypto.js";
 import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
 import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
@@ -55,6 +55,19 @@ MENU_CASES.push(
   { ...HYSTERESIS_BASE, anchor: { x: 195, y: 400 }, previous: turned }
 );
 const menuLayout = MENU_CASES.map((input) => ({ input, output: layoutMenu(input) }));
+
+const ROOM_SEED_CASES = [
+  [fixedSecretForSeeds(0), "F_SNXNUR1v1QKRwr2aN4Kd_xSJP-2-24"],
+  [fixedSecretForSeeds(0), "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],
+  [fixedSecretForSeeds(1), "F_SNXNUR1v1QKRwr2aN4Kd_xSJP-2-24"],
+  [fixedSecretForSeeds(2), "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"],
+];
+
+function fixedSecretForSeeds(n: number): string {
+  const b = new Uint8Array(32);
+  for (let i = 0; i < 32; i++) b[i] = (i * 53 + n * 17 + 3) & 0xff;
+  return bytesToB64url(b);
+}
 
 const menuSpring = (() => {
   const target = { x: 50, y: -30 };
@@ -260,6 +273,9 @@ async function main(): Promise<void> {
     sharedNames,
     menuLayout,
     menuSpring,
+    roomSeeds: await Promise.all(
+      ROOM_SEED_CASES.map(async ([device, roomId]) => ({ device, roomId, seed: await deriveRoomSeed(device, roomId) }))
+    ),
   };
 
   writeFileSync(OUT, JSON.stringify(doc, null, 2) + "\n", "utf8");

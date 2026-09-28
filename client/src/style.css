@@ -484,6 +484,31 @@ body {
 .linkbox button {
   white-space: nowrap;
 }
+.linkbox.linkbox-gap-18 {
+  margin-top: 18px;
+}
+.linkbox.linkbox-gap-16 {
+  margin-top: 16px;
+}
+.linkbox.linkbox-app {
+  margin: 0 0 18px;
+}
+.linkbox .btn-fill {
+  flex: 1;
+}
+.linkbox .btn-anchor {
+  text-align: center;
+  text-decoration: none;
+}
+.btn.btn-gap-10 {
+  margin-top: 10px;
+}
+.sheet h2.sheet-section {
+  margin-top: 22px;
+}
+.sheet p.sheet-gap-12 {
+  margin-top: 12px;
+}
 .facts {
   list-style: none;
   margin: 8px 0 0;

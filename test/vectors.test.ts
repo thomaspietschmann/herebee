@@ -15,7 +15,7 @@ import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { b64urlToBytes, decryptJson, deriveRoomKeys, encryptJson } from "../client/src/crypto.js";
+import { b64urlToBytes, decryptJson, deriveRoomKeys, deriveRoomSeed, encryptJson } from "../client/src/crypto.js";
 import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
 import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
@@ -118,6 +118,9 @@ async function main(): Promise<void> {
     check(sanitizeSharedName(n.input) === n.output, `sanitizeSharedName(${JSON.stringify(n.input)})`);
   }
 
+  for (const c of vectors.roomSeeds) {
+    check((await deriveRoomSeed(c.device, c.roomId)) === c.seed, `deriveRoomSeed(${c.roomId})`);
+  }
   const near = (a: { x: number; y: number }, b: { x: number; y: number }) =>
     Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6;
   for (const c of vectors.menuLayout) {

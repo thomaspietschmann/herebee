@@ -26,12 +26,12 @@ abstract class SecretStore {
 /// Platform secure storage. The item is bound to this device (no iCloud
 /// Keychain sync) and readable only after the first unlock.
 class SecureSecretStore implements SecretStore {
-  SecureSecretStore()
+  SecureSecretStore([this._key = 'herebee.recentRooms'])
       : _storage = const FlutterSecureStorage(
           iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
         );
 
-  static const String _key = 'herebee.recentRooms';
+  final String _key;
   final FlutterSecureStorage _storage;
 
   @override
@@ -61,9 +61,15 @@ class MemorySecretStore implements SecretStore {
 
 @immutable
 class RecentRoom {
-  const RecentRoom({required this.secret, required this.lastEntered, this.seeds = const []});
+  const RecentRoom({
+    required this.secret,
+    required this.lastEntered,
+    this.seeds = const [],
+    this.roomId = '',
+  });
 
   final String secret;
+  final String roomId;
   final DateTime lastEntered;
 
   /// Identity seeds of peers seen in this room, newest first, capped. Names are
@@ -75,6 +81,7 @@ class RecentRoom {
         's': secret,
         't': lastEntered.millisecondsSinceEpoch,
         'p': seeds,
+        if (roomId.isNotEmpty) 'r': roomId,
       };
 
   static RecentRoom? fromJson(Object? raw) {
@@ -82,11 +89,13 @@ class RecentRoom {
     final s = raw['s'];
     final t = raw['t'];
     final p = raw['p'];
+    final r = raw['r'];
     if (s is! String || s.isEmpty || t is! int) return null;
     return RecentRoom(
       secret: s,
       lastEntered: DateTime.fromMillisecondsSinceEpoch(t),
       seeds: p is List ? p.whereType<String>().toList() : const [],
+      roomId: r is String ? r : '',
     );
   }
 }
@@ -131,12 +140,13 @@ class RecentRooms extends ChangeNotifier {
 
   /// Record that the user entered [secret] now. Moves it to the front and
   /// keeps whatever was known about it.
-  Future<void> touch(String secret) async {
+  Future<void> touch(String secret, {String roomId = ''}) async {
     final existing = byId(secret);
     final updated = RecentRoom(
       secret: secret,
       lastEntered: _clock(),
       seeds: existing?.seeds ?? const [],
+      roomId: roomId.isNotEmpty ? roomId : existing?.roomId ?? '',
     );
     await _replace([updated, ...rooms.where((r) => r.secret != secret)]);
   }
@@ -153,7 +163,7 @@ class RecentRooms extends ChangeNotifier {
     await _replace([
       for (final r in rooms)
         if (r.secret == secret)
-          RecentRoom(secret: r.secret, lastEntered: r.lastEntered, seeds: merged)
+          RecentRoom(secret: r.secret, lastEntered: r.lastEntered, seeds: merged, roomId: r.roomId)
         else
           r,
     ]);

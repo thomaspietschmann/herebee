@@ -14,8 +14,10 @@ import 'package:maplibre/maplibre.dart';
 
 import '../../app_config.dart';
 import '../../core/crypto.dart';
+import '../../core/names.dart';
 import '../../core/peer_state.dart';
 import '../../core/recent_rooms.dart';
+import '../../core/style_guard.dart';
 import '../../l10n/app_localizations.dart';
 import '../hud/hud.dart';
 import '../map/auto_fit.dart';
@@ -54,6 +56,12 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   String? _openMenuSeed;
   bool _welcomeShown = false;
 
+  String? _style;
+  String? _styleLocale;
+  bool _styleLoading = false;
+  bool _styleFailed = false;
+  Timer? _styleRetry;
+
   final AutoFit _autoFit = AutoFit();
 
   final GlobalKey _brandKey = GlobalKey();
@@ -72,10 +80,39 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _styleLocale = Localizations.localeOf(context).languageCode;
+    if (_style == null && !_styleLoading) unawaited(_loadStyle());
+  }
+
+  Future<void> _loadStyle() async {
+    final locale = _styleLocale;
+    if (locale == null) return;
+    _styleLoading = true;
+    _styleRetry?.cancel();
+    try {
+      final style = await StyleGuard(AppConfig.origin).fetch(AppConfig.styleUrl(locale));
+      if (!mounted) return;
+      setState(() {
+        _style = style;
+        _styleFailed = false;
+      });
+    } on StyleRejected {
+      if (!mounted) return;
+      setState(() => _styleFailed = true);
+      _styleRetry = Timer(const Duration(seconds: 10), () => unawaited(_loadStyle()));
+    } finally {
+      _styleLoading = false;
+    }
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_panSub?.cancel());
     c.removeListener(_onControllerChange);
+    _styleRetry?.cancel();
     super.dispose();
   }
 
@@ -140,7 +177,10 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       context,
       recent: widget.recent,
       currentSecret: c.secret,
-      nameFor: c.resolveName,
+      nameFor: (room, seed) => room.secret == c.secret
+          ? c.resolveName(seed)
+          : (room.roomId.isEmpty ? null : c.storage.customName(room.roomId, seed)) ??
+              nameFromSeed(seed, c.languageCode),
     );
     if (!mounted || choice == null) return;
     widget.onOpenRoom(choice.secret ?? generateSecret());
@@ -160,7 +200,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final entry = c.peers[seed];
     final map = _map;
     if (entry == null || map == null) return;
-    final zoom = (map.camera?.zoom ?? _initialZoom).clamp(15.0, 22.0);
+    final zoom = (map.camera?.zoom ?? _initialZoom).clamp(16.0, 22.0);
     unawaited(map.animateCamera(
       center: Geographic(lon: entry.position.lng, lat: entry.position.lat),
       zoom: zoom,
@@ -266,7 +306,6 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final locale = Localizations.localeOf(context).languageCode;
     final openSeed = _openMenuSeed;
     final openEntry = openSeed == null ? null : c.peers[openSeed];
 
@@ -278,9 +317,9 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
           // children LOOSE constraints, and the native map view then sizes
           // itself to something arbitrary instead of the screen.
           Positioned.fill(
-            child: MapLibreMap(
+            child: _style == null ? const SizedBox.shrink() : MapLibreMap(
               options: MapOptions(
-                initStyle: AppConfig.styleUrl(locale),
+                initStyle: _style!,
                 initCenter: _initialCenter,
                 initZoom: _initialZoom,
                 // Location comes from peers, not from the camera; keep the
@@ -307,6 +346,14 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
               ],
             ),
           ),
+          if (_styleFailed && _style == null)
+            Positioned(
+              left: 16,
+              right: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(child: _FatalBanner(message: l.mapUnavailable)),
+            ),
           Hud(
             controller: c,
             onFitAll: _fitAll,

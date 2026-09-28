@@ -340,19 +340,26 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'eingebunden; die App läuft daher auch auf Geräten ohne Google-Dienste. Welche Daten '
                 'das Betriebssystem selbst dabei verarbeitet, liegt außerhalb des Einflusses dieser '
                 'App und richtet sich nach den Angaben des jeweiligen Herstellers.'),
-            p('<strong>Auf dem Gerät gespeichert.</strong> Eine zufällige Kennung für die eigene '
-                'Bienen-Identität, die Namen, die du anderen Teilnehmern selbst gegeben hast, sowie '
-                'pro Raum dein eigener Name und ob du ihn teilst. Außerdem die letzten fünf Räume, '
+            p('<strong>Räume sind streng getrennt.</strong> Deine Biene ist in jedem Raum eine andere: '
+                'Die Kennung wird auf dem Gerät aus einem geheimen Geräteschlüssel und dem Raum '
+                'abgeleitet und lässt sich ohne diesen Schlüssel keinem anderen Raum zuordnen. Auch '
+                'Namen gelten immer nur in dem Raum, in dem sie vergeben wurden. Wer dich in mehreren '
+                'Räumen sieht, kann dich daher nicht an einer Kennung oder einem Namen wiedererkennen – '
+                'wohl aber an deinem Standort, wenn du in mehreren Räumen teilst, oder an einem Namen, '
+                'den du selbst in mehreren Räumen teilst.'),
+            p('<strong>Auf dem Gerät gespeichert.</strong> Der geheime Geräteschlüssel in der sicheren '
+                'Ablage des Geräts (Keychain bzw. Keystore) sowie pro Raum die Namen, die du anderen '
+                'Teilnehmern gegeben hast, dein eigener Name und ob du ihn teilst. Außerdem die letzten fünf Räume, '
                 'die du betreten hast, samt Schlüssel und den Bienen, die du dort getroffen hast – '
                 'für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore); jeder '
                 'Eintrag lässt sich jederzeit löschen. Keine Standorthistorie, keine Protokolle.'),
-            p('<strong>Was das Gerät verlässt.</strong> Die Bienen-Kennung und – nur wenn du es '
-                'erlaubst – dein Name gehen Ende-zu-Ende-verschlüsselt an die anderen Teilnehmer '
-                'des Raums; wer dich in mehreren Räumen trifft, kann deine Biene wiedererkennen. '
+            p('<strong>Was das Gerät verlässt.</strong> Die Bienen-Kennung des jeweiligen Raums und – nur '
+                'wenn du es erlaubst – dein Name gehen Ende-zu-Ende-verschlüsselt an die anderen '
+                'Teilnehmer dieses Raums. '
                 'An den Server geht zusätzlich ein zufälliges Token für die Wiederverbindung, das '
                 'nur im Arbeitsspeicher liegt und bei jedem App-Start neu erzeugt wird. Unter '
                 'Android sind Sicherungen der App-Daten abgeschaltet; unter iOS können die '
-                'Einstellungen der App (ohne die Raum-Schlüssel) Teil einer Geräte- oder '
+                'Einstellungen der App (ohne Geräte- und Raum-Schlüssel) Teil einer Geräte- oder '
                 'iCloud-Sicherung sein. Beim Löschen der App werden alle Daten entfernt.'),
             p('<strong>Hosting.</strong> Die App wird auf einem Server in Deutschland betrieben. Der '
                 'Hosting-Anbieter'),
@@ -513,7 +520,7 @@ Future<RoomsChoice?> showRoomsSheet(
   BuildContext context, {
   required RecentRooms recent,
   required String currentSecret,
-  required String Function(String seed) nameFor,
+  required String Function(RecentRoom room, String seed) nameFor,
 }) =>
     _sheet<RoomsChoice>(
       context,
@@ -542,7 +549,7 @@ class RoomsPicker extends StatelessWidget {
   });
 
   final RecentRooms recent;
-  final String Function(String seed) nameFor;
+  final String Function(RecentRoom room, String seed) nameFor;
   final void Function(RoomsChoice choice) onChoose;
 
   /// The room currently open, if any; marked in the list.
@@ -678,14 +685,14 @@ class _RoomTile extends StatelessWidget {
 
   final RecentRoom room;
   final bool current;
-  final String Function(String seed) nameFor;
+  final String Function(RecentRoom room, String seed) nameFor;
   final VoidCallback onOpen;
   final VoidCallback onForget;
 
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    final title = room.seeds.isEmpty ? l.roomsUnnamed : room.seeds.map(nameFor).join(', ');
+    final title = room.seeds.isEmpty ? l.roomsUnnamed : room.seeds.map((seed) => nameFor(room, seed)).join(', ');
     final when = relativeTime(l, DateTime.now().difference(room.lastEntered));
     final tile = ListTile(
       contentPadding: current ? const EdgeInsets.only(left: 12, right: 8) : EdgeInsets.zero,

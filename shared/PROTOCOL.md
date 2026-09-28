@@ -174,7 +174,8 @@ the last known position.
 All of this is local and deterministic; nothing about it is transmitted except
 the `seed` string itself.
 
-- `seed`: a random token, stable per install (web: per browser, `localStorage`).
+- `seed`: per room, derived from a device secret and the roomId (see §7); stable
+  within a room, unlinkable across rooms.
   Never an account, never a device identifier.
 - **cyrb53** (`client/src/rng.ts`) hashes the seed; **mulberry32** turns that into
   a float stream. Both are 32-bit-arithmetic algorithms: a port must emulate
@@ -208,9 +209,12 @@ Exhaustive, by design:
 Not: coordinates, names, the key, any history. There is no database; rooms exist
 only while somebody is connected.
 
-What the **other participants** learn: the seed is the same in every room, so
-someone who meets you in two rooms can recognise your bee in both. That is what
-makes the names you give people stick. Timestamps (`at`) come from the sender;
+What the **other participants** learn: nothing that links rooms. A client's seed
+is per room, `seed = HMAC-SHA256(deviceSecret, "herebee/seed/" + roomId)`,
+first 9 bytes, each byte in base 36, where `deviceSecret` is 32 random bytes that
+never leave the device. Names a user gives others, and their own name, are stored
+per room. Rooms can still be linked by a live position shared in two rooms at
+once, or by a name the user chooses to share in both. Timestamps (`at`) come from the sender;
 receivers cap them at five seconds in the future and drop frames older than the
 linger window (20 min), so a peer cannot pin its marker as "fresh" forever.
 

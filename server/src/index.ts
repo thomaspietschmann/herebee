@@ -140,7 +140,7 @@ function securityHeaders(res: ServerResponse): void {
     [
       "default-src 'self'",
       "script-src 'self'",
-      "style-src 'self' 'unsafe-inline'",
+      "style-src 'self'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
       "worker-src 'self' blob:",

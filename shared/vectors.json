@@ -1412,5 +1412,27 @@
         "settled": true
       }
     ]
-  }
+  },
+  "roomSeeds": [
+    {
+      "device": "AzhtotcMQXar4BVKf7TpHlOIvfInXJHG-zBlms8EOW4",
+      "roomId": "F_SNXNUR1v1QKRwr2aN4Kd_xSJP-2-24",
+      "seed": "o5ax3d91m2l2f5d"
+    },
+    {
+      "device": "AzhtotcMQXar4BVKf7TpHlOIvfInXJHG-zBlms8EOW4",
+      "roomId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "seed": "2e6z2m563r4e4v3e4u"
+    },
+    {
+      "device": "FEl-s-gdUoe88SZbkMX6L2SZzgM4baLXDEF2q-AVSn8",
+      "roomId": "F_SNXNUR1v1QKRwr2aN4Kd_xSJP-2-24",
+      "seed": "535v1l0101n3u4c43"
+    },
+    {
+      "device": "JVqPxPkuY5jNAjdsodYLQHWq3xRJfrPoHVKHvPEmW5A",
+      "roomId": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+      "seed": "3g6i5j284f475k2149"
+    }
+  ]
 }

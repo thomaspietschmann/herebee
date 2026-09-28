@@ -23,7 +23,7 @@ Widget host(RecentRooms recent, void Function(RoomsChoice?) onResult) => Materia
               context,
               recent: recent,
               currentSecret: 'current',
-              nameFor: (seed) => 'Biene $seed',
+              nameFor: (room, seed) => 'Biene $seed',
             )),
             child: const Text('open'),
           ),
@@ -160,7 +160,7 @@ Widget startHost(RecentRooms recent, void Function(RoomsChoice) onChoose) => Mat
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: L.supportedLocales,
-      home: StartScreen(recent: recent, nameFor: (seed) => 'Biene $seed', onChoose: onChoose),
+      home: StartScreen(recent: recent, nameFor: (room, seed) => 'Biene $seed', onChoose: onChoose),
     );
 
 void startScreenTests() {

@@ -67,7 +67,7 @@ class RoomController extends ChangeNotifier {
 
   /// Fired once, when the user actually enters the room. That, not merely
   /// opening a link, is what makes a room worth remembering.
-  final VoidCallback? onEntered;
+  final void Function(String roomId)? onEntered;
 
   static NetClient _defaultNetClient({
     required String endpoint,
@@ -199,8 +199,7 @@ class RoomController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _selfSeed = await storage.seed();
-    await storage.dropLegacyOwnName(_selfSeed!);
+    _selfSeed = await storage.roomSeed(_keys!.roomId);
     notifyListeners();
   }
 
@@ -215,7 +214,7 @@ class RoomController extends ChangeNotifier {
     if (_keys == null) return;
     _entered = true;
     notifyListeners();
-    onEntered?.call();
+    onEntered?.call(_keys!.roomId);
 
     final net = _newNetClient(
       endpoint: AppConfig.wsUrl,
@@ -543,7 +542,7 @@ class RoomController extends ChangeNotifier {
 
   /// The name the user typed for [seed]; for themselves, the one for this room.
   String? customName(String seed) =>
-      seed == _selfSeed ? storage.ownName(_keys!.roomId) : storage.customName(seed);
+      seed == _selfSeed ? storage.ownName(_keys!.roomId) : storage.customName(_keys!.roomId, seed);
 
   /// Our own name for someone always wins over what they call themselves.
   String resolveName(String seed) {
@@ -560,7 +559,7 @@ class RoomController extends ChangeNotifier {
     if (seed == _selfSeed) {
       await storage.setOwnName(_keys!.roomId, name);
     } else {
-      await storage.setCustomName(seed, name);
+      await storage.setCustomName(_keys!.roomId, seed, name);
     }
     // Resetting our own name also stops sharing it.
     if (seed == _selfSeed && name == null) await setSharesName(false);

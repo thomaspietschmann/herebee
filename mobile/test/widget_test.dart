@@ -10,6 +10,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:herebee/core/recent_rooms.dart';
 import 'package:herebee/core/storage.dart';
 import 'package:herebee/features/hud/hud.dart';
 import 'package:herebee/features/room/room_controller.dart';
@@ -35,7 +36,7 @@ Future<RoomController> makeController() async {
   SharedPreferences.setMockInitialValues({});
   final controller = RoomController(
     secret: 'ByxRdpvA5QovVHmew-gNMld8ocbrEDVaf6TJ7hM4XYI',
-    storage: await Storage.open(),
+    storage: await Storage.open(device: MemorySecretStore()),
     languageCode: 'de',
     youSuffix: '(du)',
   );
