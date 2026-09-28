@@ -53,6 +53,7 @@
     "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
   },
   "welcomeCta": "Raum betreten",
+  "welcomeOpenApp": "In der HereBee-App öffnen",
   "watcher": "Schaut zu",
   "participantsTitle": "Wer ist hier?",
   "fitAll": "Alle auf einen Blick",

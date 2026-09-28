@@ -184,7 +184,7 @@ export class UI {
    * flows until they actively enter. `onEnter` opens the WebSocket.
    */
   openWelcome(onEnter: () => void): void {
-    this.sheetBody.innerHTML = `
+    this.sheetBody.innerHTML = `${this.appLinkRow()}
       <img class="splash-logo" src="/brand/herebee-logo.png" alt="" aria-hidden="true" />
       <h2>${t("welcomeTitle")}</h2>
       <p>${t("welcomeIntro")}</p>
@@ -203,6 +203,27 @@ export class UI {
       this.closeSheet();
       onEnter();
     });
+  }
+
+  /**
+   * On iOS, a way from this page into the installed app. Until Universal Links
+   * are active, tapping a room link in a chat always lands here in Safari; the
+   * custom scheme hands the same fragment secret to the app. The secret stays
+   * in the fragment, so it still never reaches a server. Without the app
+   * installed the link just does nothing, hence the plain secondary button.
+   * It sits above the logo because the gate scrolls on a phone, and below the
+   * fold nobody who came here for the app would find it.
+   */
+  private appLinkRow(): string {
+    const ios =
+      /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
+    if (!ios || !location.hash) return "";
+    const href = this.esc(`herebee://r${location.hash}`);
+    return `
+      <div class="linkbox" style="margin:0 0 18px">
+        <a class="btn" href="${href}" style="flex:1;text-align:center;text-decoration:none">${t("welcomeOpenApp")}</a>
+      </div>`;
   }
 
   /**

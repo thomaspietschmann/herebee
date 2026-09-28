@@ -55,6 +55,7 @@ const de = {
   welcomeFact3:
     "<strong>Jederzeit stoppen:</strong> Der Button wird zu <em>„Teilen stoppen“</em> — ein Tipp, und du teilst nichts mehr.",
   welcomeCta: "Raum betreten",
+  welcomeOpenApp: "In der HereBee-App öffnen",
   watcher: "Schaut zu",
   participantsTitle: "Wer ist hier?",
   fitAll: "Alle auf einen Blick",
@@ -166,6 +167,7 @@ const en: Record<Key, string> = {
   welcomeFact3:
     "<strong>Stop anytime:</strong> The button turns into <em>“Stop sharing”</em> — one tap and you share nothing again.",
   welcomeCta: "Enter room",
+  welcomeOpenApp: "Open in the HereBee app",
   watcher: "Watching",
   participantsTitle: "Who's here?",
   fitAll: "Fit everyone on screen",
@@ -269,6 +271,7 @@ const es: Record<Key, string> = {
   welcomeFact3:
     "<strong>Detente cuando quieras:</strong> El botón cambia a <em>«Dejar de compartir»</em>: un toque y dejas de compartir.",
   welcomeCta: "Entrar en la sala",
+  welcomeOpenApp: "Abrir en la app HereBee",
   watcher: "Mirando",
   participantsTitle: "¿Quién está aquí?",
   fitAll: "Ver a todos en pantalla",
@@ -372,6 +375,7 @@ const it: Record<Key, string> = {
   welcomeFact3:
     "<strong>Fermati quando vuoi:</strong> Il pulsante diventa <em>«Interrompi condivisione»</em>: un tocco e non condividi più nulla.",
   welcomeCta: "Entra nella stanza",
+  welcomeOpenApp: "Apri nell'app HereBee",
   watcher: "Sta guardando",
   participantsTitle: "Chi c'è?",
   fitAll: "Mostra tutti sullo schermo",
@@ -476,6 +480,7 @@ const fr: Record<Key, string> = {
   welcomeFact3:
     "<strong>Arrête quand tu veux :</strong> Le bouton devient <em>« Arrêter le partage »</em> — une touche et tu ne partages plus rien.",
   welcomeCta: "Entrer dans le salon",
+  welcomeOpenApp: "Ouvrir dans l'app HereBee",
   watcher: "Regarde",
   participantsTitle: "Qui est là ?",
   fitAll: "Tout le monde à l'écran",
@@ -580,6 +585,7 @@ const pt: Record<Key, string> = {
   welcomeFact3:
     "<strong>Para quando quiseres:</strong> O botão muda para <em>«Parar de partilhar»</em> — um toque e deixas de partilhar.",
   welcomeCta: "Entrar na sala",
+  welcomeOpenApp: "Abrir na app HereBee",
   watcher: "A observar",
   participantsTitle: "Quem está aqui?",
   fitAll: "Mostrar todos no ecrã",
