@@ -83,6 +83,8 @@
   "roomsCurrent": "Sei qui",
   "roomsForget": "Dimentica stanza",
   "roomsForgetAll": "Dimentica tutte",
+  "roomsLinkHint": "Incolla qui il link di una stanza",
+  "roomsLinkInvalid": "Questo non è un link di stanza completo",
   "roomsNote": "Le stanze scompaiono da sole dopo 3 giorni. Le loro chiavi vivono solo nell'archivio sicuro di questo dispositivo.",
   "hoursAgo": "{n} h fa",
   "daysAgo": "{n} giorni fa",

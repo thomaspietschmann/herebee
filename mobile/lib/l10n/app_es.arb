@@ -83,6 +83,8 @@
   "roomsCurrent": "Estás aquí",
   "roomsForget": "Olvidar sala",
   "roomsForgetAll": "Olvidar todas",
+  "roomsLinkHint": "Pega aquí un enlace de sala",
+  "roomsLinkInvalid": "Eso no es un enlace de sala completo",
   "roomsNote": "Las salas desaparecen solas a los 3 días. Sus claves solo están en el almacenamiento seguro de este dispositivo.",
   "hoursAgo": "hace {n} h",
   "daysAgo": "hace {n} días",

@@ -83,6 +83,8 @@
   "roomsCurrent": "You are here",
   "roomsForget": "Forget room",
   "roomsForgetAll": "Forget all",
+  "roomsLinkHint": "Paste a room link here",
+  "roomsLinkInvalid": "That is not a complete room link",
   "roomsNote": "Rooms disappear on their own after 3 days. Their keys live only in this device's secure storage.",
   "hoursAgo": "{n} h ago",
   "daysAgo": "{n} days ago",

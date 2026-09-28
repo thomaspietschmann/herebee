@@ -76,6 +76,28 @@ void main() {
     expect(result!.secret, isNull);
   });
 
+  testWidgets('a pasted room link opens that room; junk says why it cannot',
+      (tester) async {
+    const secret = 'ByxRdpvA5QovVHmew-gNMld8ocbrEDVaf6TJ7hM4XYI';
+    final recent = RecentRooms(MemorySecretStore());
+    await recent.load();
+    RoomsChoice? result;
+
+    await tester.pumpWidget(host(recent, (r) => result = r));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'kaputt');
+    await tester.testTextInput.receiveAction(TextInputAction.go);
+    await tester.pumpAndSettle();
+    expect(find.text('Das ist kein vollständiger Raum-Link'), findsOneWidget);
+    expect(result, isNull);
+
+    await tester.enterText(find.byType(TextField), 'Komm: https://herebee.app/r/#$secret');
+    await tester.pumpAndSettle();
+    expect(result?.secret, secret);
+  });
+
   testWidgets('the close button forgets a room immediately, forget-all empties the list',
       (tester) async {
     final recent = RecentRooms(MemorySecretStore());

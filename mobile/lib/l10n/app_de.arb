@@ -197,6 +197,8 @@
   "roomsCurrent": "Du bist hier",
   "roomsForget": "Raum vergessen",
   "roomsForgetAll": "Alle vergessen",
+  "roomsLinkHint": "Raum-Link hier einfügen",
+  "roomsLinkInvalid": "Das ist kein vollständiger Raum-Link",
   "roomsNote": "Räume verschwinden nach 3 Tagen von selbst. Ihre Schlüssel liegen nur in der sicheren Ablage dieses Geräts.",
   "hoursAgo": "vor {n} h",
   "@hoursAgo": {

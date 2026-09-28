@@ -50,4 +50,26 @@ void main() {
       expect(looksLikeRoomLink(Uri.parse('https://herebee.app/')), isFalse);
     });
   });
+
+  group('secretFromText', () {
+    test('finds the link inside a chat message', () {
+      expect(secretFromText('Komm dazu: https://herebee.app/r/#$valid bis gleich'), valid);
+      expect(secretFromText('herebee://r#$valid'), valid);
+    });
+
+    test('drops trailing punctuation and surrounding whitespace', () {
+      expect(secretFromText('  https://herebee.app/r/#$valid.\n'), valid);
+      expect(secretFromText('(https://herebee.app/r/#$valid)'), valid);
+    });
+
+    test('still rejects a truncated secret', () {
+      expect(secretFromText('https://herebee.app/r/#${valid.substring(0, 42)}'), isNull);
+    });
+
+    test('ignores text without a room link', () {
+      expect(secretFromText(''), isNull);
+      expect(secretFromText('hello'), isNull);
+      expect(secretFromText(valid), isNull, reason: 'a bare secret is not a link');
+    });
+  });
 }

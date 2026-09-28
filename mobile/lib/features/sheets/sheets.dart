@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../core/deep_links.dart';
 import '../../core/recent_rooms.dart';
 import '../../l10n/app_localizations.dart';
 import '../../util/markup.dart';
@@ -475,6 +476,8 @@ class RoomsPicker extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: Text(l.roomsNew),
             ),
+            const SizedBox(height: 10),
+            _RoomLinkField(onSecret: (secret) => onChoose(RoomsChoice(secret))),
             if (rooms.isNotEmpty) ...[
               const SizedBox(height: 18),
               Text(l.roomsRecent,
@@ -502,6 +505,74 @@ class RoomsPicker extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Opens a room from a link pasted out of a chat, for as long as tapping the
+/// link does not reach the app (no Universal Links without the paid program).
+///
+/// A valid link opens as soon as it lands in the field, so paste is the whole
+/// gesture. On iOS the system edit menu is used: its Paste is user-initiated,
+/// so iOS does not ask "Allow Paste?" as it would for a programmatic read.
+class _RoomLinkField extends StatefulWidget {
+  const _RoomLinkField({required this.onSecret});
+
+  final void Function(String secret) onSecret;
+
+  @override
+  State<_RoomLinkField> createState() => _RoomLinkFieldState();
+}
+
+class _RoomLinkFieldState extends State<_RoomLinkField> {
+  final TextEditingController _controller = TextEditingController();
+  bool _invalid = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _changed(String text) {
+    final secret = secretFromText(text);
+    if (secret != null) {
+      widget.onSecret(secret);
+      return;
+    }
+    if (_invalid) setState(() => _invalid = false);
+  }
+
+  void _submit(String text) {
+    final secret = secretFromText(text);
+    if (secret != null) {
+      widget.onSecret(secret);
+    } else if (text.trim().isNotEmpty) {
+      setState(() => _invalid = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return TextField(
+      controller: _controller,
+      style: const TextStyle(color: Colors.white),
+      keyboardType: TextInputType.url,
+      autocorrect: false,
+      textInputAction: TextInputAction.go,
+      onChanged: _changed,
+      onSubmitted: _submit,
+      contextMenuBuilder: (context, state) => SystemContextMenu.isSupportedByField(state)
+          ? SystemContextMenu.editableText(editableTextState: state)
+          : AdaptiveTextSelectionToolbar.editableText(editableTextState: state),
+      decoration: InputDecoration(
+        prefixIcon: const Icon(Icons.link, color: Colors.white54),
+        hintText: l.roomsLinkHint,
+        hintStyle: const TextStyle(color: Colors.white30),
+        errorText: _invalid ? l.roomsLinkInvalid : null,
+        border: const OutlineInputBorder(),
+      ),
     );
   }
 }

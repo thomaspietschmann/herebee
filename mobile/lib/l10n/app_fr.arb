@@ -83,6 +83,8 @@
   "roomsCurrent": "Vous êtes ici",
   "roomsForget": "Oublier le salon",
   "roomsForgetAll": "Tout oublier",
+  "roomsLinkHint": "Colle ici un lien de salon",
+  "roomsLinkInvalid": "Ce n'est pas un lien de salon complet",
   "roomsNote": "Les salons disparaissent d'eux-mêmes après 3 jours. Leurs clés ne sont conservées que dans le stockage sécurisé de cet appareil.",
   "hoursAgo": "il y a {n} h",
   "daysAgo": "il y a {n} jours",

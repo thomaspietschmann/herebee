@@ -35,3 +35,23 @@ String? secretFromLink(Uri uri) {
 /// (say so, because the user expected a specific room).
 bool looksLikeRoomLink(Uri uri) =>
     uri.fragment.isNotEmpty || uri.path.startsWith('/r') || uri.host == 'r' || uri.path == 'r';
+
+/// A room link somewhere inside pasted text: `https://…#secret` or
+/// `herebee://…#secret`.
+///
+/// The secret is taken as the whole base64url run after the `#`, so trailing
+/// punctuation from a chat message ("here: https://…#abc.") falls away, while
+/// a truncated or overlong run still fails the same strict length check.
+final RegExp _linkInText = RegExp(r'(?:https?|herebee)://[^\s#]*#([A-Za-z0-9_-]+)');
+
+/// The room secret of the first room link in [text], or null if there is none.
+///
+/// For links copied out of a chat while Universal Links are not active: the
+/// message often carries more than the bare link.
+String? secretFromText(String text) {
+  for (final match in _linkInText.allMatches(text)) {
+    final candidate = match.group(1)!;
+    if (_secretPattern.hasMatch(candidate)) return candidate;
+  }
+  return null;
+}
