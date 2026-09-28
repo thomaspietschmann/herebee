@@ -6,6 +6,7 @@
   "shareLocation": "Share location",
   "stopSharing": "Stop sharing",
   "infoAria": "How anonymous is this?",
+  "mapAria": "Map with the room participants' locations",
   "close": "Close",
   "connOn": "Connected",
   "connOff": "Disconnected",

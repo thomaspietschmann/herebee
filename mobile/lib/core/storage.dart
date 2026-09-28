@@ -1,5 +1,5 @@
-/// What this app persists in plain preferences: an identity seed, a reconnect
-/// token, any names the user typed, and whether their own name is shared.
+/// What this app persists in plain preferences: an identity seed, any names
+/// the user typed, and whether their own name is shared.
 /// The user's own name and its sharing choice are kept per room, so a new room
 /// never knows what they called themselves elsewhere.
 ///
@@ -15,7 +15,7 @@ import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String _seedKey = 'herebee.seed';
-const String _cidKey = 'herebee.cid';
+const String _legacyCidKey = 'herebee.cid';
 const String _namePrefix = 'herebee.name.';
 const String _ownNamePrefix = 'herebee.ownName.';
 const String _shareNamePrefix = 'herebee.shareName.';
@@ -32,7 +32,11 @@ String mintToken() {
 class Storage {
   Storage(this._prefs);
 
-  static Future<Storage> open() async => Storage(await SharedPreferences.getInstance());
+  static Future<Storage> open() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_legacyCidKey);
+    return Storage(prefs);
+  }
 
   final SharedPreferences _prefs;
 
@@ -42,7 +46,9 @@ class Storage {
 
   /// Ephemeral reconnect token. Lets the relay drop THIS client's own stale
   /// socket when it reconnects. Never an identity; see shared/PROTOCOL.md.
-  Future<String> cid() async => _getOrMint(_cidKey);
+  Future<String> cid() async => _processCid;
+
+  static final String _processCid = mintToken();
 
   Future<String> _getOrMint(String key) async {
     final existing = _prefs.getString(key);

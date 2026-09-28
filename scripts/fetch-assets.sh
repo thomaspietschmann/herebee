@@ -8,7 +8,7 @@
 # Env overrides:
 #   BBOX     minLon,minLat,maxLon,maxLat   (default whole world)
 #   MAXZOOM  max zoom level                (default 12; was 14 for the old DACH-only extract)
-#   OUT      output pmtiles path           (default server/assets/tiles/dach.pmtiles)
+#   OUT      output pmtiles path           (default server/assets/tiles/basemap.pmtiles)
 #   PLANET   explicit planet URL           (default: resolve latest build)
 set -euo pipefail
 

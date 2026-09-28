@@ -7,7 +7,7 @@ import 'package:herebee/features/sheets/sheets.dart';
 import 'package:herebee/l10n/app_localizations.dart';
 
 LocUpdate fix({String? name}) =>
-    LocUpdate(seed: 'p', lat: 1, lng: 2, acc: null, hdg: null, spd: null, at: 3, name: name);
+    LocUpdate(seed: 'p', lat: 1, lng: 2, acc: null, hdg: null, spd: null, at: DateTime.now().millisecondsSinceEpoch, name: name);
 
 void main() {
   test('a peer keeps its shared name only while its updates carry it', () {

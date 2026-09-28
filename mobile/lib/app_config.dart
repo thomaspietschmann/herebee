@@ -16,7 +16,7 @@ class AppConfig {
   );
 
   /// Sent as X-HereBee-Client on the WebSocket upgrade. Carries no identity.
-  static const String clientVersion = '1.0.0';
+  static const String clientVersion = '0.0.11';
 
   static String get wsUrl {
     final u = Uri.parse(origin);

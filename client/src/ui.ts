@@ -181,7 +181,7 @@ export class UI {
       <h2>${t("shareTitle")}</h2>
       <p>${t("shareBody")}</p>
       <div class="linkbox">
-        <input id="link-input" readonly value="${url.replace(/"/g, "&quot;")}" />
+        <input id="link-input" readonly value="${this.esc(url)}" />
         <button class="btn btn-ghost" id="link-copy">${t("copy")}</button>
       </div>`;
     this.openSheet();
@@ -260,7 +260,7 @@ export class UI {
       <h2>${t("renameTitle")}</h2>
       <p>${t("renameBody")}</p>
       <div class="linkbox">
-        <input id="rename-input" maxlength="40" placeholder="${t("renamePlaceholder")}" value="${currentName.replace(/"/g, "&quot;")}" />
+        <input id="rename-input" maxlength="40" placeholder="${t("renamePlaceholder")}" value="${this.esc(currentName)}" />
         <button class="btn btn-primary" id="rename-save">${t("save")}</button>
       </div>
       ${hasCustom ? `<button class="btn btn-ghost" id="rename-reset" style="margin-top:10px">${t("renameReset")}</button>` : ""}`;
@@ -403,8 +403,17 @@ export class UI {
       <p><strong>Keine Cookies, kein Tracking.</strong> HereBee setzt keine Cookies, nutzt keine
       Analyse- oder Tracking-Dienste und bindet keine fremden CDNs ein. Karten, Schriften und Symbole
       werden selbst gehostet.</p>
-      <p><strong>Speicherdauer.</strong> Über die aktive Sitzung hinaus speichert die Anwendung nichts.
-      Für etwaige Infrastruktur-Logs gilt die Aufbewahrungsfrist des Hosting-Anbieters.</p>
+      <p><strong>Im Browser gespeichert.</strong> Im lokalen Speicher deines Browsers (localStorage)
+      liegen eine zufällige Kennung für deine Bienen-Identität, die Namen, die du anderen Teilnehmern
+      gegeben hast, sowie pro Raum dein eigener Name und ob du ihn teilst. Nur für den geöffneten Tab
+      (sessionStorage) kommen ein zufälliges Token für die Wiederverbindung und die Angabe hinzu, ob du
+      gerade teilst. Das ist für die Funktion technisch erforderlich (§ 25 Abs. 2 TDDDG), verlässt den
+      Browser nur verschlüsselt an die Teilnehmer bzw. als Token an den Server und lässt sich über die
+      Website-Daten des Browsers jederzeit löschen. Die Bienen-Kennung ist in allen Räumen dieselbe;
+      wer dich in mehreren Räumen trifft, kann deine Biene wiedererkennen.</p>
+      <p><strong>Speicherdauer.</strong> Auf dem Server speichert die Anwendung über die aktive Sitzung
+      hinaus nichts. Die Daten im Browser bleiben, bis du sie löschst. Für etwaige Infrastruktur-Logs
+      gilt die Aufbewahrungsfrist des Hosting-Anbieters.</p>
       <p><strong>Deine Rechte.</strong> Du hast das Recht auf Auskunft, Berichtigung, Löschung,
       Einschränkung, Datenübertragbarkeit und Widerspruch (Art. 15–22 DSGVO). Da über die Sitzung
       hinaus keine personenbezogenen Daten gespeichert werden, ergibt eine Auskunft in der Regel, dass

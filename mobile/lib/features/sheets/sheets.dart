@@ -340,11 +340,20 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'eingebunden; die App läuft daher auch auf Geräten ohne Google-Dienste. Welche Daten '
                 'das Betriebssystem selbst dabei verarbeitet, liegt außerhalb des Einflusses dieser '
                 'App und richtet sich nach den Angaben des jeweiligen Herstellers.'),
-            p('<strong>Auf dem Gerät gespeichert.</strong> Nur eine zufällige Kennung für die eigene '
-                'Bienen-Identität, ein ebenso zufälliges Token für die Wiederverbindung und die '
-                'Namen, die du anderen Teilnehmern selbst gegeben hast. Keine Standorthistorie, '
-                'keine Protokolle, keine Liste besuchter Räume. Diese Daten verlassen das Gerät '
-                'nicht und werden beim Löschen der App-Daten entfernt.'),
+            p('<strong>Auf dem Gerät gespeichert.</strong> Eine zufällige Kennung für die eigene '
+                'Bienen-Identität, die Namen, die du anderen Teilnehmern selbst gegeben hast, sowie '
+                'pro Raum dein eigener Name und ob du ihn teilst. Außerdem die letzten fünf Räume, '
+                'die du betreten hast, samt Schlüssel und den Bienen, die du dort getroffen hast – '
+                'für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore); jeder '
+                'Eintrag lässt sich jederzeit löschen. Keine Standorthistorie, keine Protokolle.'),
+            p('<strong>Was das Gerät verlässt.</strong> Die Bienen-Kennung und – nur wenn du es '
+                'erlaubst – dein Name gehen Ende-zu-Ende-verschlüsselt an die anderen Teilnehmer '
+                'des Raums; wer dich in mehreren Räumen trifft, kann deine Biene wiedererkennen. '
+                'An den Server geht zusätzlich ein zufälliges Token für die Wiederverbindung, das '
+                'nur im Arbeitsspeicher liegt und bei jedem App-Start neu erzeugt wird. Unter '
+                'Android sind Sicherungen der App-Daten abgeschaltet; unter iOS können die '
+                'Einstellungen der App (ohne die Raum-Schlüssel) Teil einer Geräte- oder '
+                'iCloud-Sicherung sein. Beim Löschen der App werden alle Daten entfernt.'),
             p('<strong>Hosting.</strong> Die App wird auf einem Server in Deutschland betrieben. Der '
                 'Hosting-Anbieter'),
             ph('[Anbieter, Anschrift – wird vor Veröffentlichung ergänzt]'),
@@ -356,9 +365,10 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'keine Analyse-, Absturzberichts- oder Tracking-Dienste und bindet keine fremden '
                 'CDNs ein. Karten, Schriften und Symbole werden selbst gehostet. Die App enthält '
                 'keine Bibliotheken von Google Play Services oder vergleichbaren Drittanbietern.'),
-            p('<strong>Speicherdauer.</strong> Über die aktive Sitzung hinaus speichert die Anwendung '
-                'nichts. Für etwaige Infrastruktur-Logs gilt die Aufbewahrungsfrist des '
-                'Hosting-Anbieters.'),
+            p('<strong>Speicherdauer.</strong> Auf dem Server speichert die Anwendung über die aktive '
+                'Sitzung hinaus nichts. Die Daten auf deinem Gerät bleiben, bis du sie löschst; '
+                'gemerkte Räume verfallen nach drei Tagen von selbst. Für etwaige Infrastruktur-Logs '
+                'gilt die Aufbewahrungsfrist des Hosting-Anbieters.'),
             p('<strong>Deine Rechte.</strong> Du hast das Recht auf Auskunft, Berichtigung, Löschung, '
                 'Einschränkung, Datenübertragbarkeit und Widerspruch (Art. 15–22 DSGVO). Da über die '
                 'Sitzung hinaus keine personenbezogenen Daten gespeichert werden, ergibt eine '

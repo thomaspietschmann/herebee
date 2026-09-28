@@ -60,7 +60,7 @@ Binding for every phase. The app must be at least as data-minimal as the web app
 | Network | `herebee.app` only, for everything: relay, style, glyphs, sprites, tiles. Android `network_security_config` forbids cleartext; iOS keeps ATS defaults. |
 | Push | None. Android shows a local ongoing notification only because a foreground service requires one. |
 | Location source | Android: framework `LocationManager`, not Fused Location Provider. iOS: CoreLocation, which is unavoidable and is disclosed as such. |
-| Storage | Identity seed, custom names, per-room "was sharing" flag. Nothing else. No logs, no location history. MapLibre ambient tile cache capped at 50 MB. |
+| Storage | Identity seed, custom names, your own name and its sharing choice per room (SharedPreferences); the last five rooms with their keys for three days (Keychain / Keystore). The reconnect token lives only in memory. No logs, no location history. Backups are disabled on Android. MapLibre's ambient tile cache uses the SDK default size. |
 | Identity | Random seed per install. Never an account, never a device identifier. |
 | Deep-link verification | Apple's CDN and Google's verifier fetch the `/.well-known/` documents. They learn that this domain has an app; no user data is involved. |
 | Apple privacy manifest | `PrivacyInfo.xcprivacy` with `NSPrivacyTracking=false`, no tracking domains, `NSPrivacyAccessedAPICategoryUserDefaults` reason `CA92.1`. Nutrition label: Location, not linked to the user, App Functionality. |

@@ -9,6 +9,7 @@
  */
 import type { WebSocket } from "ws";
 import type { ServerMessage } from "../../shared/messages.js";
+import { envInt } from "./env.js";
 
 export interface Conn {
   readonly id: string; // ephemeral, per-connection, not linkable
@@ -29,14 +30,75 @@ export interface Conn {
 
 const rooms = new Map<string, Set<Conn>>();
 
+interface RoomState {
+  tokens: number;
+  lastRefill: number;
+  lastRequestAt: number;
+  requestTimer: ReturnType<typeof setTimeout> | null;
+}
+
+const roomStates = new Map<string, RoomState>();
+
+const ROOM_MIN_RATE = 20;
+const ROOM_RATE_PER_MEMBER = 2;
+const REQUEST_DEBOUNCE_MS = 2_000;
+
 // Resource ceilings so a single client that mints unlimited valid roomIds (or
 // fans many sockets into one room) can't exhaust memory. Generous for real use.
-const MAX_ROOMS = Number(process.env.MAX_ROOMS ?? 5_000);
-const MAX_CONNS_PER_ROOM = Number(process.env.MAX_CONNS_PER_ROOM ?? 100);
+const MAX_ROOMS = envInt("MAX_ROOMS", 5_000);
+const MAX_CONNS_PER_ROOM = envInt("MAX_CONNS_PER_ROOM", 100);
 
 export function send(conn: Conn, msg: ServerMessage): void {
   if (conn.ws.readyState !== conn.ws.OPEN) return;
   conn.ws.send(JSON.stringify(msg));
+}
+
+function roomState(roomId: string): RoomState {
+  let state = roomStates.get(roomId);
+  if (!state) {
+    state = { tokens: ROOM_MIN_RATE, lastRefill: Date.now(), lastRequestAt: 0, requestTimer: null };
+    roomStates.set(roomId, state);
+  }
+  return state;
+}
+
+function dropRoomState(roomId: string): void {
+  const state = roomStates.get(roomId);
+  if (state?.requestTimer) clearTimeout(state.requestTimer);
+  roomStates.delete(roomId);
+}
+
+function takeRoomToken(roomId: string, size: number): boolean {
+  const state = roomState(roomId);
+  const rate = Math.max(ROOM_MIN_RATE, ROOM_RATE_PER_MEMBER * size);
+  const now = Date.now();
+  state.tokens = Math.min(rate, state.tokens + ((now - state.lastRefill) / 1000) * rate);
+  state.lastRefill = now;
+  if (state.tokens < 1) return false;
+  state.tokens -= 1;
+  return true;
+}
+
+function sendRequest(room: Set<Conn>, except: Conn | null): void {
+  for (const c of room) if (c !== except) send(c, { t: "request" });
+}
+
+function requestRebroadcast(roomId: string, room: Set<Conn>, newcomer: Conn): void {
+  const state = roomState(roomId);
+  if (state.requestTimer) return;
+  const wait = state.lastRequestAt + REQUEST_DEBOUNCE_MS - Date.now();
+  if (wait <= 0) {
+    state.lastRequestAt = Date.now();
+    sendRequest(room, newcomer);
+    return;
+  }
+  state.requestTimer = setTimeout(() => {
+    state.requestTimer = null;
+    const current = rooms.get(roomId);
+    if (!current || roomStates.get(roomId) !== state) return;
+    state.lastRequestAt = Date.now();
+    sendRequest(current, null);
+  }, wait);
 }
 
 /** Tell every member of a room the current occupancy (a bare count, no identity). */
@@ -95,9 +157,9 @@ export function joinRoom(conn: Conn, roomId: string, cid?: string): void {
     // Replay each peer's last position to the newcomer right away — even peers
     // whose device is asleep and can't answer a live request.
     if (other.lastData) send(conn, { t: "peer", id: other.id, data: other.lastData });
-    // Also nudge awake peers to send a fresh one.
-    send(other, { t: "request" });
   }
+  // Also nudge awake peers to send a fresh one.
+  if (room.size > 1) requestRebroadcast(roomId, room, conn);
   // Everyone (incl. the newcomer) learns the new occupancy, so watchers show up
   // as a count even though they never broadcast a position.
   broadcastPresence(room);
@@ -108,6 +170,7 @@ export function relay(conn: Conn, data: string): void {
   if (!conn.roomId) return;
   const room = rooms.get(conn.roomId);
   if (!room) return;
+  if (!takeRoomToken(conn.roomId, room.size)) return;
   conn.lastData = data; // remember last ciphertext (RAM only) for newcomers
   const msg: ServerMessage = { t: "peer", id: conn.id, data };
   const payload = JSON.stringify(msg);
@@ -129,14 +192,9 @@ export function leaveRoom(conn: Conn): void {
   room.delete(conn);
   if (room.size === 0) {
     rooms.delete(roomId); // self-healing: empty rooms disappear immediately
+    dropRoomState(roomId);
     return;
   }
   for (const other of room) send(other, { t: "left", id: conn.id });
   broadcastPresence(room); // occupancy dropped by one
-}
-
-export function stats(): { rooms: number; connections: number } {
-  let connections = 0;
-  for (const room of rooms.values()) connections += room.size;
-  return { rooms: rooms.size, connections };
 }

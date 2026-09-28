@@ -9,7 +9,7 @@ import { deriveRoomKeys, generateSecret, type RoomKeys } from "./crypto.js";
 import { NetClient } from "./net.js";
 import { createCoordinator } from "./coord.js";
 import { initMap } from "./map.js";
-import { MarkerManager, type MenuActions } from "./markers.js";
+import { LINGER_MS, MarkerManager, type MenuActions } from "./markers.js";
 import { identityFromSeed, hueFromIndex } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
 import { UI } from "./ui.js";
@@ -225,7 +225,9 @@ async function main(): Promise<void> {
   // secret can't decode — show a friendly notice instead of failing silently.
   let keys: RoomKeys;
   try {
-    keys = await deriveRoomKeys(ensureSecret());
+    const secret = ensureSecret();
+    if (!/^[A-Za-z0-9_-]{43}$/.test(secret)) throw new Error("invalid secret");
+    keys = await deriveRoomKeys(secret);
   } catch {
     ui.openInvalidLink();
     return;
@@ -235,6 +237,7 @@ async function main(): Promise<void> {
     // Older builds kept our own name and its sharing choice across all rooms.
     localStorage.removeItem("herebee.name." + seed);
     localStorage.removeItem("herebee.shareName");
+    localStorage.removeItem("herebee.sharing." + keys.roomId);
   } catch {
     /* private mode */
   }
@@ -243,8 +246,8 @@ async function main(): Promise<void> {
   const shareKey = "herebee.sharing." + keys.roomId;
   const rememberSharing = (on: boolean) => {
     try {
-      if (on) localStorage.setItem(shareKey, "1");
-      else localStorage.removeItem(shareKey);
+      if (on) sessionStorage.setItem(shareKey, "1");
+      else sessionStorage.removeItem(shareKey);
     } catch {
       /* private mode */
     }
@@ -559,7 +562,7 @@ async function main(): Promise<void> {
     engineLive = true;
     net.connect();
     try {
-      if (localStorage.getItem(shareKey) === "1") leaderStartShare();
+      if (sessionStorage.getItem(shareKey) === "1") leaderStartShare();
     } catch {
       /* private mode */
     }
@@ -577,6 +580,11 @@ async function main(): Promise<void> {
         // cached blob on join, so a lingering old socket would otherwise feed us
         // our own stale "stop"/ghost. Our own marker is owned by sharing.
         if (update.seed === seed) return;
+        if (update.k === "loc") {
+          const now = Date.now();
+          if (update.at < now - LINGER_MS) return;
+          update = { ...update, at: Math.min(update.at, now + 5000) };
+        }
         connSeed.set(id, update.seed); // so a later "left" for this id resolves to a marker
         markers.setOffline(update.seed, false); // fresh data => the link is fine again
         renderPeer(update);
@@ -587,12 +595,13 @@ async function main(): Promise<void> {
       // surface that the link, not just the position, is stale.
       onLeft(id) {
         const s = connSeed.get(id);
+        connSeed.delete(id);
         if (!s) return;
         markers.setOffline(s, true);
         coord.post({ t: "offline", seed: s, off: true } satisfies Bus);
       },
       onRequest() {
-        if (lastPos) void net?.broadcast(locUpdate(lastPos));
+        if (lastPos) scheduleSend();
       },
       onStatus(c) {
         setConnected(c);
@@ -722,6 +731,7 @@ async function main(): Promise<void> {
   // in every tab, since every tab renders its own markers.
   setInterval(() => {
     for (const id of markers.tick()) {
+      for (const [c, s] of connSeed) if (s === id) connSeed.delete(c);
       roster.delete(id);
       if (followSeed === id) followSeed = null;
     }

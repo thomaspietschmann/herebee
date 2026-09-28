@@ -13,10 +13,11 @@ import { randomBytes } from "node:crypto";
 import { WebSocketServer, type WebSocket } from "ws";
 import { clientMessageSchema, ROOM_ID_LENGTH } from "../../shared/messages.js";
 import { negotiate, OG } from "../../shared/og.js";
+import { envInt } from "./env.js";
 import { isValidRoomId } from "./roomId.js";
 import { type Conn, joinRoom, leaveRoom, relay, send } from "./relay.js";
 
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = envInt("PORT", 3000);
 const ROOT = resolve(process.cwd());
 const CLIENT_DIST = resolve(process.env.CLIENT_DIST ?? join(ROOT, "client", "dist"));
 const ASSETS_DIR = resolve(process.env.ASSETS_DIR ?? join(ROOT, "server", "assets"));
@@ -32,6 +33,8 @@ const ALLOWED_ORIGINS = csv(process.env.ALLOWED_ORIGINS);
 // production (e.g. https://herebee.app); left empty it is derived per request,
 // which is what dev wants.
 const PUBLIC_ORIGIN = (process.env.PUBLIC_ORIGIN ?? "").trim().replace(/\/+$/, "");
+
+const ALLOWED_HTTPS_ORIGIN = ALLOWED_ORIGINS.find((o) => o.startsWith("https://"))?.replace(/\/+$/, "") ?? "";
 
 // Deep-link association files. Each is served only when its env is present, so a
 // half-configured deployment serves nothing rather than something wrong.
@@ -74,17 +77,38 @@ function tilesVersion(): string {
 
 // --- rate limiting -------------------------------------------------------
 const RATE_TOKENS = 10; // burst
-const RATE_PER_SEC = 10; // sustained messages / second
+const RATE_PER_SEC = 3; // sustained messages / second
 const MAX_PAYLOAD = 16 * 1024; // bytes per WS frame
 const MAX_CONNS_PER_IP = 40;
-const MAX_TOTAL_CONNS = Number(process.env.MAX_CONNS ?? 10_000); // global socket ceiling
+const MAX_TOTAL_CONNS = envInt("MAX_CONNS", 10_000); // global socket ceiling
 const connsPerIp = new Map<string, number>();
+const UPGRADE_WINDOW_MS = 10_000;
+const MAX_UPGRADES_PER_WINDOW = 20;
+const upgradesPerIp = new Map<string, { start: number; count: number }>();
+
+function takeUpgradeSlot(ip: string): boolean {
+  const now = Date.now();
+  const entry = upgradesPerIp.get(ip);
+  if (!entry || now - entry.start >= UPGRADE_WINDOW_MS) {
+    upgradesPerIp.set(ip, { start: now, count: 1 });
+    return true;
+  }
+  entry.count += 1;
+  return entry.count <= MAX_UPGRADES_PER_WINDOW;
+}
+
+function pruneUpgradeWindows(): void {
+  const now = Date.now();
+  for (const [ip, entry] of upgradesPerIp) {
+    if (now - entry.start >= UPGRADE_WINDOW_MS) upgradesPerIp.delete(ip);
+  }
+}
 
 // Number of trusted reverse-proxy hops in front of this process. 0 (default,
 // safe for dev/direct) means "ignore X-Forwarded-For and use the socket IP".
 // Behind exactly one proxy (Traefik/Coolify) set TRUSTED_PROXY_HOPS=1 so the
 // per-IP cap keys on the real client IP instead of a spoofable XFF entry.
-const TRUSTED_PROXY_HOPS = Math.max(0, Number(process.env.TRUSTED_PROXY_HOPS ?? 0));
+const TRUSTED_PROXY_HOPS = envInt("TRUSTED_PROXY_HOPS", 0, 0);
 
 function takeToken(conn: Conn): boolean {
   const now = Date.now();
@@ -125,6 +149,7 @@ function securityHeaders(res: ServerResponse): void {
       // to a foreign WebSocket host despite script-src 'self'.
       "connect-src 'self'",
       "base-uri 'self'",
+      "object-src 'none'",
       "form-action 'self'",
       "frame-ancestors 'none'",
     ].join("; ")
@@ -204,11 +229,19 @@ function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, 
   const range = ifRange && ifRange !== etag && ifRange !== lastModified ? undefined : req.headers.range;
   if (range) {
     const m = /^bytes=(\d*)-(\d*)$/.exec(range);
-    if (m) {
+    if (m && (m[1] || m[2]) && !(m[1] && m[2] && Number(m[1]) > Number(m[2]))) {
       const total = st.size;
-      let start = m[1] ? parseInt(m[1], 10) : 0;
-      let end = m[2] ? parseInt(m[2], 10) : total - 1;
-      if (Number.isNaN(start) || Number.isNaN(end) || start > end || end >= total) {
+      let start: number;
+      let end: number;
+      if (!m[1]) {
+        const suffix = Number(m[2]);
+        start = Math.max(0, total - suffix);
+        end = suffix > 0 ? total - 1 : -1;
+      } else {
+        start = Number(m[1]);
+        end = m[2] ? Math.min(Number(m[2]), total - 1) : total - 1;
+      }
+      if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start >= total || start > end) {
         res.writeHead(416, { "Content-Range": `bytes */${total}` }).end();
         return;
       }
@@ -232,6 +265,7 @@ function serveFile(req: IncomingMessage, res: ServerResponse, filePath: string, 
  */
 function publicOrigin(req: IncomingMessage): string {
   if (PUBLIC_ORIGIN) return PUBLIC_ORIGIN;
+  if (ALLOWED_HTTPS_ORIGIN) return ALLOWED_HTTPS_ORIGIN;
   const host = req.headers.host ?? `localhost:${PORT}`;
   // Only believe the scheme header when a trusted proxy actually sits in front.
   // Unlike X-Forwarded-For (where the LAST entry is the trustworthy one), the
@@ -505,7 +539,7 @@ httpServer.on("upgrade", (req, socket, head) => {
   }
   const ip = clientIp(req);
   const count = connsPerIp.get(ip) ?? 0;
-  if (count >= MAX_CONNS_PER_IP) {
+  if (!takeUpgradeSlot(ip) || count >= MAX_CONNS_PER_IP) {
     socket.destroy();
     return;
   }
@@ -573,6 +607,7 @@ wss.on("connection", (ws: AliveWs) => {
 
 // Heartbeat: reap dead sockets (leaveRoom runs via their "close" handler).
 const heartbeat = setInterval(() => {
+  pruneUpgradeWindows();
   for (const ws of wss.clients as Set<AliveWs>) {
     if (ws.isAlive === false) {
       ws.terminate();

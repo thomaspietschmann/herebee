@@ -226,7 +226,7 @@ class RoomController extends ChangeNotifier {
         onPeer: _onPeer,
         onLeft: _onLeft,
         onRequest: () {
-          if (_sharing && _lastPos != null) _flushSend();
+          if (_sharing && _lastPos != null) _scheduleSend();
         },
         onStatus: (connected) {
           _connection = connected ? LinkState.on : LinkState.off;

@@ -12,6 +12,8 @@
 /// spot for [lingerFor] and then disappears on its own.
 library;
 
+import 'dart:math';
+
 import 'types.dart';
 
 // 45 s, not 15: a sharer resting in the background sends only every 30 s
@@ -20,6 +22,7 @@ import 'types.dart';
 const Duration freshFor = Duration(seconds: 45);
 const Duration staleFor = Duration(minutes: 2);
 const Duration lingerFor = Duration(minutes: 20);
+const Duration maxClockSkew = Duration(seconds: 5);
 
 /// GPS heading is noise at low speed (it swings wildly while standing still), so
 /// the arrow only shows once the fix reports genuine movement. ~1.5 m/s is a
@@ -79,7 +82,7 @@ class PeerStore {
   PeerEntry? operator [](String seed) => _entries[seed];
   int get length => _entries.length;
 
-  void upsert(PeerUpdate update, {bool isSelf = false}) {
+  void upsert(PeerUpdate update, {bool isSelf = false, DateTime? now}) {
     switch (update) {
       case StopUpdate():
         _entries.remove(update.seed); // active stop -> disappear now
@@ -90,9 +93,12 @@ class PeerStore {
           :final acc,
           :final hdg,
           :final spd,
-          :final at,
+          at: final sentAt,
           :final name
         ):
+        final nowMs = (now ?? DateTime.now()).millisecondsSinceEpoch;
+        if (sentAt < nowMs - lingerFor.inMilliseconds) return;
+        final at = min(sentAt, nowMs + maxClockSkew.inMilliseconds);
         final position = Position(lat: lat, lng: lng, acc: acc, hdg: hdg, spd: spd);
         final existing = _entries[seed];
         if (existing == null) {

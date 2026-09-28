@@ -32,7 +32,7 @@ import {
 // sync with freshFor in mobile/lib/core/peer_state.dart.
 const FRESH_MS = 45_000;
 const STALE_MS = 120_000;
-const LINGER_MS = 20 * 60_000; // keep a silent peer this long after its last fix
+export const LINGER_MS = 20 * 60_000; // keep a silent peer this long after its last fix
 
 // GPS `heading` is noise at low speed (it can swing wildly while stationary or
 // shuffling in place), so the arrow only shows once the fix reports genuine

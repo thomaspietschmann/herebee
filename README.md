@@ -222,8 +222,9 @@ never receives a page instead of JSON.
 
 Pushing a tag `android-vX.Y.Z` runs `.github/workflows/release-android.yml`. It
 builds a signed release APK with Flutter 3.44.0 and JDK 21, verifies that the
-APK is not debug-signed, and attaches it to a GitHub Release of the same name,
-marked as a pre-release.
+APK is not debug-signed, and attaches it to a GitHub Release of the same name.
+It is deliberately not marked as a pre-release, because updaters such as
+Obtainium skip pre-releases by default.
 
 ```bash
 git tag android-v0.0.1 && git push origin android-v0.0.1

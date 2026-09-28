@@ -125,12 +125,15 @@ Endpoint `/ws`, JSON text frames, max 16 KiB per frame.
 | `{t:"pong"}` | Reply to `ping`. |
 | `{t:"error", reason}` | Fatal: `invalid-room`, `capacity`, `room-full`. Socket closes. |
 
-The server rate-limits to 10 frames/s (burst 10) and silently drops the excess.
+The server rate-limits each connection to 3 frames/s (burst 10) and each room to
+max(20, 2 × members) frames/s, and silently drops the excess. It sends `request`
+at most once per room every 2 s; clients answer through their normal send
+throttle (at most one frame per second), never immediately.
 
 ### `cid` — the reconnect token
 
 An ephemeral per-client token (web: per browser tab, in `sessionStorage`; native:
-per install). On join, the relay **closes any other socket in the room carrying
+per app process, kept only in memory). On join, the relay **closes any other socket in the room carrying
 the same `cid`**. That is what stops a standby/reload zombie socket from
 double-counting occupancy and replaying a stale cached position. It must be
 stable across reconnects of one client and different between genuinely separate
@@ -193,13 +196,27 @@ the `seed` string itself.
 Exhaustive, by design:
 
 - the roomId (an opaque routing handle),
-- opaque ciphertext and its size,
+- opaque ciphertext and its size (plaintext is padded with spaces to a multiple
+  of 256 bytes before encryption, so the size no longer tells a position from a
+  stop or reveals whether a name is attached),
+- the `cid`, which links the reconnects of one tab or one app run and nothing
+  beyond that,
 - connection timing and the client IP for the duration of the connection
   (used only for a per-IP connection cap; never logged or stored),
 - room occupancy counts.
 
 Not: coordinates, names, the key, any history. There is no database; rooms exist
 only while somebody is connected.
+
+What the **other participants** learn: the seed is the same in every room, so
+someone who meets you in two rooms can recognise your bee in both. That is what
+makes the names you give people stick. Timestamps (`at`) come from the sender;
+receivers cap them at five seconds in the future and drop frames older than the
+linger window (20 min), so a peer cannot pin its marker as "fresh" forever.
+
+What can leak the **link** (and with it the key), outside of HereBee's control:
+browser history sync, browser extensions, link-preview servers of messengers
+that fetch the full URL, and clipboard history. The link is the key.
 
 ## 8. Native client specifics
 
@@ -214,3 +231,6 @@ only while somebody is connected.
 - **Deep links.** `https://herebee.app/r/#<secret>` (Universal Links / App Links,
   association documents under `/.well-known/`) and the fallback scheme
   `herebee://r#<secret>`. The secret is in the **fragment**, so read `uri.fragment`.
+  A custom scheme is not verified: another app that registers `herebee://` could
+  receive the secret. Until Universal Links are active, the web entry gate offers
+  the scheme link on iOS for convenience; once they are, the scheme path should go.

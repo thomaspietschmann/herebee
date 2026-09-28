@@ -77,10 +77,19 @@ Future<RoomKeys> deriveRoomKeys(String secretB64) async {
   return RoomKeys(roomId: bytesToB64url(raw), key: SecretKey(keyBytes));
 }
 
+const int padBlock = 256;
+
+Uint8List padPlaintext(List<int> clear) {
+  final size = (clear.length + padBlock - 1) ~/ padBlock * padBlock;
+  return Uint8List(size)
+    ..setRange(0, clear.length, clear)
+    ..fillRange(clear.length, size, 0x20);
+}
+
 /// Encrypt with a fresh 96-bit IV and pack as base64url(iv ‖ ciphertext ‖ tag).
 Future<String> encryptJson(SecretKey key, Object? value) async {
   final box = await _aesGcm.encrypt(
-    utf8.encode(jsonEncode(value)),
+    padPlaintext(utf8.encode(jsonEncode(value))),
     secretKey: key,
     nonce: _aesGcm.newNonce(),
   );
