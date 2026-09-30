@@ -92,4 +92,25 @@ void main() {
     expect(d, closeTo(2480, 60));
     expect(SendPolicy.distanceMeters(52.52, 13.405, 52.52, 13.405), 0);
   });
+
+  test('only the resting background profile asks for low power', () {
+    expect(SendPolicy.foregroundProfile.lowPower, isFalse);
+    expect(SendPolicy.backgroundMoving.lowPower, isFalse);
+    expect(SendPolicy.backgroundStill.lowPower, isTrue);
+    expect(SendPolicy.backgroundStill.heartbeat, lessThan(const Duration(seconds: 45)),
+        reason: 'peers show a bee as live for 45 s');
+  });
+
+  test('while resting, a coarse fix inside its own accuracy is not movement', () {
+    p.onFix(lat: 52.52, lng: 13.405, accuracy: 5);
+    p.setForeground(false);
+    tick(const Duration(seconds: 31));
+    expect(p.profile, SendPolicy.backgroundStill);
+
+    p.onFix(lat: 52.5205, lng: 13.405, accuracy: 80);
+    expect(p.profile, SendPolicy.backgroundStill, reason: '~55 m away but 80 m vague');
+
+    p.onFix(lat: 52.5215, lng: 13.405, accuracy: 80);
+    expect(p.profile, SendPolicy.backgroundMoving, reason: '~165 m is further than the fix is vague');
+  });
 }

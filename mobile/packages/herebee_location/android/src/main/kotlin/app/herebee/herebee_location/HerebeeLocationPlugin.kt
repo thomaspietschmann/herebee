@@ -121,6 +121,7 @@ class HerebeeLocationPlugin :
                 LocationForegroundService.current?.reconfigure(
                     (call.argument<Number>("intervalMs")?.toLong() ?: 1000L),
                     (call.argument<Number>("distanceFilter")?.toFloat() ?: 3f),
+                    call.argument<Boolean>("lowPower") ?: false,
                 )
                 result.success(null)
             }
@@ -165,6 +166,10 @@ class HerebeeLocationPlugin :
             .putExtra(
                 LocationForegroundService.EXTRA_DISTANCE_FILTER,
                 (call.argument<Number>("distanceFilter")?.toFloat() ?: 3f),
+            )
+            .putExtra(
+                LocationForegroundService.EXTRA_LOW_POWER,
+                call.argument<Boolean>("lowPower") ?: false,
             )
         try {
             ContextCompat.startForegroundService(context, intent)

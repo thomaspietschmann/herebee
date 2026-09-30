@@ -43,6 +43,7 @@ class LocationForegroundService : Service(), LocationListener {
         const val EXTRA_STOP_LABEL = "stopLabel"
         const val EXTRA_INTERVAL_MS = "intervalMs"
         const val EXTRA_DISTANCE_FILTER = "distanceFilter"
+        const val EXTRA_LOW_POWER = "lowPower"
 
         private const val CHANNEL_ID = "herebee.sharing"
         private const val NOTIFICATION_ID = 4711
@@ -83,6 +84,7 @@ class LocationForegroundService : Service(), LocationListener {
         val stopLabel = intent?.getStringExtra(EXTRA_STOP_LABEL) ?: "Stop"
         val intervalMs = intent?.getLongExtra(EXTRA_INTERVAL_MS, 1000L) ?: 1000L
         val distanceFilter = intent?.getFloatExtra(EXTRA_DISTANCE_FILTER, 3f) ?: 3f
+        val lowPower = intent?.getBooleanExtra(EXTRA_LOW_POWER, false) ?: false
 
         try {
             startForegroundCompat(buildNotification(title, body, stopLabel))
@@ -96,7 +98,7 @@ class LocationForegroundService : Service(), LocationListener {
         }
         acquireWakeLock()
 
-        if (!requestUpdates(intervalMs, distanceFilter)) {
+        if (!requestUpdates(intervalMs, distanceFilter, lowPower)) {
             onStopped?.invoke("servicesDisabled")
             stopSelf()
             return START_NOT_STICKY
@@ -123,15 +125,15 @@ class LocationForegroundService : Service(), LocationListener {
      * filter and interval let the GPS rest while the device does; see the
      * app's SendPolicy for who decides.
      */
-    fun reconfigure(intervalMs: Long, distanceFilter: Float) {
+    fun reconfigure(intervalMs: Long, distanceFilter: Float, lowPower: Boolean) {
         locationManager?.removeUpdates(this)
-        if (!requestUpdates(intervalMs, distanceFilter)) {
+        if (!requestUpdates(intervalMs, distanceFilter, lowPower)) {
             onStopped?.invoke("servicesDisabled")
             stopSelf()
         }
     }
 
-    private fun requestUpdates(intervalMs: Long, distanceFilter: Float): Boolean {
+    private fun requestUpdates(intervalMs: Long, distanceFilter: Float, lowPower: Boolean): Boolean {
         val manager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return false
         locationManager = manager
 
@@ -139,7 +141,12 @@ class LocationForegroundService : Service(), LocationListener {
         // fast first result. Whichever reports, Dart gets it; the wire format
         // carries the accuracy so peers can see how vague a position is.
         var subscribed = false
-        for (provider in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) {
+        val providers = if (lowPower && manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            listOf(LocationManager.NETWORK_PROVIDER)
+        } else {
+            listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+        }
+        for (provider in providers) {
             if (!manager.isProviderEnabled(provider)) continue
             try {
                 manager.requestLocationUpdates(provider, intervalMs, distanceFilter, this, Looper.getMainLooper())

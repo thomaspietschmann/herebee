@@ -14,8 +14,9 @@ import 'crypto.dart';
 import 'protocol.dart';
 import 'types.dart';
 
-const Duration _pingInterval = Duration(seconds: 15);
-const Duration _staleLimit = Duration(seconds: 35);
+const Duration _pingForeground = Duration(seconds: 15);
+const Duration _pingBackground = Duration(seconds: 30);
+const Duration _staleSlack = Duration(seconds: 5);
 const Duration _watchdogInterval = Duration(seconds: 5);
 const Duration _resyncDebounce = Duration(seconds: 2);
 const Duration _minBackoff = Duration(milliseconds: 500);
@@ -75,7 +76,6 @@ class NetClient {
   /// The last "loc" frame, replayed on reconnect so peers see us again.
   String? _lastSent;
   DateTime _lastActivity = DateTime.fromMillisecondsSinceEpoch(0);
-  Timer? _pingTimer;
   Timer? _watchdog;
   Timer? _reconnectTimer;
 
@@ -176,18 +176,30 @@ class NetClient {
   void _startHeartbeat() {
     _stopHeartbeat();
     _lastActivity = DateTime.now();
-    _pingTimer = Timer.periodic(_pingInterval, (_) => _send(pingFrame));
+    _lastPing = DateTime.now();
     _watchdog = Timer.periodic(_watchdogInterval, (_) {
       if (_ws == null) return;
-      if (DateTime.now().difference(_lastActivity) <= _staleLimit) return;
+      final now = DateTime.now();
+      if (now.difference(_lastPing) >= _pingEvery) _ping();
+      if (now.difference(_lastActivity) <= _pingEvery * 2 + _staleSlack) return;
       handlers.onStatus(false);
       unawaited(connect()); // tears down the zombie and reconnects
     });
   }
 
+  Duration _pingEvery = _pingForeground;
+  DateTime _lastPing = DateTime.fromMillisecondsSinceEpoch(0);
+
+  void setBackground(bool background) {
+    _pingEvery = background ? _pingBackground : _pingForeground;
+  }
+
+  void _ping() {
+    _lastPing = DateTime.now();
+    _send(pingFrame);
+  }
+
   void _stopHeartbeat() {
-    _pingTimer?.cancel();
-    _pingTimer = null;
     _watchdog?.cancel();
     _watchdog = null;
   }
@@ -225,6 +237,7 @@ class NetClient {
       _lastSent = null;
     }
     _ws?.add(frame);
+    if (_ws != null && DateTime.now().difference(_lastPing) >= _pingEvery ~/ 2) _ping();
   }
 
   Future<void> close() async {

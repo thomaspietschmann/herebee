@@ -33,6 +33,7 @@ class SendProfile {
     required this.intervalMs,
     required this.minSend,
     required this.heartbeat,
+    this.lowPower = false,
   });
 
   /// Native request: deliver a fix only after moving this far ...
@@ -47,16 +48,19 @@ class SendProfile {
   /// Re-send the last position this often while nothing new arrives.
   final Duration heartbeat;
 
+  final bool lowPower;
+
   @override
   bool operator ==(Object other) =>
       other is SendProfile &&
       other.distanceFilterMeters == distanceFilterMeters &&
       other.intervalMs == intervalMs &&
       other.minSend == minSend &&
-      other.heartbeat == heartbeat;
+      other.heartbeat == heartbeat &&
+      other.lowPower == lowPower;
 
   @override
-  int get hashCode => Object.hash(distanceFilterMeters, intervalMs, minSend, heartbeat);
+  int get hashCode => Object.hash(distanceFilterMeters, intervalMs, minSend, heartbeat, lowPower);
 }
 
 class SendPolicy {
@@ -79,6 +83,7 @@ class SendPolicy {
     intervalMs: 15000,
     minSend: Duration(seconds: 3),
     heartbeat: Duration(seconds: 30),
+    lowPower: true,
   );
 
   static const double stillRadius = 10; // metres
@@ -106,9 +111,10 @@ class SendPolicy {
   void setForeground(bool foreground) => _foreground = foreground;
 
   /// A new fix. Moves the anchor when the device left it or is walking.
-  void onFix({required double lat, required double lng, double? speed}) {
+  void onFix({required double lat, required double lng, double? speed, double? accuracy}) {
     final aLat = _anchorLat, aLng = _anchorLng;
-    final moved = aLat == null || aLng == null || distanceMeters(aLat, aLng, lat, lng) > stillRadius;
+    final radius = stationary ? max(stillRadius, accuracy ?? 0) : stillRadius;
+    final moved = aLat == null || aLng == null || distanceMeters(aLat, aLng, lat, lng) > radius;
     final walking = speed != null && speed > walkingSpeed;
     if (moved || walking) {
       _anchorLat = lat;

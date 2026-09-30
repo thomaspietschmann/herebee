@@ -64,7 +64,9 @@ class RoomController extends ChangeNotifier {
     required this.youSuffix,
     this.onEntered,
     NetClientFactory? netClientFactory,
-  }) : _newNetClient = netClientFactory ?? _defaultNetClient;
+    DateTime Function()? clock,
+  })  : _newNetClient = netClientFactory ?? _defaultNetClient,
+        _policy = SendPolicy(clock: clock);
 
   /// Fired once, when the user actually enters the room. That, not merely
   /// opening a link, is what makes a room worth remembering.
@@ -176,7 +178,7 @@ class RoomController extends ChangeNotifier {
   /// the web client; less often in the background, see SendPolicy). Our own
   /// marker still moves with every fix; only what leaves the device is
   /// throttled.
-  final SendPolicy _policy = SendPolicy();
+  final SendPolicy _policy;
   SendProfile _applied = SendPolicy.foregroundProfile;
   DateTime _lastSendAt = DateTime.fromMillisecondsSinceEpoch(0);
   Timer? _pendingSend;
@@ -381,6 +383,7 @@ class RoomController extends ChangeNotifier {
         notificationStopLabel: notificationStopLabel,
         distanceFilterMeters: _applied.distanceFilterMeters,
         intervalMs: _applied.intervalMs,
+        lowPower: _applied.lowPower,
       );
     } catch (_) {
       // Do not leave listeners attached for a session that never began.
@@ -488,6 +491,7 @@ class RoomController extends ChangeNotifier {
   /// restores the live cadence and sends at once, so the others never wait for
   /// a background timer to expire.
   void setForeground(bool foreground) {
+    _net?.setBackground(!foreground);
     _policy.setForeground(foreground);
     _applyPolicy();
   }
@@ -504,6 +508,7 @@ class RoomController extends ChangeNotifier {
     unawaited(HereBeeLocation.reconfigure(
       distanceFilterMeters: next.distanceFilterMeters,
       intervalMs: next.intervalMs,
+      lowPower: next.lowPower,
     ));
     _startHeartbeat();
     if (_lastPos != null) {
@@ -518,9 +523,15 @@ class RoomController extends ChangeNotifier {
     // A fix can arrive after stop: the platform stop is asynchronous on both
     // sides, and a straggler must not resurrect us for our peers.
     if (seed == null || !_sharing || _disposed) return;
-    _lastPos = Position(lat: fix.lat, lng: fix.lng, acc: fix.acc, hdg: fix.hdg, spd: fix.spd);
-    _policy.onFix(lat: fix.lat, lng: fix.lng, speed: fix.spd);
+    final coarse = _isCoarseRepeat(fix);
+    _policy.onFix(lat: fix.lat, lng: fix.lng, speed: fix.spd, accuracy: fix.acc);
     _applyPolicy();
+    if (coarse && _policy.stationary) {
+      _touchSelf();
+      notifyListeners();
+      return;
+    }
+    _lastPos = Position(lat: fix.lat, lng: fix.lng, acc: fix.acc, hdg: fix.hdg, spd: fix.spd);
 
     // Render our own marker from every fix, unthrottled: the throttle exists to
     // spare the network, not to make our own dot stutter.
@@ -541,6 +552,14 @@ class RoomController extends ChangeNotifier {
     if (_followSeed == seed) _panRequests.add(seed);
     notifyListeners();
     _scheduleSend();
+  }
+
+  bool _isCoarseRepeat(LocationFix fix) {
+    final prev = _lastPos;
+    final acc = fix.acc;
+    if (prev == null || acc == null) return false;
+    if (acc <= (prev.acc ?? double.infinity)) return false;
+    return SendPolicy.distanceMeters(prev.lat, prev.lng, fix.lat, fix.lng) <= acc;
   }
 
   void _scheduleSend() {

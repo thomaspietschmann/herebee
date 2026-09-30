@@ -157,6 +157,7 @@ class HereBeeLocation {
     required String notificationStopLabel,
     double distanceFilterMeters = 3,
     int intervalMs = 1000,
+    bool lowPower = false,
   }) async {
     try {
       await _methods.invokeMethod<void>('start', {
@@ -165,6 +166,7 @@ class HereBeeLocation {
         'notificationStopLabel': notificationStopLabel,
         'distanceFilter': distanceFilterMeters,
         'intervalMs': intervalMs,
+        'lowPower': lowPower,
       });
     } on PlatformException catch (e) {
       throw LocationException(e.code, e.message ?? 'could not start location updates');
@@ -179,10 +181,12 @@ class HereBeeLocation {
   static Future<void> reconfigure({
     required double distanceFilterMeters,
     required int intervalMs,
+    bool lowPower = false,
   }) =>
       _methods.invokeMethod<void>('reconfigure', {
         'distanceFilter': distanceFilterMeters,
         'intervalMs': intervalMs,
+        'lowPower': lowPower,
       });
 
   /// True while the platform is actively producing fixes.

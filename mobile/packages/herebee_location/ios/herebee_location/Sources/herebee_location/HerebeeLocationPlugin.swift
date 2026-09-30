@@ -74,12 +74,15 @@ public class HerebeeLocationPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
             stop()
             result(nil)
         case "reconfigure":
-            // Only the distance filter matters on iOS; there is no interval.
+            // iOS has no interval; the distance filter and accuracy are what count.
             // Core Location keeps delivering in the background as long as
             // updates stay on, a larger filter just lets it report less.
-            if sharing, let args = call.arguments as? [String: Any],
-               let filter = (args["distanceFilter"] as? NSNumber)?.doubleValue {
-                manager.distanceFilter = filter
+            if sharing, let args = call.arguments as? [String: Any] {
+                if let filter = (args["distanceFilter"] as? NSNumber)?.doubleValue {
+                    manager.distanceFilter = filter
+                }
+                let lowPower = (args["lowPower"] as? NSNumber)?.boolValue ?? false
+                manager.desiredAccuracy = lowPower ? kCLLocationAccuracyHundredMeters : kCLLocationAccuracyBest
             }
             result(nil)
         case "isSharing":
@@ -151,6 +154,8 @@ public class HerebeeLocationPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
 
         let args = call.arguments as? [String: Any]
         manager.distanceFilter = (args?["distanceFilter"] as? NSNumber)?.doubleValue ?? 3
+        let lowPower = (args?["lowPower"] as? NSNumber)?.boolValue ?? false
+        manager.desiredAccuracy = lowPower ? kCLLocationAccuracyHundredMeters : kCLLocationAccuracyBest
 
         // Requires UIBackgroundModes: location in Info.plist. Setting it without
         // that entry throws, so failing loudly here is better than a share that

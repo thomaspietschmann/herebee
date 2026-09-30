@@ -56,6 +56,7 @@ void main() {
 
   late RecordingNetClient net;
   late List<String> platformCalls;
+  final List<Map<Object?, Object?>> reconfigures = [];
   late bool platformSharing;
   Object? startError;
 
@@ -68,19 +69,20 @@ void main() {
     );
   }
 
-  Future<void> emitFix({double lat = 52.52, double lng = 13.405}) => emit({
+  Future<void> emitFix({double lat = 52.52, double lng = 13.405, double acc = 5.0}) => emit({
         'event': 'fix',
         'lat': lat,
         'lng': lng,
-        'acc': 5.0,
+        'acc': acc,
         'hdg': null,
         'spd': null,
         'at': DateTime.now().millisecondsSinceEpoch,
       });
 
-  Future<RoomController> makeController() async {
+  Future<RoomController> makeController({DateTime Function()? clock}) async {
     SharedPreferences.setMockInitialValues({});
     final controller = RoomController(
+      clock: clock,
       secret: _secret,
       storage: await Storage.open(),
       languageCode: 'en',
@@ -113,6 +115,7 @@ void main() {
     startError = null;
     messenger.setMockMethodCallHandler(_methods, (call) async {
       platformCalls.add(call.method);
+      if (call.method == 'reconfigure') reconfigures.add(Map<Object?, Object?>.from(call.arguments as Map));
       switch (call.method) {
         case 'start':
           if (startError != null) throw startError!;
@@ -306,6 +309,45 @@ void main() {
     await emitFix();
     await Future<void>.delayed(Duration.zero);
     expect(net.positions.last.msg, isNull, reason: 'stopping ends the message');
+    c.dispose();
+  });
+
+  test('a coarse fix while resting keeps the precise position', () async {
+    var now = DateTime.now();
+    final c = await makeController(clock: () => now);
+    await start(c);
+    await emitFix(acc: 4);
+    await Future<void>.delayed(Duration.zero);
+    final precise = c.lastPos!;
+    now = now.add(const Duration(seconds: 31));
+
+    await emitFix(lat: 52.5203, acc: 90);
+    await Future<void>.delayed(Duration.zero);
+    expect(c.lastPos!.lat, precise.lat, reason: 'at rest, a vague fix nearby is not a new position');
+    expect(c.lastPos!.acc, 4);
+
+    await emitFix(lat: 52.53, acc: 90);
+    await Future<void>.delayed(Duration.zero);
+    expect(c.lastPos!.lat, 52.53, reason: 'a vague fix far away is real movement');
+    c.dispose();
+  });
+
+  test('resting in the background asks the platform for low power, moving again restores it', () async {
+    reconfigures.clear();
+    var now = DateTime.now();
+    final c = await makeController(clock: () => now);
+    await start(c);
+    await emitFix(acc: 4);
+    await Future<void>.delayed(Duration.zero);
+    c.setForeground(false);
+    now = now.add(const Duration(seconds: 31));
+    await emitFix(acc: 4);
+    await Future<void>.delayed(Duration.zero);
+    expect(reconfigures.last['lowPower'], isTrue);
+
+    await emitFix(lat: 52.53, acc: 4);
+    await Future<void>.delayed(Duration.zero);
+    expect(reconfigures.last['lowPower'], isFalse, reason: 'movement brings full accuracy back');
     c.dispose();
   });
 }
