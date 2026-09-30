@@ -57,8 +57,8 @@ fi
 
 ADDR_FILE="$TILES_DIR/addresses.pmtiles"
 ADDR_PARAMS="$TILES_DIR/.addresses"
-ADDRESSES_URL="${ADDRESSES_URL-https://github.com/thomaspietschmann/herebee/releases/download/addresses-europe-20260929/addresses-europe-20260929.pmtiles}"
-ADDRESSES_SHA256="${ADDRESSES_SHA256-4b17203be05d6d8f17961308d7dee8256979ca4dca4ab996a3e43ab542058280}"
+ADDRESSES_URL="${ADDRESSES_URL-https://github.com/thomaspietschmann/herebee/releases/download/addresses-20260929/addresses-20260929.pmtiles}"
+ADDRESSES_SHA256="${ADDRESSES_SHA256-776c2470566e7dd6039bcdaa6632a63422eff64e5f1b91bc0710e6bbe5eda24b}"
 ADDR_HAVE=""
 [ -f "$ADDR_PARAMS" ] && ADDR_HAVE="$(cat "$ADDR_PARAMS")"
 
