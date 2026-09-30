@@ -184,6 +184,34 @@
   },
   "statusOnline": "Online",
   "statusNoSignal": "Kein Signal",
+  "menuSayAria": "Etwas sagen",
+  "sayTitle": "Deine Biene sagt …",
+  "sayBody": "Alle im Raum sehen die Nachricht zehn Minuten lang als Sprechblase an deiner Biene. Ende-zu-Ende-verschlüsselt, nirgends gespeichert.",
+  "sayPlaceholder": "Kurze Nachricht",
+  "saySend": "Sagen",
+  "sayClear": "Nachricht entfernen",
+  "sayClearInput": "Text löschen",
+  "bubblesShow": "Sprechblasen einblenden",
+  "bubblesHide": "Sprechblasen ausblenden",
+  "infoSaid": "gesagt {t}",
+  "@infoSaid": {
+    "placeholders": {
+      "t": {
+        "type": "String"
+      }
+    }
+  },
+  "sayAnnounce": "{name} sagt: {msg}",
+  "@sayAnnounce": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
   "notifSharingTitle": "HereBee teilt deinen Standort",
   "notifSharingBody": "Nur wer den Link hat, sieht dich.",
   "notifStop": "Stoppen",

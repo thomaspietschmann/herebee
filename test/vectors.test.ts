@@ -15,10 +15,10 @@ import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { b64urlToBytes, decryptJson, deriveRoomKeys, deriveRoomSeed, encryptJson } from "../client/src/crypto.js";
+import { PAD_BLOCK, b64urlToBytes, decryptJson, deriveRoomKeys, deriveRoomSeed, encryptJson } from "../client/src/crypto.js";
 import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
-import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
+import { englishName, germanName, sanitizeSharedMessage, sanitizeSharedName } from "../client/src/names.js";
 import { isValidRoomId } from "../server/src/roomId.js";
 import { layoutMenu, springSettled, springStep } from "../client/src/menu-layout.js";
 
@@ -66,6 +66,8 @@ async function main(): Promise<void> {
     check(roomId === m.roomId, `message roomId ${m.roomId}`);
     const got = await decryptJson<unknown>(key, m.ciphertext);
     check(eq(got, m.plaintext), `decrypt committed ciphertext for seed ${m.plaintext.seed}`);
+    const bodyLen = b64urlToBytes(m.ciphertext).length - 12 - 16;
+    check(bodyLen === PAD_BLOCK, `ciphertext for seed ${m.plaintext.seed} is exactly one pad block`);
     const rt = await decryptJson<unknown>(key, await encryptJson(key, m.plaintext));
     check(eq(rt, m.plaintext), `encrypt/decrypt round trip for seed ${m.plaintext.seed}`);
   }
@@ -118,6 +120,11 @@ async function main(): Promise<void> {
     check(sanitizeSharedName(n.input) === n.output, `sanitizeSharedName(${JSON.stringify(n.input)})`);
   }
 
+  check(vectors.constants.padBlock === PAD_BLOCK, "pad block constant");
+  for (const n of vectors.sharedMessages) {
+    check(sanitizeSharedMessage(n.input) === n.output, `sanitizeSharedMessage(${JSON.stringify(n.input)})`);
+  }
+
   for (const c of vectors.roomSeeds) {
     check((await deriveRoomSeed(c.device, c.roomId)) === c.seed, `deriveRoomSeed(${c.roomId})`);
   }
@@ -125,7 +132,8 @@ async function main(): Promise<void> {
     Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6;
   for (const c of vectors.menuLayout) {
     const got = layoutMenu(c.input);
-    const where = `layoutMenu(${JSON.stringify(c.input.anchor)}, previous ${JSON.stringify(c.input.previous ?? null)})`;
+    const where = `layoutMenu(${JSON.stringify(c.input.anchor)}, bubble ${c.input.bubble}, count ${c.input.count ?? 3}, previous ${JSON.stringify(c.input.previous ?? null)})`;
+    check(got.bubbles.length === c.output.bubbles.length, `${where} bubble count`);
     check(got.bubbles.every((b, i) => near(b, c.output.bubbles[i])), `${where} bubbles`);
     check(near(got.box, c.output.box), `${where} box`);
     check(JSON.stringify(got.choice) === JSON.stringify(c.output.choice), `${where} choice`);

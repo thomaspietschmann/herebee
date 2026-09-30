@@ -14,11 +14,11 @@ LocUpdate loc(int at) =>
 
 void main() {
   group('padding', () {
-    test('pads with spaces to the next multiple of 256 bytes', () {
-      expect(padPlaintext(List<int>.filled(1, 0x7b)).length, 256);
-      expect(padPlaintext(List<int>.filled(255, 0x7b)).length, 256);
-      expect(padPlaintext(List<int>.filled(256, 0x7b)).length, 256);
-      expect(padPlaintext(List<int>.filled(257, 0x7b)).length, 512);
+    test('pads with spaces to the next multiple of 768 bytes', () {
+      expect(padPlaintext(List<int>.filled(1, 0x7b)).length, 768);
+      expect(padPlaintext(List<int>.filled(767, 0x7b)).length, 768);
+      expect(padPlaintext(List<int>.filled(768, 0x7b)).length, 768);
+      expect(padPlaintext(List<int>.filled(769, 0x7b)).length, 1536);
       final padded = padPlaintext(utf8.encode('{"a":1}'));
       expect(padded.sublist(7).every((b) => b == 0x20), isTrue);
     });
@@ -27,7 +27,7 @@ void main() {
       final keys = await deriveRoomKeys(generateSecret());
       final short = await encryptJson(keys.key, {'t': 'loc', 'n': 'A'});
       final long = await encryptJson(keys.key, {'t': 'loc', 'n': 'A much longer name than the other'});
-      expect(b64urlToBytes(short).length, ivBytes + 256 + tagBytes);
+      expect(b64urlToBytes(short).length, ivBytes + 768 + tagBytes);
       expect(b64urlToBytes(long).length, b64urlToBytes(short).length);
       expect(await decryptJson(keys.key, long), {'t': 'loc', 'n': 'A much longer name than the other'});
     });

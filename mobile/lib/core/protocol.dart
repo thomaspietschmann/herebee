@@ -124,6 +124,10 @@ PeerUpdate? validPeerUpdate(Object? raw) {
   final at = raw['at'];
   if (at is! num || !at.toDouble().isFinite) return null;
 
+  final msg = sanitizeSharedMessage(raw['msg']);
+  final msgAtRaw = raw['msgAt'];
+  final msgOk = msg != null && msgAtRaw is num && msgAtRaw.toDouble().isFinite;
+
   return LocUpdate(
     seed: seed,
     lat: lat,
@@ -134,5 +138,7 @@ PeerUpdate? validPeerUpdate(Object? raw) {
     at: at.toInt(),
     // A malformed name drops only the name, not the position.
     name: sanitizeSharedName(raw['name']),
+    msg: msgOk ? msg : null,
+    msgAt: msgOk ? msgAtRaw.toInt() : null,
   );
 }

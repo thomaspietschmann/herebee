@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/deep_links.dart';
+import '../../core/names.dart';
 import '../../core/recent_rooms.dart';
 import '../map/bee_marker.dart';
 import '../room/room_controller.dart';
@@ -69,6 +70,7 @@ Future<T?> _sheet<T>(
       elevation: 0,
       barrierColor: const Color(0x73000000),
       isScrollControlled: true,
+      useSafeArea: true,
       isDismissible: dismissible,
       enableDrag: dismissible,
       showDragHandle: false,
@@ -302,7 +304,7 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
             p('<strong>Grundprinzip.</strong> HereBee ist bewusst datensparsam gebaut. Ein '
                 '256-Bit-Schlüssel steckt ausschließlich im Link hinter <code>#</code> und wird nie '
                 'an den Server übertragen. Die App leitet daraus die Raum-Kennung und einen '
-                'AES-256-GCM-Schlüssel ab; alle Koordinaten und Anzeigenamen werden auf dem Gerät '
+                'AES-256-GCM-Schlüssel ab; alle Koordinaten, Anzeigenamen und Nachrichten werden auf dem Gerät '
                 'verschlüsselt. Der Server (Relay) leitet nur undurchsichtige, verschlüsselte '
                 'Datenpakete weiter und kann sie nicht entschlüsseln.'),
             p('<strong>App statt Browser.</strong> Der Programmcode dieser App ist installiert und '
@@ -317,7 +319,7 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'selbst speichert die IP nicht. Da die Kartenkacheln vom selben Server geladen '
                 'werden, kann dieser anhand der angefragten Kacheln grob erkennen, welche Region du '
                 'ansiehst; die Koordinaten selbst bleiben Ende-zu-Ende-verschlüsselt.'),
-            _fact('<strong>Verschlüsselte Standort- und Namensdaten</strong> – werden nur '
+            _fact('<strong>Verschlüsselte Standort-, Namens- und Nachrichtendaten</strong> – werden nur '
                 'weitergeleitet, nicht gespeichert und sind für den Betreiber nicht lesbar.'),
             _fact('<strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, '
                 'sobald der letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine '
@@ -340,6 +342,10 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'eingebunden; die App läuft daher auch auf Geräten ohne Google-Dienste. Welche Daten '
                 'das Betriebssystem selbst dabei verarbeitet, liegt außerhalb des Einflusses dieser '
                 'App und richtet sich nach den Angaben des jeweiligen Herstellers.'),
+            p('<strong>Nachrichten.</strong> Eine kurze Nachricht deiner Biene sehen alle im Raum '
+                'zehn Minuten lang, solange du deinen Standort teilst. Sie wird auf dem Gerät '
+                'verschlüsselt, mit jeder Standortmeldung erneut übertragen und bei den anderen nur '
+                'im Arbeitsspeicher gehalten; auch diese App speichert sie nicht.'),
             p('<strong>Räume sind streng getrennt.</strong> Deine Biene ist in jedem Raum eine andere: '
                 'Die Kennung wird auf dem Gerät aus einem geheimen Geräteschlüssel und dem Raum '
                 'abgeleitet und lässt sich ohne diesen Schlüssel keinem anderen Raum zuordnen. Auch '
@@ -349,12 +355,13 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'den du selbst in mehreren Räumen teilst.'),
             p('<strong>Auf dem Gerät gespeichert.</strong> Der geheime Geräteschlüssel in der sicheren '
                 'Ablage des Geräts (Keychain bzw. Keystore) sowie pro Raum die Namen, die du anderen '
-                'Teilnehmern gegeben hast, dein eigener Name und ob du ihn teilst. Außerdem die letzten fünf Räume, '
+                'Teilnehmern gegeben hast, dein eigener Name und ob du ihn teilst, sowie ob Sprechblasen '
+                'angezeigt werden. Außerdem die letzten fünf Räume, '
                 'die du betreten hast, samt Schlüssel und den Bienen, die du dort getroffen hast – '
                 'für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore); jeder '
                 'Eintrag lässt sich jederzeit löschen. Keine Standorthistorie, keine Protokolle.'),
             p('<strong>Was das Gerät verlässt.</strong> Die Bienen-Kennung des jeweiligen Raums und – nur '
-                'wenn du es erlaubst – dein Name gehen Ende-zu-Ende-verschlüsselt an die anderen '
+                'wenn du es erlaubst – dein Name sowie deine Nachricht gehen Ende-zu-Ende-verschlüsselt an die anderen '
                 'Teilnehmer dieses Raums. '
                 'An den Server geht zusätzlich ein zufälliges Token für die Wiederverbindung, das '
                 'nur im Arbeitsspeicher liegt und bei jedem App-Start neu erzeugt wird. Unter '
@@ -432,6 +439,64 @@ Future<String?> showRenameSheet(
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(controller.text.trim()),
                 child: Text(l.save),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Future<String?> showSaySheet(BuildContext context, {required String? current}) {
+  final controller = TextEditingController(text: current ?? '');
+  return _sheet<String>(
+    context,
+    builder: (context) {
+      final l = L.of(context);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l.sayTitle, style: _h2),
+          const SizedBox(height: 8),
+          Text(l.sayBody, style: _body),
+          const SizedBox(height: 14),
+          TextField(
+            key: const ValueKey('say-input'),
+            controller: controller,
+            autofocus: true,
+            maxLength: sharedMessageMax,
+            textInputAction: TextInputAction.send,
+            style: const TextStyle(color: tokens.mist),
+            decoration: InputDecoration(
+              hintText: l.sayPlaceholder,
+              hintStyle: const TextStyle(color: tokens.muted),
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: controller,
+                builder: (context, value, _) => value.text.isEmpty
+                    ? const SizedBox.shrink()
+                    : IconButton(
+                        key: const ValueKey('say-clear-input'),
+                        tooltip: l.sayClearInput,
+                        icon: const Icon(Icons.close_rounded, color: tokens.muted, size: 20),
+                        onPressed: controller.clear,
+                      ),
+              ),
+            ),
+            onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
+          ),
+          Row(
+            children: [
+              if (current != null)
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(''),
+                  child: Text(l.sayClear),
+                ),
+              const Spacer(),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+                child: Text(l.saySend),
               ),
             ],
           ),
@@ -801,13 +866,28 @@ Future<void> showParticipantsSheet(
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              r.identity.name,
-                              style: TextStyle(
-                                color: r.offline ? tokens.muted : tokens.mist,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  r.identity.name,
+                                  style: TextStyle(
+                                    color: r.offline ? tokens.muted : tokens.mist,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (r.entry.message != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      '💬 ${r.entry.message}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: tokens.muted, fontSize: 12.5),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                           if (r.offline)

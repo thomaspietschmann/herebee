@@ -17,6 +17,8 @@ export type PeerUpdate =
       // The sender's own name, present only if they chose to share it. Lives
       // inside the ciphertext like everything else here; the relay never sees it.
       name?: string;
+      msg?: string;
+      msgAt?: number;
     }
   | { k: "stop"; seed: string };
 

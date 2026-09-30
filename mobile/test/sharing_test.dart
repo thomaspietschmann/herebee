@@ -271,4 +271,41 @@ void main() {
     expect(c.peers[c.selfSeed!], isNotNull);
     c.dispose();
   });
+
+  test('a message rides on every position until cleared, and never survives a stop', () async {
+    final c = await makeController();
+    await start(c);
+    await emitFix();
+    await Future<void>.delayed(Duration.zero);
+
+    c.setOwnMessage('Bin gleich da');
+    await Future<void>.delayed(Duration.zero);
+    final said = net.positions.last;
+    expect(said.msg, 'Bin gleich da', reason: 'setting a message sends it at once');
+    expect(said.msgAt, isNotNull);
+    expect(c.peers[c.selfSeed!]!.message, 'Bin gleich da', reason: 'our own bee shows it too');
+
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    await emitFix(lat: 52.53);
+    await Future<void>.delayed(Duration.zero);
+    expect(net.positions.last.msg, 'Bin gleich da', reason: 'the next position repeats it');
+    expect(net.positions.last.msgAt, said.msgAt, reason: 'a repeat keeps its identity');
+
+    c.setOwnMessage('Bin gleich da');
+    await Future<void>.delayed(Duration.zero);
+    expect(net.positions.last.msgAt, greaterThan(said.msgAt!), reason: 'saying it again is a new message');
+
+    c.setOwnMessage(null);
+    await Future<void>.delayed(Duration.zero);
+    expect(net.positions.last.msg, isNull, reason: 'a position without msg clears it for peers');
+
+    c.setOwnMessage('noch da?');
+    await c.stopSharing();
+    await start(c);
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    await emitFix();
+    await Future<void>.delayed(Duration.zero);
+    expect(net.positions.last.msg, isNull, reason: 'stopping ends the message');
+    c.dispose();
+  });
 }

@@ -87,13 +87,19 @@ final RegExp _nameStrip = RegExp(r'\p{Cc}|\p{Cs}|(?![‌‍])\p{Cf}', unicode: t
 /// Every room member holds the key, so this is untrusted input. Port of
 /// `sanitizeSharedName` in `client/src/names.ts`; shared/vectors.json pins the
 /// output so both sides show the same name.
-String? sanitizeSharedName(Object? raw) {
+String? sanitizeSharedName(Object? raw) => sanitizeSharedText(raw, sharedNameMax);
+
+const int sharedMessageMax = 100;
+
+String? sanitizeSharedMessage(Object? raw) => sanitizeSharedText(raw, sharedMessageMax);
+
+String? sanitizeSharedText(Object? raw, int max) {
   if (raw is! String) return null;
   final cleaned = raw
       .replaceAll(_nameSpace, ' ')
       .replaceAll(_nameStrip, '')
       .replaceAll(RegExp(r' {2,}'), ' ')
       .trim();
-  final capped = String.fromCharCodes(cleaned.runes.take(sharedNameMax)).trim();
+  final capped = String.fromCharCodes(cleaned.runes.take(max)).trim();
   return capped.isEmpty ? null : capped;
 }

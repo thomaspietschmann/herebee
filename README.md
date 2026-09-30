@@ -16,7 +16,7 @@ This is **data-minimised, non-persisted, end-to-end-encrypted** location sharing
 for the peer payloads. It is deliberately private, but it is **not "anonymous"**.
 That word would be a lie.
 
-- **The server never sees your location, your name, or the key.** A 256-bit
+- **The server never sees your location, your name, your messages, or the key.** A 256-bit
   secret lives in the URL fragment (`#...`), which browsers never send to the
   server. From it the client derives (via HKDF) a routing room id and an
   AES-256-GCM key. Every update is encrypted on the client. The relay only
@@ -27,7 +27,8 @@ That word would be a lie.
   encryption. The native apps bundle their code and do not have this caveat.
 - **No database. Room state is RAM-only.** Rooms exist while someone is
   connected and vanish when the last person leaves. The server stores no
-  coordinates, names, or room history. The native apps keep the last five
+  coordinates, names, messages, or room history. A message your bee says lives
+  for ten minutes in the other participants' memory and nowhere else. The native apps keep the last five
   rooms, including their keys, for three days in the device's secure storage
   (Keychain or Keystore) so you can re-enter them. On launch the app asks which
   room to open; it never re-enters one on its own. Each entry can be deleted at

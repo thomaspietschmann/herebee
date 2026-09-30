@@ -245,9 +245,32 @@ class _RosterButton extends StatelessWidget {
             onTap: onFitAll,
             shape: const CircleBorder(side: BorderSide(color: _hair)),
             child: const SizedBox(
-              width: 34,
-              height: 34,
-              child: Center(child: Text('⛶', style: TextStyle(color: _mist, fontSize: 16, height: 1))),
+              width: 46,
+              height: 46,
+              child: Center(child: Icon(Icons.fullscreen_rounded, color: _mist, size: 26)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Semantics(
+          button: true,
+          toggled: controller.bubblesVisible,
+          label: controller.bubblesVisible ? l.bubblesHide : l.bubblesShow,
+          excludeSemantics: true,
+          child: _GlassButton(
+            key: const ValueKey('bubbles-toggle'),
+            onTap: () => controller.setBubblesVisible(!controller.bubblesVisible),
+            shape: const CircleBorder(side: BorderSide(color: _hair)),
+            child: SizedBox(
+              width: 46,
+              height: 46,
+              child: Center(
+                child: Icon(
+                  controller.bubblesVisible ? Icons.chat_bubble_rounded : Icons.chat_bubble_outline_rounded,
+                  color: controller.bubblesVisible ? _mist : _muted,
+                  size: 21,
+                ),
+              ),
             ),
           ),
         ),
@@ -321,7 +344,7 @@ class _Pip extends StatelessWidget {
 }
 
 class _GlassButton extends StatelessWidget {
-  const _GlassButton({required this.onTap, required this.shape, required this.child});
+  const _GlassButton({required this.onTap, required this.shape, required this.child, super.key});
 
   final VoidCallback onTap;
   final ShapeBorder shape;

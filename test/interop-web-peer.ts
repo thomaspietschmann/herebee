@@ -27,6 +27,8 @@ const MY_UPDATE: PeerUpdate = {
   hdg: 275.5,
   spd: 1.75,
   at: 1_700_000_000_123,
+  msg: "Bin am Brunnen 🐝",
+  msgAt: 1_700_000_000_000,
 };
 
 function finish(result: Record<string, unknown>, code: number): never {

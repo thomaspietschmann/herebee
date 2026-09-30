@@ -33,6 +33,7 @@ import {
 const FRESH_MS = 45_000;
 const STALE_MS = 120_000;
 export const LINGER_MS = 20 * 60_000; // keep a silent peer this long after its last fix
+export const MSG_TTL_MS = 10 * 60_000;
 
 // GPS `heading` is noise at low speed (it can swing wildly while stationary or
 // shuffling in place), so the arrow only shows once the fix reports genuine
@@ -46,6 +47,7 @@ interface Entry {
   el: HTMLElement;
   label: HTMLElement;
   arrow: HTMLElement;
+  sayEl: HTMLElement;
   identity: Identity;
   pos: Position;
   at: number;
@@ -63,7 +65,7 @@ function tierOf(age: number): Tier {
   return "fresh";
 }
 
-function relTime(ageMs: number): string {
+export function relTime(ageMs: number): string {
   if (ageMs < 5_000) return t("justNow");
   if (ageMs < 60_000) return t("secsAgo", { n: Math.round(ageMs / 1000) });
   return t("minsAgo", { n: Math.round(ageMs / 60_000) });
@@ -84,10 +86,18 @@ export interface MenuActions {
   onRename: () => void;
   onZoom: () => void;
   onToggleFollow: () => void;
+  onSay?: () => void;
 }
 
 const DISC_RADIUS = 21;
-const BUBBLE_SIZE = 38;
+const BUBBLE_SIZE = 46;
+const EMOJI_ONLY = /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\u200D|\uFE0F|\s){1,24}$/u;
+
+function isEmojiOnly(text: string): boolean {
+  if (!EMOJI_ONLY.test(text) || !/\p{Extended_Pictographic}/u.test(text)) return false;
+  const graphemes = [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text.replace(/\s/g, ""))];
+  return graphemes.length <= 3;
+}
 
 class MenuMotion {
   private springs: Spring[];
@@ -102,6 +112,10 @@ class MenuMotion {
     this.springs = nodes.map(() => ({ x: 0, y: 0, vx: 0, vy: 0 }));
     this.targets = nodes.map(() => ({ x: 0, y: 0 }));
     this.apply();
+  }
+
+  get count(): number {
+    return this.nodes.length;
   }
 
   aim(targets: Point[]): void {
@@ -174,11 +188,14 @@ export class MarkerManager {
       <div class="mk-pulse"></div>
       <div class="mk-arrow"></div>
       <div class="mk-disc">${identity.svg}</div>
+      <div class="mk-say-dot" aria-hidden="true"></div>
+      <div class="mk-say" aria-hidden="true"></div>
       <div class="mk-label"></div>`;
     const label = el.querySelector<HTMLElement>(".mk-label")!;
     const arrow = el.querySelector<HTMLElement>(".mk-arrow")!;
+    const sayEl = el.querySelector<HTMLElement>(".mk-say")!;
     label.textContent = identity.name;
-    return { el, label, arrow };
+    return { el, label, arrow, sayEl };
   }
 
   upsert(id: string, identity: Identity, pos: Position, at: number, self = false): void {
@@ -230,6 +247,33 @@ export class MarkerManager {
     this.refresh(seed, e);
   }
 
+  say(seed: string, text: string | null, pop: boolean): void {
+    const e = this.entries.get(seed);
+    if (!e) return;
+    if (!text) {
+      e.el.classList.remove("has-say", "say-pop");
+      e.sayEl.textContent = "";
+      return;
+    }
+    e.sayEl.textContent = text;
+    e.sayEl.classList.toggle("is-emoji", isEmojiOnly(text));
+    e.el.classList.add("has-say");
+    if (pop) {
+      e.el.classList.remove("say-pop");
+      void e.el.offsetWidth;
+      e.el.classList.add("say-pop");
+      this.raise(seed);
+    }
+  }
+
+  isOnScreen(seed: string): boolean {
+    const e = this.entries.get(seed);
+    if (!e) return false;
+    const p = this.map.project([e.pos.lng, e.pos.lat]);
+    const c = this.map.getContainer();
+    return p.x >= 0 && p.y >= 0 && p.x <= c.clientWidth && p.y <= c.clientHeight;
+  }
+
   /** Everything an info box needs for one marker, or null if it's not on the map. */
   status(seed: string): { at: number; offline: boolean; tier: Tier; lastSeen: string } | null {
     const e = this.entries.get(seed);
@@ -259,7 +303,7 @@ export class MarkerManager {
       el.remove();
       return;
     }
-    motion?.aim([0, 1, 2, 3].map(() => ({ x: 0, y: 0 })));
+    if (motion) motion.aim(Array.from({ length: motion.count }, () => ({ x: 0, y: 0 })));
     const done = () => {
       motion?.stop();
       el.remove();
@@ -281,6 +325,7 @@ export class MarkerManager {
       <button type="button" class="mk-bubble mk-bubble-rename" aria-label="${t("menuRenameAria")}">✏️</button>
       <button type="button" class="mk-bubble mk-bubble-zoom" aria-label="${t("menuZoomAria")}">🔍</button>
       <button type="button" class="mk-bubble mk-bubble-follow${actions.following ? " is-following" : ""}" aria-label="${actions.following ? t("menuUnfollow") : t("menuFollow")}">📍</button>
+      ${actions.onSay ? `<button type="button" class="mk-bubble mk-bubble-say" aria-label="${t("menuSayAria")}">💬</button>` : ""}
       <div class="mk-infobox"><div class="mk-infobox-name"></div><div class="mk-infobox-lines">${actions.infoHtml}</div></div>`;
     div.querySelector<HTMLElement>(".mk-infobox-name")!.textContent = e.identity.name;
     const on = (sel: string, fn: () => void) =>
@@ -291,6 +336,7 @@ export class MarkerManager {
     on(".mk-bubble-rename", actions.onRename);
     on(".mk-bubble-zoom", actions.onZoom);
     on(".mk-bubble-follow", actions.onToggleFollow);
+    if (actions.onSay) on(".mk-bubble-say", actions.onSay);
     e.el.appendChild(div);
     e.el.classList.add("has-menu");
     this.menuEl = div;
@@ -331,6 +377,7 @@ export class MarkerManager {
       bubble: BUBBLE_SIZE,
       box: { w: box.offsetWidth, h: box.offsetHeight },
       previous: this.menuChoice,
+      count: el.querySelectorAll(".mk-bubble").length,
     });
     this.menuChoice = layout.choice;
     this.menuMotion?.aim([...layout.bubbles, layout.box]);

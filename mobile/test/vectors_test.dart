@@ -60,6 +60,8 @@ void main() {
         // The direction that proves interoperability: read what the browser wrote.
         expect(await decryptJson(keys.key, m['ciphertext'] as String), m['plaintext']);
         // And the reverse, via a round trip (a fresh IV makes the bytes differ).
+        final packed = b64urlToBytes(m['ciphertext'] as String);
+        expect(packed.length - 12 - 16, padBlock, reason: 'one pad block');
         final again = await encryptJson(keys.key, m['plaintext']);
         expect(await decryptJson(keys.key, again), m['plaintext']);
       });
@@ -144,6 +146,14 @@ void main() {
     }
   });
 
+  group('shared messages', () {
+    for (final v in vectors['sharedMessages'] as List<dynamic>) {
+      test('sanitizes ${jsonEncode(v['input'])}', () {
+        expect(sanitizeSharedMessage(v['input']), v['output']);
+      });
+    }
+  });
+
   group('per-room seeds', () {
     for (final v in vectors['roomSeeds'] as List<dynamic>) {
       test('derives the seed for room ${v['roomId']}', () async {
@@ -158,7 +168,9 @@ void main() {
         c == null ? null : MenuChoice(c['dir'] as int, c['turn'] as int, c['dist'] as int);
     for (final v in vectors['menuLayout'] as List<dynamic>) {
       final input = v['input'];
-      test('places the menu for a bee at ${jsonEncode(input['anchor'])}, previous ${jsonEncode(input['previous'])}', () {
+      test(
+          'places the menu for a bee at ${jsonEncode(input['anchor'])}, bubble ${input['bubble']}, '
+          'count ${input['count'] ?? 3}, previous ${jsonEncode(input['previous'])}', () {
         final b = input['bounds'];
         final got = layoutMenu(
           anchor: pt(input['anchor']),
@@ -168,10 +180,12 @@ void main() {
           bubble: (input['bubble'] as num).toDouble(),
           box: Size((input['box']['w'] as num).toDouble(), (input['box']['h'] as num).toDouble()),
           previous: choiceOf(input['previous']),
+          count: (input['count'] as int?) ?? 3,
         );
         final want = v['output'];
         final wantBubbles = [for (final p in want['bubbles'] as List<dynamic>) pt(p)];
-        for (var i = 0; i < 3; i++) {
+        expect(got.bubbles.length, wantBubbles.length, reason: 'bubble count');
+        for (var i = 0; i < wantBubbles.length; i++) {
           expect((got.bubbles[i] - wantBubbles[i]).distance, lessThan(1e-6), reason: 'bubble $i');
         }
         expect((got.box - pt(want['box'])).distance, lessThan(1e-6), reason: 'box');

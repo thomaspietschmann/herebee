@@ -70,10 +70,12 @@ export async function deriveRoomKeys(secretB64: string): Promise<RoomKeys> {
   return { roomId, key };
 }
 
+export const PAD_BLOCK = 768;
+
 export async function encryptJson(key: CryptoKey, value: unknown): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const json = new TextEncoder().encode(JSON.stringify(value));
-  const plaintext = new Uint8Array(Math.ceil(json.length / 256) * 256).fill(0x20);
+  const plaintext = new Uint8Array(Math.ceil(json.length / PAD_BLOCK) * PAD_BLOCK).fill(0x20);
   plaintext.set(json, 0);
   const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext));
   const packed = new Uint8Array(iv.length + ct.length);

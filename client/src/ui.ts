@@ -8,6 +8,7 @@ export interface UIHandlers {
   onToggleShare: () => void;
   onFitAll: () => void; // zoom the map so every shared marker fits on screen
   onGoTo: (seed: string) => void; // fly the map to one participant's marker
+  onToggleBubbles: () => void;
 }
 
 interface Sharer {
@@ -15,6 +16,7 @@ interface Sharer {
   color: string;
   name: string;
   offline: boolean; // was sharing but its link dropped — still a ghost on the map
+  say?: string;
 }
 
 type Conn = "connecting" | "on" | "off";
@@ -31,6 +33,8 @@ export class UI {
   private rosterStack = this.roster.querySelector<HTMLElement>(".roster-stack")!;
   private rosterCount = this.roster.querySelector<HTMLElement>(".roster-count")!;
   private fitAllBtn = document.getElementById("fit-all-btn")!;
+  private bubblesBtn = document.getElementById("bubbles-btn")!;
+  private sayLive = document.getElementById("say-live")!;
   private hint = document.getElementById("hint")!;
   private sheet = document.getElementById("sheet")!;
   private sheetBody = document.getElementById("sheet-body")!;
@@ -47,6 +51,7 @@ export class UI {
     this.infoBtn.addEventListener("click", () => this.openInfo());
     this.roster.addEventListener("click", () => this.openParticipants());
     this.fitAllBtn.addEventListener("click", () => this.h.onFitAll());
+    this.bubblesBtn.addEventListener("click", () => this.h.onToggleBubbles());
     document.getElementById("sheet-close")!.addEventListener("click", () => this.closeSheet());
     this.sheet.addEventListener("click", (e) => {
       if (e.target === this.sheet && !this.gated) this.closeSheet();
@@ -123,7 +128,7 @@ export class UI {
       ? `<ul class="party-list">${this.lastSharers
           .map(
             (m) =>
-              `<li><button type="button" class="party${m.offline ? " is-offline" : ""}" data-seed="${this.esc(m.seed)}"><span class="pip${m.offline ? " pip-offline" : ""}" data-color="${this.esc(m.color)}"></span><span class="party-name">${this.esc(m.name)}</span>${m.offline ? `<span class="party-status">${t("offlineStatus")}</span>` : ""}</button></li>`
+              `<li><button type="button" class="party${m.offline ? " is-offline" : ""}" data-seed="${this.esc(m.seed)}"><span class="pip${m.offline ? " pip-offline" : ""}" data-color="${this.esc(m.color)}"></span><span class="party-text"><span class="party-name">${this.esc(m.name)}</span>${m.say ? `<span class="party-say">💬 ${this.esc(m.say)}</span>` : ""}</span>${m.offline ? `<span class="party-status">${t("offlineStatus")}</span>` : ""}</button></li>`
           )
           .join("")}</ul>`
       : `<p>${t("noSharers")}</p>`;
@@ -157,6 +162,78 @@ export class UI {
       right: window.innerWidth - inset,
       bottom: dockTop - inset,
     };
+  }
+
+  setBubblesVisible(visible: boolean): void {
+    const label = t(visible ? "bubblesHide" : "bubblesShow");
+    this.bubblesBtn.setAttribute("aria-pressed", String(visible));
+    this.bubblesBtn.setAttribute("aria-label", label);
+    this.bubblesBtn.title = label;
+  }
+
+  announce(text: string): void {
+    this.sayLive.textContent = "";
+    requestAnimationFrame(() => (this.sayLive.textContent = text));
+  }
+
+  toastAction(msg: string, onClick: () => void): void {
+    this.toast(msg);
+    const handler = () => {
+      this.toastEl.removeEventListener("click", handler);
+      this.toastEl.classList.remove("is-action");
+      onClick();
+    };
+    this.toastEl.classList.add("is-action");
+    this.toastEl.addEventListener("click", handler);
+    window.setTimeout(() => {
+      this.toastEl.removeEventListener("click", handler);
+      this.toastEl.classList.remove("is-action");
+    }, 2500);
+  }
+
+  openSay(current: string | null, onSave: (text: string | null) => void): void {
+    this.sheetBody.innerHTML = `
+      <h2>${t("sayTitle")}</h2>
+      <p>${t("sayBody")}</p>
+      <div class="linkbox">
+        <div class="say-field">
+          <input id="say-input" class="say-input" maxlength="100" enterkeyhint="send" placeholder="${t("sayPlaceholder")}" value="${this.esc(current ?? "")}" />
+          <button type="button" class="say-x" id="say-x" aria-label="${t("sayClearInput")}" title="${t("sayClearInput")}">×</button>
+        </div>
+        <button class="btn btn-primary" id="say-send">${t("saySend")}</button>
+      </div>
+      <p class="say-meta" id="say-count"></p>
+      ${current ? `<button class="btn btn-ghost btn-gap-10" id="say-clear">${t("sayClear")}</button>` : ""}`;
+    this.openSheet();
+    const input = document.getElementById("say-input") as HTMLInputElement;
+    const count = document.getElementById("say-count")!;
+    const clearBtn = document.getElementById("say-x")!;
+    const updateCount = () => {
+      count.textContent = `${Array.from(input.value).length}/100`;
+      clearBtn.hidden = input.value.length === 0;
+    };
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      updateCount();
+      input.focus();
+    });
+    updateCount();
+    input.addEventListener("input", updateCount);
+    input.focus();
+    input.select();
+    const send = (text: string) => {
+      const v = text.trim();
+      this.closeSheet();
+      onSave(v.length ? v : null);
+    };
+    document.getElementById("say-send")!.addEventListener("click", () => send(input.value));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") send(input.value);
+    });
+    document.getElementById("say-clear")?.addEventListener("click", () => {
+      this.closeSheet();
+      onSave(null);
+    });
   }
 
   hideHint(): void {
@@ -379,8 +456,8 @@ export class UI {
       Diensteanbieter.</p>
       <p><strong>Grundprinzip.</strong> HereBee ist bewusst datensparsam gebaut. Ein 256-Bit-Schlüssel
       steckt ausschließlich im Link hinter <code>#</code> und wird nie an den Server übertragen. Der
-      Browser leitet daraus die Raum-Kennung und einen AES-256-GCM-Schlüssel ab; alle Koordinaten und
-      Anzeigenamen werden im Browser verschlüsselt. Der Server (Relay) leitet nur undurchsichtige,
+      Browser leitet daraus die Raum-Kennung und einen AES-256-GCM-Schlüssel ab; alle Koordinaten,
+      Anzeigenamen und Nachrichten werden im Browser verschlüsselt. Der Server (Relay) leitet nur undurchsichtige,
       verschlüsselte Datenpakete weiter und kann sie nicht entschlüsseln.</p>
       <p><strong>Welche Daten verarbeitet werden:</strong></p>
       <ul class="facts">
@@ -390,7 +467,7 @@ export class UI {
         Anwendung selbst speichert die IP nicht. Da die Kartenkacheln vom selben Server geladen werden,
         kann dieser anhand der angefragten Kacheln grob erkennen, welche Region du ansiehst; die
         Koordinaten selbst bleiben Ende-zu-Ende-verschlüsselt.</li>
-        <li><strong>Verschlüsselte Standort- und Namensdaten</strong> – werden nur weitergeleitet,
+        <li><strong>Verschlüsselte Standort-, Namens- und Nachrichtendaten</strong> – werden nur weitergeleitet,
         nicht gespeichert und sind für den Betreiber nicht lesbar.</li>
         <li><strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, sobald der
         letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine Historie, keine Speicherung von
@@ -403,6 +480,10 @@ export class UI {
       Server nie sichtbar.</p>
       <p><strong>Anzeigename.</strong> Frei wählbar (Pseudonym oder echter Name – deine Entscheidung),
       im Browser verschlüsselt, für den Betreiber nie sichtbar.</p>
+      <p><strong>Nachrichten.</strong> Eine kurze Nachricht deiner Biene sehen alle im Raum zehn Minuten
+      lang, solange du deinen Standort teilst. Sie wird im Browser verschlüsselt, mit jeder
+      Standortmeldung erneut übertragen und bei den anderen nur im Arbeitsspeicher gehalten; niemand
+      speichert sie dauerhaft.</p>
       <p><strong>Hosting.</strong> Die App wird auf einem Server in Deutschland betrieben. Der
       Hosting-Anbieter ${ph("[Anbieter, Anschrift – wird vor Veröffentlichung ergänzt]")} kann im
       Rahmen des Serverbetriebs Infrastruktur-/Server-Logs (einschließlich IP-Adresse) im Auftrag des
@@ -419,9 +500,9 @@ export class UI {
       Räumen teilst, oder an einem Namen, den du selbst in mehreren Räumen teilst.</p>
       <p><strong>Im Browser gespeichert.</strong> Im lokalen Speicher deines Browsers (localStorage)
       liegen der geheime Geräteschlüssel sowie pro Raum die Namen, die du anderen Teilnehmern gegeben
-      hast, dein eigener Name und ob du ihn teilst. Nur für den geöffneten Tab
-      (sessionStorage) kommen ein zufälliges Token für die Wiederverbindung und die Angabe hinzu, ob du
-      gerade teilst. Das ist für die Funktion technisch erforderlich (§ 25 Abs. 2 TDDDG), verlässt den
+      hast, dein eigener Name und ob du ihn teilst, außerdem ob Sprechblasen angezeigt werden. Nur für
+      den geöffneten Tab (sessionStorage) kommen ein zufälliges Token für die Wiederverbindung, die
+      Angabe, ob du gerade teilst, und deine aktuelle Nachricht bis zu ihrem Ablauf hinzu. Das ist für die Funktion technisch erforderlich (§ 25 Abs. 2 TDDDG), verlässt den
       Browser nur verschlüsselt an die Teilnehmer bzw. als Token an den Server und lässt sich über die
       Website-Daten des Browsers jederzeit löschen.</p>
       <p><strong>Speicherdauer.</strong> Auf dem Server speichert die Anwendung über die aktive Sitzung

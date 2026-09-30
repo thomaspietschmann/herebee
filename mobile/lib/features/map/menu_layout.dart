@@ -3,6 +3,7 @@ import 'dart:ui';
 
 const double _spread = 50;
 const double _gap = 10;
+const double _bubbleMargin = 4;
 const double _hysteresis = 12;
 const List<double> _arcDirections = [-90, -45, -135, 0, 180, 45, 135, 90];
 const List<double> _boxTurns = [180, 135, -135, 90, -90];
@@ -31,6 +32,7 @@ class MenuLayout {
 }
 
 double _rad(double deg) => deg * math.pi / 180;
+double _deg(double rad) => rad * 180 / math.pi;
 
 double _overflow(Rect r, Rect bounds) =>
     math.max(0, bounds.left - r.left) +
@@ -67,17 +69,19 @@ MenuLayout layoutMenu({
   required double bubble,
   required Size box,
   MenuChoice? previous,
+  int count = 3,
 }) {
   final ring = beeRadius + _gap + bubble / 2;
+  final step = math.max(_spread, _deg(2 * math.asin(math.min(1.0, (bubble + _bubbleMargin) / (2 * ring)))));
   final boxDistances = [beeRadius + _gap, beeRadius + _gap + bubble + _gap];
   final strict = bounds.deflate(_hysteresis);
 
   List<Rect> bubblesAt(double dir) => [
-        for (final a in [dir - _spread, dir, dir + _spread])
+        for (var i = 0; i < count; i++)
           Rect.fromCenter(
             center: Offset(
-              anchor.dx + math.cos(_rad(a)) * ring,
-              anchor.dy + math.sin(_rad(a)) * ring,
+              anchor.dx + math.cos(_rad(dir + (i - (count - 1) / 2) * step)) * ring,
+              anchor.dy + math.sin(_rad(dir + (i - (count - 1) / 2) * step)) * ring,
             ),
             width: bubble,
             height: bubble,
@@ -127,7 +131,7 @@ MenuLayout layoutMenu({
     }
   }
   final shifted = _shiftInside([...bestBubbles!, bestBox!], bounds);
-  return _result(anchor, shifted.sublist(0, 3), shifted[3], bestChoice!);
+  return _result(anchor, shifted.sublist(0, count), shifted[count], bestChoice!);
 }
 
 MenuLayout _result(Offset anchor, List<Rect> bubbles, Rect box, MenuChoice choice) => MenuLayout(

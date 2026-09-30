@@ -20,10 +20,10 @@ import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { b64urlToBytes, bytesToB64url, deriveRoomKeys, deriveRoomSeed, encryptJson } from "../client/src/crypto.js";
+import { PAD_BLOCK, b64urlToBytes, bytesToB64url, deriveRoomKeys, deriveRoomSeed, encryptJson } from "../client/src/crypto.js";
 import { cyrb53, mulberry32 } from "../client/src/rng.js";
 import { HUE_PALETTE, creatureSvg, hslToCss, hueFromIndex, hueFromSeed } from "../client/src/avatar.js";
-import { englishName, germanName, sanitizeSharedName } from "../client/src/names.js";
+import { englishName, germanName, sanitizeSharedMessage, sanitizeSharedName } from "../client/src/names.js";
 import type { PeerUpdate } from "../client/src/types.js";
 import { layoutMenu, springSettled, springStep, type MenuLayoutInput } from "../client/src/menu-layout.js";
 
@@ -54,6 +54,17 @@ MENU_CASES.push(
   { ...HYSTERESIS_BASE, anchor: { x: 195, y: 190 }, previous: turned },
   { ...HYSTERESIS_BASE, anchor: { x: 195, y: 400 }, previous: turned }
 );
+const WIDE = { bounds: MENU_BOUNDS, beeRadius: 21, bubble: 46, box: { w: 150, h: 66 } };
+for (const count of [3, 4]) {
+  for (const [x, y] of [
+    [195, 400], [195, 130], [195, 690], [20, 400], [370, 400],
+    [20, 125], [370, 125], [20, 690], [370, 690], [120, 150],
+  ]) {
+    MENU_CASES.push({ ...WIDE, anchor: { x, y }, count });
+  }
+  const wideTurned = layoutMenu({ ...WIDE, anchor: { x: 195, y: 160 }, count }).choice;
+  MENU_CASES.push({ ...WIDE, anchor: { x: 195, y: 190 }, previous: wideTurned, count });
+}
 const menuLayout = MENU_CASES.map((input) => ({ input, output: layoutMenu(input) }));
 
 const ROOM_SEED_CASES = [
@@ -105,6 +116,10 @@ const PLAINTEXTS: PeerUpdate[] = [
   { k: "loc", seed: "emoji-🐝", lat: 90, lng: -180, acc: 99999.5, hdg: 359.9, spd: 42.25, at: 2_000_000_000_000 },
   { k: "stop", seed: "abc" },
   { k: "stop", seed: "日本語" },
+  {
+    k: "loc", seed: "chatty", lat: 48.137, lng: 11.575, acc: 8, hdg: null, spd: null, at: 1_700_000_060_000,
+    name: "x".repeat(40), msg: "🐝".repeat(100), msgAt: 1_700_000_000_000,
+  },
 ];
 
 // --- raw key material ------------------------------------------------------
@@ -164,6 +179,22 @@ function corruptChecksum(roomId: string): string {
 }
 
 /** What a malicious or careless peer might put in `name`; see sanitizeSharedName. */
+const SHARED_MESSAGE_INPUTS: unknown[] = [
+  "Bin gleich da",
+  "  Wo   seid  ihr?  ",
+  "Zeile eins\nZeile zwei\r\nZeile drei",
+  "\u202eevil\u202c text",
+  "zero\u200bwidth\ufeff",
+  "👩\u200d💻 bin am Rechner",
+  "y".repeat(120),
+  "🐝".repeat(110),
+  " ",
+  "",
+  7,
+  null,
+  { text: "hi" },
+];
+
 const SHARED_NAME_INPUTS: unknown[] = [
   "Anna",
   "  Anna   Lena  ",
@@ -249,6 +280,7 @@ async function main(): Promise<void> {
   }));
 
   const sharedNames = SHARED_NAME_INPUTS.map((input) => ({ input, output: sanitizeSharedName(input) }));
+  const sharedMessages = SHARED_MESSAGE_INPUTS.map((input) => ({ input, output: sanitizeSharedMessage(input) }));
 
   const doc = {
     $schema: "https://herebee.app/schemas/vectors-v1",
@@ -261,6 +293,8 @@ async function main(): Promise<void> {
       hkdfInfoRoomId: "room-id",
       hkdfInfoAesKey: "aes-key",
       roomIdLength: 32,
+      padBlock: PAD_BLOCK,
+      messageTtlMs: 10 * 60_000,
       ivBytes: 12,
       tagBytes: 16,
       huePalette: HUE_PALETTE,
@@ -271,6 +305,7 @@ async function main(): Promise<void> {
     identity,
     svgSamples,
     sharedNames,
+    sharedMessages,
     menuLayout,
     menuSpring,
     roomSeeds: await Promise.all(

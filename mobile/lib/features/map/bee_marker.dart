@@ -16,7 +16,9 @@ import '../../l10n/app_localizations.dart';
 import '../../util/format.dart';
 import '../../ui/tokens.dart';
 
-const Size beeMarkerSize = Size(240, 110);
+const double _sayReserve = 64;
+
+const Size beeMarkerSize = Size(240, 174);
 
 const double _discSize = 42;
 
@@ -24,7 +26,17 @@ const double _center = 38;
 
 const double beeDiscRadius = _discSize / 2;
 
-const Alignment beeMarkerAlignment = Alignment(0, _center / (110 / 2) - 1);
+const Alignment beeMarkerAlignment = Alignment(0, (_sayReserve + _center) / (174 / 2) - 1);
+
+const String _pictographicPattern = r'\p{Extended_Pictographic}';
+const String _emojiOnlyPattern = r'^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\u200D|\uFE0F|\s){1,24}$';
+final RegExp _emojiOnly = RegExp(_emojiOnlyPattern, unicode: true);
+final RegExp _pictographic = RegExp(_pictographicPattern, unicode: true);
+
+bool isEmojiOnly(String text) =>
+    _emojiOnly.hasMatch(text) &&
+    _pictographic.allMatches(text).length <= 3 &&
+    _pictographic.hasMatch(text);
 
 Color colorFromHue(int hue) => HSLColor.fromAHSL(1, hue.toDouble(), 0.72, 0.56).toColor();
 
@@ -45,6 +57,7 @@ class BeeMarker extends StatelessWidget {
     required this.onTap,
     this.isSelf = false,
     this.menuOpen = false,
+    this.bubblesVisible = true,
     super.key,
   });
 
@@ -56,6 +69,8 @@ class BeeMarker extends StatelessWidget {
 
   final bool menuOpen;
 
+  final bool bubblesVisible;
+
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
@@ -66,6 +81,7 @@ class BeeMarker extends StatelessWidget {
         ? (0.5, 0.85)
         : switch (tier) { Tier.fresh => (1.0, 0.0), Tier.stale => (0.75, 0.0), Tier.ghost => (0.5, 0.9) };
 
+    final message = entry.message;
     final suffix = statusSuffix(entry, now, l);
     final label = suffix == null ? identity.name : '${identity.name} · $suffix';
 
@@ -116,9 +132,28 @@ class BeeMarker extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              if (message != null && bubblesVisible)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: beeMarkerSize.height - _sayReserve - _center + beeDiscRadius + 4,
+                  child: Center(
+                    child: IgnorePointer(
+                      child: AnimatedOpacity(
+                        opacity: menuOpen ? 0 : 1,
+                        duration: const Duration(milliseconds: 180),
+                        child: _SayBubble(
+                          key: ValueKey(entry.messageAt),
+                          text: message,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
                 left: beeMarkerSize.width / 2 - _center,
-                top: 0,
+                top: _sayReserve,
                 width: _center * 2,
                 height: _center * 2,
                 child: Stack(
@@ -132,11 +167,27 @@ class BeeMarker extends StatelessWidget {
                         child: _HeadingArrow(color: color),
                       ),
                     GestureDetector(onTap: onTap, child: disc),
+                    if (message != null && !bubblesVisible)
+                      Positioned(
+                        top: _center - beeDiscRadius - 2,
+                        right: _center - beeDiscRadius - 2,
+                        child: IgnorePointer(
+                          child: Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: ink, width: 2),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
               Positioned(
-                top: _center + 25,
+                top: _sayReserve + _center + 25,
                 left: 0,
                 right: 0,
                 child: Center(
@@ -156,6 +207,80 @@ class BeeMarker extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SayBubble extends StatelessWidget {
+  const _SayBubble({required this.text, required this.color, super.key});
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final emoji = isEmojiOnly(text);
+    final bubble = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: inkGlass,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color, width: 1.5),
+              boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 14, offset: Offset(0, 4))],
+            ),
+            child: Padding(
+              padding: emoji
+                  ? const EdgeInsets.symmetric(horizontal: 8, vertical: 3)
+                  : const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Text(
+                text,
+                maxLines: emoji ? 1 : 3,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: emoji
+                    ? const TextStyle(fontSize: 22, height: 1.1)
+                    : const TextStyle(color: mist, fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
+              ),
+            ),
+          ),
+        ),
+        CustomPaint(size: const Size(10, 6), painter: _TailPainter(color)),
+      ],
+    );
+    if (MediaQuery.disableAnimationsOf(context)) return bubble;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 340),
+      curve: const Cubic(0.34, 1.56, 0.64, 1),
+      builder: (context, t, child) => Opacity(
+        opacity: t.clamp(0.0, 1.0),
+        child: Transform.scale(scale: 0.3 + 0.7 * t, alignment: Alignment.bottomCenter, child: child),
+      ),
+      child: bubble,
+    );
+  }
+}
+
+class _TailPainter extends CustomPainter {
+  _TailPainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, 0)
+        ..lineTo(size.width, 0)
+        ..lineTo(size.width / 2, size.height)
+        ..close(),
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TailPainter old) => old.color != color;
 }
 
 List<double> _greyscale(double amount) {

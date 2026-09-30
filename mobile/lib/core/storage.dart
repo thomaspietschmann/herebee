@@ -1,5 +1,5 @@
-/// What this app persists in plain preferences: any names the user typed, and
-/// whether their own name is shared.
+/// What this app persists in plain preferences: any names the user typed,
+/// whether their own name is shared, and whether speech bubbles are shown.
 /// The user's own name and its sharing choice are kept per room, so a new room
 /// never knows what they called themselves elsewhere.
 ///
@@ -23,6 +23,7 @@ const String _namePrefix = 'herebee.name.';
 const String _ownNamePrefix = 'herebee.ownName.';
 const String _shareNamePrefix = 'herebee.shareName.';
 const String _legacyShareNameKey = 'herebee.shareName';
+const String _bubblesKey = 'herebee.bubbles';
 
 /// Matches the browser's token shape (see `mintToken` in client/src/main.ts).
 String mintToken() {
@@ -90,6 +91,16 @@ class Storage {
       await _prefs.setBool('$_shareNamePrefix$roomId', true);
     } else {
       await _prefs.remove('$_shareNamePrefix$roomId');
+    }
+  }
+
+  bool get bubblesVisible => _prefs.getBool(_bubblesKey) ?? true;
+
+  Future<void> setBubblesVisible(bool visible) async {
+    if (visible) {
+      await _prefs.remove(_bubblesKey);
+    } else {
+      await _prefs.setBool(_bubblesKey, false);
     }
   }
 

@@ -71,6 +71,7 @@
           <span class="roster-count"></span>
         </button>
         <button id="fit-all-btn" class="roster-fit" type="button" data-i18n-aria="fitAll" aria-label="Alle auf einen Blick">⛶</button>
+        <button id="bubbles-btn" class="roster-fit" type="button" aria-pressed="true" data-i18n-aria="bubblesHide" aria-label="Sprechblasen ausblenden">💬</button>
       </div>
 
       <div class="dock">
@@ -95,6 +96,7 @@
       </div>
 
       <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+      <div id="say-live" class="visually-hidden" aria-live="polite"></div>
     </div>
     <script type="module" src="./src/main.ts"></script>
   </body>

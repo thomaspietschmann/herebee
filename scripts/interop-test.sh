@@ -66,4 +66,11 @@ if [ "$WEB_ROOM" != "$APP_ROOM" ]; then
   exit 1
 fi
 
+WEB_SAW="$(node -e 'const d=require(process.argv[1]).decrypted;console.log(d.msg+"|"+d.msgAt)' "$TMP/web.json")"
+APP_SAW="$(node -e 'const d=require(process.argv[1]).decrypted;console.log(d.msg+"|"+d.msgAt)' "$TMP/app.json")"
+if [ "$WEB_SAW" != "Komme gleich 👋|1700000000400" ] || [ "$APP_SAW" != "Bin am Brunnen 🐝|1700000000000" ]; then
+  echo "✗ messages did not round-trip: web saw '$WEB_SAW', app saw '$APP_SAW'"
+  exit 1
+fi
+
 echo "✓ interop passed — both peers decrypted each other in room $WEB_ROOM"

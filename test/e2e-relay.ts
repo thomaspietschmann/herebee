@@ -78,6 +78,29 @@ async function main() {
   const bad = await decryptJson<PeerUpdate>(other.key, opaque);
   check(bad === null, "payload does not decrypt under a different room key");
 
+  const said: PeerUpdate = { ...loc, at: Date.now(), msg: "Bin gleich da", msgAt: Date.now() - 1000 };
+  const saidBlob = await encryptJson(key, said);
+  const quiet = await encryptJson(key, { ...loc, at: Date.now() });
+  check(saidBlob.length === quiet.length, "a message does not change the frame size the relay sees");
+  a.send(JSON.stringify({ t: "relay", data: saidBlob }));
+  await wait(200);
+  const late = await open();
+  const lateReceived: PeerUpdate[] = [];
+  late.on("message", async (raw) => {
+    const msg = JSON.parse(raw.toString());
+    if (msg.t !== "peer") return;
+    const dec = await decryptJson<PeerUpdate>(key, msg.data);
+    if (dec) lateReceived.push(dec);
+  });
+  late.send(JSON.stringify({ t: "join", roomId }));
+  await wait(300);
+  const replayed = lateReceived.find((u) => u.seed === "peerA");
+  check(
+    !!replayed && replayed.k === "loc" && replayed.msg === "Bin gleich da",
+    "a newcomer gets the message through the relay's last-blob replay"
+  );
+  late.close();
+
   // Bad-checksum roomId is rejected and the socket is closed.
   const c = await open();
   let rejected = false;

@@ -8,6 +8,8 @@
     "hkdfInfoRoomId": "room-id",
     "hkdfInfoAesKey": "aes-key",
     "roomIdLength": 32,
+    "padBlock": 768,
+    "messageTtlMs": 600000,
     "ivBytes": 12,
     "tagBytes": 16,
     "huePalette": [
@@ -100,7 +102,7 @@
           "spd": 1.4,
           "at": 1700000000000
         },
-        "ciphertext": "LbliQ3fpE5CuphJhBCY8UBMrp4qOch8hG9wiBuXRCqsK19yD26cKWHDLNW0Pw-TpCAoGhby2RjCgkn4BdBdWBePvTra-M3JLoFvUjBQ-sO-HanlfMLEMtrRCkh-NhMlYdTqtNynNKCkSEAmf323Tvb1pVX3GMMT43tHivWtR6g"
+        "ciphertext": "FrVOxzI_IH7fhDgl0OjQ9HJp80X9a7ZmLNoMLBmMDtm9cxFEUaZ8J9nsKE6J7ayW5PZxGclJ3XbYKd2tVDX7fNXmLCxv-jrSLt0qJSaIA2lK-X9DjbhKjLsMRIj7jfXgDFkoHExn_cPdft3aXYG4Hf-Hjss8bFs7rZH6i1kwjNktBD0hNC9WEtS5aBs0S6CC_BikCgjvi3ELQWp9mSafSEV78kF_vbEk2x9StdFreOWlXZl5APOx_3tn3hJAtmPJxCXFBumItUNIhLtUs8t9eNRs6acGSTme08IbD9hP3Uou_BLTRWwXK-N1H9I0yeym83_803TybXK34rdW5EBpuoKXCI2ycz9qoxuY9bo1wfpUStFAsqxV4j3t7qfehAFJZfqgP0LYbt4EQDyW0vQw4hVLRNWMyv58rOzPQnmGrKrVGOoox6esNhry7qHSgSAUP2STDObV8dcKc2rhf6NhCjUpYRGb2QQCVnYvyNCnDZPYKyi9INsrnIDaK28KrINgE2kvp6Snib_RtSK2QXm2Ofy2gxyy6SFhXuRCoGkJJI_fkeZVDK-iGBauz-LdjEBk4UYs0UdwwbzeeKIKOgthAeMmas3sWN3OaSsti4lZaUTXKQQ0q1Xfe_XyjbCpdxqS_uwFHSp2LY4A-9qM69k8VCGV1Rj6FhL_wPLtL6RI2VVY6IyQAP4GD-Z4fdocZNhy_Bywvwng-YSmGFfBZxteO9N3gRu_7jWGUr33n2yxXq_jdLHafO_9Gd8asazCmqg7Kd6NIH9VzK1Z6s1tR8fu3doHXexJZKcXTjaFF1Akg3jU1bKuEWFcA-SHnZ283H6edTJgmr1RCQCwCcTiiDlepD5SWTUGFY_BxRTMxqs_TO8RG0_VBnzqXi6SG_e7wDTWfxChICkxwkXZMY9EpLf1_inv8sjQCLBjVEHilt74hczgyyftjII7Z-vrZfJfkR22Wz1s4zcGd-Whtb11IuaOcd5VuRDtmgEvQ86ouXEYOh1wFI5Vx26tkgivM4C6EubBDDwNQq4LLfyilcIjsNrDU7qSACuS-zkGSNFIfw"
       },
       {
         "secret": "bJG22wAlSm-Uud4DKE1yl7zhBitQdZq_5AkuU3idwuc",
@@ -115,7 +117,7 @@
           "spd": null,
           "at": 1700000001000
         },
-        "ciphertext": "j5Cb60zOBOXthfmXWKVM6kBoGxTGvQQJZDluvdmcEXWsQ7ofDrMMJJIZ0OkL9x1PrJF8AsCsii8ZHueRPckIWIt6-ice48_VpK49nMJGI3Phq9lPobPgobwcjWilq1WcRWfKnwNpXux8ehScpCxax1Sxd6HQVZAfzh9-ylVWSNpk9BhKdOA"
+        "ciphertext": "PfFBlT8k3vgYwddj0zMmteWGfjiKUnjyX6wHRi3X2jOYtwJ9hYLPD5JN-WX-RVdQeWqqRzfRWVx6Lz14_y_OKzxtvEyqcGzR2RbGyVBxXIFGuVP-tS50_siTYAmlxHNNMOMAWyb-BGrg7BbEW9DDsozgBN64wbBQhz_vWjqbCxWI1Rl30IiaH7Fgk_C4dxbvU0G0a4BQ4Y9mtad0WHllRAJk2xoaeCh9ON9-yYtzMz9SSPd3L0sI3SAgkeFROC9YQCgGuIdFIj2xsksbOC5QZAn1YOo97Bff8iFa19Eaz4Hw6vzinH_GixfABZY0Sx-sYGGBXom1pGBGqPrSl8CQ3qi0n3zeIsITejOy9wwK1ugVpEotUUroiRHx_gPeqZTO-cVZiF8fmMek_VPbRAmON7h3Ev5DI-mi0ET3wcstB-nSivxBi2JT1L5YEvvZjmowlsHdPY9vltlN-o3VvW7Bu6fSDPwKOSp2HvAw5Zfg66e_Ci1elJKVMDXCu3bYaTyLKupAXYsU9nFqSHO17yXZIrha1QpBYJHAUGD4J9EBgkrKhH2L1i1NvFJoWKrnzQstEShCSGPbVTGaKkeRWMdcOdsipUTVDgCHcsfqlwQr-L9YhqlO01D2IOo1KJtv3qBQh5KoYiDDiS6ZMoYbxedvuJy6sy8ullB_H8xR2JZkcXjdYeRo69Fx--7OkH-Y-1IpN_0IDWROCx22c8S-WrubP7Z871pb8B_B54Jp0QAiBwrLjK-qri1-phxxk2NaKvm01E5VQeal6oaiuNIphP3s3axT3vhpTWxKQUVg_UhQ0lmxc41EBd65loKXlpKPF_U2pg-HQ9aKNTgr7JPnMas8MrlbQPRDMQPz-VVleZEgt9pxvl2X-Plsi4o_AiwpWoDx7YBaDBedzgDhD2ZZT3QIF2XuQhnV7cUV5nNAastgnflH0JdEeJ7FiCMKvv86b_lY8sA8TZFK6LOp57moDUQEplpRdbRJe85tXpekEaKLfKhPApvI_7Fdyt3npizHUSNk5DdLRoIzbNBvpot9jumT92OPAfzYpeIZK_ntkg"
       },
       {
         "secret": "0fYbQGWKr9T5HkNojbLX_CFGa5C12v8kSW6TuN0CJ0w",
@@ -130,7 +132,7 @@
           "spd": 0,
           "at": 1
         },
-        "ciphertext": "4xwKDigz2cn20OEnHA3J3oxdGWs61fpVaqKNAIznhIhAGtyA_4Sy3PjM9f82XIgm-xMjGPWmQQwf-RZVSGgB7XN0u9ljTBC6aZ-T-69CVI0B5jpUsI47_G3PFN3Eho8kiL1l98txnw"
+        "ciphertext": "D7xV-gipUcr3XD3vglfElqak9wxVq7E0ko6GRKit4r1V75_c1r21g0PNKG_e7d4g_hUOlXk2B1A8PxpzUAPrgs8Id-VH4_tbV-X3YwCEenkUOAe6uBVZTZvNC5QtMQE4UViQd6Ofa6P0VTg-oGhw5Wx430T-k39xTCOiuo9ZGubHmVQ_P0ThGg8gwT3BMurGdrTnrFsAS3y6hieLA_MqukmsyyflOiiBbyve8qhYGwfK_pojW71g6J5rG6FaC4cRZQU96XslDv5WE7bh3V4UXnzSnxfg-NbToH_6lbFj06DkQHo0eGF9lZCzkVbWKfh-OrGwWyNyIh0ligVJ7zizuEuWqUW7tnVrg5iCZKTCuUq2yTChKpeAJ3zd0PNKi161VYwEFRqCfcJT9ZTKLDiRbKbjsqAE4Ta5xgpVKJNoG6llDPADjCELJJDZ0I1DnTbVI1r9scU1yIHcri0Rul3zww64NQghZvFvF6tzM-ZFJqE4XpveEYoRMFSybUQCEq1DjPn6Bcm0WKJjTcFkwDWzxa7aIsjESL8S60ErIKJ9NUcZ4fKA_dUtYLSPcqj3dD1WKpF1otO51C7pRAhw4PaHvRw4iKPCpVi4VmaAYcU2alO5METB4vAoFbTCSZ3QAHc2G4JlW0U8vfmAW2yj0hwiRW9PrhN3i6ZocUbnbGzZdbiPY8iD-gwHLITWFm_K7P0JErXu8DY4IltPPh9sjGOz8BBxPiEqFBnj8j11lzxXpZo0bMWjXHpdRKH4axuf9ABNifp6xPvgcPlUlr37YqKpUu-8Talq0KJoR-LjpKzmqrF299bMD52tuBwkmCEzhrQ5AGahXIMXUNe-7dC271E2Hzlmq3NBYwXcCPnWYkvKDOTxU7btHus5ZowDZyN-Lhpg5o2Txa_huXpYw3uG5-Ttp6lZpz4B4QLvRd24y5tBiwIeFs0VpSkmC4GKAxDLmt-cI-42DZFPh3yaAqotHTq4V7bZj5fNSI-0X6NE9G8C7voVz3kU3SGr9oWej6NoW1aX-oQ0OhbT7UcWrH7s1YOdhWyw0L1UYXLHxPHe5g"
       },
       {
         "secret": "NluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLE",
@@ -145,7 +147,7 @@
           "spd": 42.25,
           "at": 2000000000000
         },
-        "ciphertext": "Y-mRvXMHUPdwfGVTsS7FSVIL0h_xyaQhjJkSUS5JK0plCkm0F46WIMuqhyaQwcJVQie9OPDVccLlc23tOVrga5makGf17Csm_U2LpFO066zdwc3-iPZ-H0XHn1qhjd3Hi1DlMToOXI0QatzUxh0h7w8wEMQvoQPIJ9LZfMZXO_WERaJay2u-dA"
+        "ciphertext": "taJzojERhyyoaRJEeKkjPVCerF5nTTspbWS_DPa62mRwpxFjTdqm5H5EnfuUgkfuw4lxMUn2UNyBrvpJvQvOha8vra0oYw5xXG0j9fkaho4tmkRWjWpnOgy6t7YU985blxUqlbhE5LCxippS1em8vJROyxHieW8VgT1Y4buywEiBwgf4YlDeRScp_ThrzPex-50THDOMGKvpWHyzLnP1l0AYP7Iw2KfJF-fmtfA7AjP14Zz6z9mrKRpV5nEO2NxxCEYtJ7-jnF2yiER30Sr0VNM-gPbY2jmiWlJCrO_JtMLfAJ5NcmbJ6wXeilLvFz_5cWWpuhlLMi5k8cCkMyd9m4nK_tBnfHBaiR4qvYyPV3n85JLyl3TJvoGSWMuJOdIJwmMqgaQ1teq63oVVX6f44JLqs1GLYISR7QHuwmOTsdZGi8OOxrFq5XJHcSo4X91UfVkZZJ2UkN58IugScKhC2XJAQD-8kOKuvZmdrc7Re6joiecTwKvhZtH8PyuzhiopZUziqiWFI1QITHMb6aC6WU6vxFoCpK6u93hFKxs4r9HGCP9zGyctgdgYrIUxLHK1zzyPifSBdL3hT_9OaA_XL3t2rVvazNao5UYRKFJzQKhzhpDB4uMrPjarMfhOPpOPfHiIJwg02R6p0eywnrhDf6Z-zdS9WIPRdWTNx0F2c7xkQeh2zwoAa13HhjSx388BROpPX7Upz5cF-FiJKJFHKt9nwQ3_xNW_Oa5WXOSbxERfPf5WAXP4TXdk_9r1u8b7Z6OFCE9LVR2slO-ze5lSQHHyARxZN5mP7hMf34H24aEvBs6jxKm5w9iIfXv7yska7Ih2SmhWfPf1CTtkqFz6sS0FT7yi_pPdnwcsQ09S-0gQ7XJR6FpwoFpog0xYyDIok1Z9w58M00x6U7LeqogAizlEjREANt89TcP-jLjwonNqd4s10_VykR288FvKFR0Lr1uvfFmLvJBUZkhSXKQwOzPcogoGe6JHMM-OMvesJaxWx7lhJF0ljzawoOVsz_cr8N2uGi8CX9pKu9_aw_9yWbRxJsAFWOl_MB2SLQ"
       },
       {
         "secret": "m8DlCi9UeZ7D6A0yV3yhxusQNVp_pMnuEzhdgqfM8RY",
@@ -154,7 +156,7 @@
           "k": "stop",
           "seed": "abc"
         },
-        "ciphertext": "cQHLEHsBkeUDNgP3fANt_diYXaAuES1doqY7kA7UA22grqEFxY8Idz0bEd4QqWDnLRqJ578"
+        "ciphertext": "X8LnXDobOgRuYef2p1CYYSFmUXmJQA5kALl8OkkPTqEJnauSadbnkY9YpZN8vZg6_M2nleODmPoVjPfmCMvAO5Mb31W5srZQmnnVg1PwEtQxngcMJaItuFAaPiWIniu84UmUTayfxmQDKCQ0WZJ7wBpz5FPRR91HvkXRx6fjZ5AA-cfLszDpJuuWsoo5YGvNr9fdnsH_RGd2bH8EDwxOnSG0oQwvlcLO5qMDITNsT1fBVjR2HpClqPoOOKHYxdy-c3vf-yH0o59GizQ5xRA3J5hwubxTGCWVQDdBix5QqLltuH-p2N60A4hGexlmhwgJa0fDHkcKhSbmRm4HBDM7JYSmMp_lcMmT34abm0vZMomJtGmH9oSD2RCCxy9n3XaVIkSJifjDiNamY7Re0lOlM4Zxqk8LHVBoO8jtYYqz64-Av2q3-DtCSD0VoeM17dFXER4XsPVwZ2xJNPUd2ZX81rmXA8CvUUXqD9UVge2scyC1izhDs5V9nFMaYSF4-YU9XN8LZJXtubXGu9bhNcV6O4b4mpD2YYKkpNM-22CICnjqtXgmZqBSnrnuDtZeZTsrrEa28JbRrdDBWtv03rLp8i_ewHGjQjTzxR2WkNDQ3LCmiAlaSAR3Guf_PDUK2GY6SX9BedxqrHnmz-uEg3Ac3lFFylC7JppVEqy1pqmrlmgeyxcSxnzlRn6hGw5ukzHiCwF-hiuLkLm2P6IHFulkrwRFk7u0PW4U8Q-v6v0Efe2OaeEJhnnXrRkFfBhvLk1FuqFM7pc--LEXBAnfjT4VB3kwOc8PBFWFhVKN16rkDwR4DllUaAxwouNOi6PlQxoAF_bct1gALhLZeHXfRGTpqLn7qmoYmV10L74bT5vQr7U7tKKwWItBk_6Aw4ed4PkryOsTq3f77Ow0-WKjY93hMzeJJoggQgaWDEIBsFM7_4JofC3nxiuZTHqMNWlp4y-KIGpxSoR4YgVBhKgehUv4wKSjkCwruA_uMadpNLRB-_THu1tNaBUAZTY4mz3nSiL0HEW8dvNjzLJ1zHoyJODDJ-XrywDQ50rnLVDVqA"
       },
       {
         "secret": "ACVKb5S53gMoTXKXvOEGK1B1mr_kCS5TeJ3C5wwxVns",
@@ -163,7 +165,25 @@
           "k": "stop",
           "seed": "日本語"
         },
-        "ciphertext": "LE5HHG3G6ceQVpHMv0C55j-fPh6I9YDqHt2k6c9BIFTgk9CL1SPr6ja_Ikge954h1WI21mGmxszbTh0"
+        "ciphertext": "1iFv0XiP-RXBu8dNJWZ5boEQKGSQACrnfJ3TAJVyofcBk4MeMwEiA3y8twsRH-uodDHRBKNWhANNXzZZg0uLfgv6BjQBTQu-HFhJizp3PBVbzftZpETF7kbLV_DDvL_S3T2G2MpwqFGuy4Kmuw2je2mZAz4vvXjCi5DfH3ybGA8ft8vTWb0fZZf5QoJdk-qpe8AFyK32RywHgZmseW9Yy0y7h1ZTdKot9l3blqAtGGt3zLB_kyE7yLX3rWjO2YGNpuKUDDD9SLIsVmTnPAo826EFfQWAuqn8wemh48uqpFz3ybdEuqslpI7uUoiM0-_1LZcDZyFcqN3c66ZX_hiiHpg4qrv64xNMDh99xq_AEQHBE5nMMOtB2aENhOcI6HPUW_pqT1FNKO3yTyj3GsEaNbgU8PZSdSSG8L2ut3XJ6aXt_kVyWDux30e3Ozcrcjlbganw0sWt8qHHNKRz0QUiTCqG8fFEm7SuQ0Ej-pFrpON156lgOUa-0foSjAEZDC9OBGCK991aaABsPbd6xOChHgVHpt4TCwYefXkC5dNbsAyJ6Mib2C6UK_Yjl5DkWOWBCsGlgiEH02HQtTu6z462dqx1KUHeGc2w7B6wTc65j4qYTdNMf-JMjneg9vzhR2Z4KFZosSAUsFflawNYDtrmbuzcyz911vQKP53IwAY5JG39hebhNl8-9uiJd2m6z5zdvkBooC15MHi4-7UUkzojnYK7LjzQ6UerFakbnZ2PyP28zNquI9BwU0taDSim4pkdNZu7fKrM-OnE_UwHx-SvmYVJHSX64E8Y5CdHf3mO9ujQ2ghv7GVIM730iJWcK9qhhHVFWdl9ttfXkLwduaD_yUIauhExj5Fx2uaJFNZc1ihiCDWch5OEMofFRvxt9KRxcYhnQN4YX5nPxPyDJxp5H2A1nY7G6ODwJwzeN4fFQ37joVmgpsNhNmc8Xo4WMWJSqm50yvm8Zrg7WYpfOa-ubx6Z4p3cTZVBc33yNIDsPxxgXoKCjvy3MHSY-QU0DY3QQgjojsDaeC8X0CmHQvceB_F6iMbiHObbT0h0ng"
+      },
+      {
+        "secret": "ZYqv1PkeQ2iNstf8IUZrkLXa_yRJbpO43QInTHGWu-A",
+        "roomId": "Oz55Xzd-5TDCN29xeZMxoU4fc_tpy23Q",
+        "plaintext": {
+          "k": "loc",
+          "seed": "chatty",
+          "lat": 48.137,
+          "lng": 11.575,
+          "acc": 8,
+          "hdg": null,
+          "spd": null,
+          "at": 1700000060000,
+          "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "msg": "🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝",
+          "msgAt": 1700000000000
+        },
+        "ciphertext": "naaSe_03QjX-sR92G9qBCZu7yoTk34eGdJ45fVxt7AhoKOaGzbOD3HwVLFp3qvdionO-xGh6xNdgeKzCkL5l4ug5npC96kSsVGW_gIMbjbQx0toUH5f0isFgpHK6ZeBDm_ddl5-qCOHnUCnRhp6w_-x8VLtKGZTAtYrObKs1DaWsep_8QvVtfOw6FrM_VKOz7YX3uUjAeOSS-vUDDUoTo6l2gf1KBOz-Fs-sEWNOFM0xuUonqfIbBRF7zhE5bD-eSsvPd5li6E5H9Bykgokt65h5PKZJVbYApULT69YcJFZTzJd-bsRmPMd4QQkAIrJqDpt74tjaA60XDBDyDUIRnuHUjWLPggnCYi2e_kK5_pZ8Ox7Z3zlxs6yHb9OO57PSkxarlqzrjUmAqCCdqXzA8te-5QPecu-XG-sWGdVYtwHNTXiR6FJ9-mHpIFqy07EANUJjSH95aLO8g6eae7n7Y3Kd6xOIPMwagQSXfB9jwSOKDn24hpzntMshWjvSP70ubiJpYWEerE4UoULgzTZHHaP8kC_ce72r6Dycs8T327_w60EIMk_hfVfyFdkzWvnvUZ-FXRMRCxP5PBwl3224eiTSHPLfIw0a100_gLJWwkNx4DPjRQZpQxUF5k_71h0lT3-7xg15SgYtPlYXnUnq5Qd9_t2ZSBUeSddAUZPzWm36hEu2GxaMkNJKwpxzz3D1UMZkuOYK3L5v-RB-mnFBWQ-dxqFOXdX44EJC1N7JLhDLbU9waocCyfQnHyNb5esjsXk1aZq0TC46ck_X4qDAsz2tzRYplLVG89pqDhtrOZworIYgrnDNqchJd8K8XnggcGhVjxfBy4opvPHnry7rpLiXcdsl1EYEsMb7Bzfxej-snPSJPi5c3Hz6LMSMW4tpmM1coo2KxdovHpmwA2aEfF5dYkuXXcsz273yqxK5oB6Rs1QBecTpjCzk5klqJwNvTLCiO186pkljMfgZWdk5fYxjrIMEQIO5gjLG0psVoF2M7lzQTA0fqMe6EQKRql_AGSm2Q_jJBZvIO-PY3-6LyVijBh9dYC_8Gpd7jw"
       }
     ],
     "invalidRoomIds": [
@@ -695,6 +715,62 @@
       "input": [
         "Anna"
       ],
+      "output": null
+    }
+  ],
+  "sharedMessages": [
+    {
+      "input": "Bin gleich da",
+      "output": "Bin gleich da"
+    },
+    {
+      "input": "  Wo   seid  ihr?  ",
+      "output": "Wo seid ihr?"
+    },
+    {
+      "input": "Zeile eins\nZeile zwei\r\nZeile drei",
+      "output": "Zeile eins Zeile zwei Zeile drei"
+    },
+    {
+      "input": "‮evil‬ text",
+      "output": "evil text"
+    },
+    {
+      "input": "zero​width﻿",
+      "output": "zerowidth"
+    },
+    {
+      "input": "👩‍💻 bin am Rechner",
+      "output": "👩‍💻 bin am Rechner"
+    },
+    {
+      "input": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+      "output": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+    },
+    {
+      "input": "🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝",
+      "output": "🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝🐝"
+    },
+    {
+      "input": " ",
+      "output": null
+    },
+    {
+      "input": "",
+      "output": null
+    },
+    {
+      "input": 7,
+      "output": null
+    },
+    {
+      "input": null,
+      "output": null
+    },
+    {
+      "input": {
+        "text": "hi"
+      },
       "output": null
     }
   ],
@@ -1334,6 +1410,1072 @@
         },
         "choice": {
           "dir": 0,
+          "turn": 0,
+          "dist": 0
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 400
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -44.31888127323822,
+            "y": -30.851851851851848
+          },
+          {
+            "x": 0,
+            "y": -54
+          },
+          {
+            "x": 44.31888127323822,
+            "y": -30.851851851851848
+          }
+        ],
+        "box": {
+          "x": 0,
+          "y": 64
+        },
+        "choice": {
+          "dir": 0,
+          "turn": 0,
+          "dist": 0
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 130
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 55.705033691736105,
+            "y": 3
+          },
+          {
+            "x": 40.73506473629425,
+            "y": 50.706394010374595
+          },
+          {
+            "x": -6.971329274080347,
+            "y": 65.67636296581645
+          }
+        ],
+        "box": {
+          "x": -112,
+          "y": 97.37544156868677
+        },
+        "choice": {
+          "dir": 5,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 690
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -6.971329274080347,
+            "y": -75.67636296581645
+          },
+          {
+            "x": 40.73506473629425,
+            "y": -60.70639401037454
+          },
+          {
+            "x": 55.705033691736105,
+            "y": -13
+          }
+        ],
+        "box": {
+          "x": -112,
+          "y": -107.37544156868671
+        },
+        "choice": {
+          "dir": 1,
+          "turn": 4,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 20,
+          "y": 400
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 11,
+            "y": -53.15373513951545
+          },
+          {
+            "x": 58.70639401037461,
+            "y": -38.183766184073534
+          },
+          {
+            "x": 73.67636296581645,
+            "y": 9.522627826301061
+          }
+        ],
+        "box": {
+          "x": 135.07392637852175,
+          "y": 84.8528137423857
+        },
+        "choice": {
+          "dir": 1,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 370,
+          "y": 400
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -73.67636296581651,
+            "y": 9.522627826301061
+          },
+          {
+            "x": -58.706394010374595,
+            "y": -38.18376618407359
+          },
+          {
+            "x": -11,
+            "y": -53.15373513951545
+          }
+        ],
+        "box": {
+          "x": -135.0739263785218,
+          "y": 84.8528137423857
+        },
+        "choice": {
+          "dir": 2,
+          "turn": 4,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 20,
+          "y": 125
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 99.63776254647644,
+            "y": 48.85185185185185
+          },
+          {
+            "x": 55.31888127323822,
+            "y": 72
+          },
+          {
+            "x": 11,
+            "y": 48.85185185185185
+          }
+        ],
+        "box": {
+          "x": 217.31888127323822,
+          "y": 18
+        },
+        "choice": {
+          "dir": 7,
+          "turn": 4,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 370,
+          "y": 125
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -11,
+            "y": 48.85185185185185
+          },
+          {
+            "x": -55.31888127323822,
+            "y": 72
+          },
+          {
+            "x": -99.63776254647644,
+            "y": 48.85185185185185
+          }
+        ],
+        "box": {
+          "x": -217.31888127323822,
+          "y": 18
+        },
+        "choice": {
+          "dir": 7,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 20,
+          "y": 690
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 11,
+            "y": -53.85185185185185
+          },
+          {
+            "x": 55.31888127323822,
+            "y": -77
+          },
+          {
+            "x": 99.63776254647644,
+            "y": -53.85185185185185
+          }
+        ],
+        "box": {
+          "x": 217.31888127323822,
+          "y": -23
+        },
+        "choice": {
+          "dir": 0,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 370,
+          "y": 690
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -99.63776254647644,
+            "y": -53.85185185185185
+          },
+          {
+            "x": -55.31888127323822,
+            "y": -77
+          },
+          {
+            "x": -11,
+            "y": -53.85185185185185
+          }
+        ],
+        "box": {
+          "x": -217.31888127323822,
+          "y": -23
+        },
+        "choice": {
+          "dir": 0,
+          "turn": 4,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 120,
+          "y": 150
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 9.522627826301061,
+            "y": 53.15373513951542
+          },
+          {
+            "x": -38.18376618407356,
+            "y": 38.18376618407356
+          },
+          {
+            "x": -53.15373513951542,
+            "y": -9.522627826301033
+          }
+        ],
+        "box": {
+          "x": 162,
+          "y": 0
+        },
+        "choice": {
+          "dir": 6,
+          "turn": 2,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 190
+        },
+        "previous": {
+          "dir": 5,
+          "turn": 3,
+          "dist": 1
+        },
+        "count": 3
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 30.851851851851848,
+            "y": -44.31888127323822
+          },
+          {
+            "x": 54,
+            "y": 0
+          },
+          {
+            "x": 30.851851851851848,
+            "y": 44.31888127323822
+          }
+        ],
+        "box": {
+          "x": -74.95331880577405,
+          "y": 45.25483399593904
+        },
+        "choice": {
+          "dir": 3,
+          "turn": 1,
+          "dist": 0
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 400
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -53.5665294924554,
+            "y": -6.828390596172994
+          },
+          {
+            "x": -25,
+            "y": -47.86439177509726
+          },
+          {
+            "x": 25,
+            "y": -47.86439177509726
+          },
+          {
+            "x": 53.5665294924554,
+            "y": -6.828390596172994
+          }
+        ],
+        "box": {
+          "x": 0,
+          "y": 64
+        },
+        "choice": {
+          "dir": 0,
+          "turn": 0,
+          "dist": 0
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 130
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 103.5665294924554,
+            "y": 19.828390596172994
+          },
+          {
+            "x": 75,
+            "y": 60.86439177509726
+          },
+          {
+            "x": 25,
+            "y": 60.86439177509726
+          },
+          {
+            "x": -3.566529492455402,
+            "y": 19.828390596172994
+          }
+        ],
+        "box": {
+          "x": -112,
+          "y": 13
+        },
+        "choice": {
+          "dir": 7,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 690
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -103.5665294924554,
+            "y": -29.828390596172994
+          },
+          {
+            "x": -75,
+            "y": -70.86439177509726
+          },
+          {
+            "x": -25,
+            "y": -70.86439177509726
+          },
+          {
+            "x": 3.566529492455402,
+            "y": -29.828390596172994
+          }
+        ],
+        "box": {
+          "x": 112,
+          "y": -23
+        },
+        "choice": {
+          "dir": 0,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 20,
+          "y": 400
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 69.828390596173,
+            "y": -53.5665294924554
+          },
+          {
+            "x": 110.86439177509726,
+            "y": -25
+          },
+          {
+            "x": 110.86439177509726,
+            "y": 25
+          },
+          {
+            "x": 69.828390596173,
+            "y": 53.5665294924554
+          }
+        ],
+        "box": {
+          "x": 63,
+          "y": 120
+        },
+        "choice": {
+          "dir": 3,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 370,
+          "y": 400
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -69.828390596173,
+            "y": 53.5665294924554
+          },
+          {
+            "x": -110.86439177509726,
+            "y": 25
+          },
+          {
+            "x": -110.86439177509732,
+            "y": -24.999999999999943
+          },
+          {
+            "x": -69.828390596173,
+            "y": -53.5665294924554
+          }
+        ],
+        "box": {
+          "x": -63,
+          "y": -120
+        },
+        "choice": {
+          "dir": 4,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 20,
+          "y": 125
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 118.13305898491083,
+            "y": 24.828390596172994
+          },
+          {
+            "x": 89.56652949245542,
+            "y": 65.86439177509726
+          },
+          {
+            "x": 39.56652949245541,
+            "y": 65.86439177509726
+          },
+          {
+            "x": 11,
+            "y": 24.828390596172994
+          }
+        ],
+        "box": {
+          "x": 226.5665294924554,
+          "y": 18
+        },
+        "choice": {
+          "dir": 7,
+          "turn": 4,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 370,
+          "y": 125
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -11,
+            "y": 24.828390596172994
+          },
+          {
+            "x": -39.5665294924554,
+            "y": 65.86439177509726
+          },
+          {
+            "x": -89.5665294924554,
+            "y": 65.86439177509726
+          },
+          {
+            "x": -118.1330589849108,
+            "y": 24.828390596172994
+          }
+        ],
+        "box": {
+          "x": -226.5665294924554,
+          "y": 18
+        },
+        "choice": {
+          "dir": 7,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 20,
+          "y": 690
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 11,
+            "y": -29.828390596172994
+          },
+          {
+            "x": 39.56652949245541,
+            "y": -70.86439177509726
+          },
+          {
+            "x": 89.56652949245542,
+            "y": -70.86439177509726
+          },
+          {
+            "x": 118.13305898491083,
+            "y": -29.828390596172994
+          }
+        ],
+        "box": {
+          "x": 226.5665294924554,
+          "y": -23
+        },
+        "choice": {
+          "dir": 0,
+          "turn": 3,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 370,
+          "y": 690
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": -118.1330589849108,
+            "y": -29.828390596172994
+          },
+          {
+            "x": -89.5665294924554,
+            "y": -70.86439177509726
+          },
+          {
+            "x": -39.5665294924554,
+            "y": -70.86439177509726
+          },
+          {
+            "x": -11,
+            "y": -29.828390596172994
+          }
+        ],
+        "box": {
+          "x": -226.5665294924554,
+          "y": -23
+        },
+        "choice": {
+          "dir": 0,
+          "turn": 4,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 120,
+          "y": 150
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 53.5665294924554,
+            "y": 6.828390596172994
+          },
+          {
+            "x": 25,
+            "y": 47.86439177509726
+          },
+          {
+            "x": -25,
+            "y": 47.86439177509726
+          },
+          {
+            "x": -53.566529492455416,
+            "y": 6.828390596172994
+          }
+        ],
+        "box": {
+          "x": 162,
+          "y": 0
+        },
+        "choice": {
+          "dir": 7,
+          "turn": 4,
+          "dist": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "bounds": {
+          "left": 8,
+          "top": 110,
+          "right": 382,
+          "bottom": 700
+        },
+        "beeRadius": 21,
+        "bubble": 46,
+        "box": {
+          "w": 150,
+          "h": 66
+        },
+        "anchor": {
+          "x": 195,
+          "y": 190
+        },
+        "previous": {
+          "dir": 3,
+          "turn": 0,
+          "dist": 0
+        },
+        "count": 4
+      },
+      "output": {
+        "bubbles": [
+          {
+            "x": 6.828390596172994,
+            "y": -53.5665294924554
+          },
+          {
+            "x": 47.86439177509726,
+            "y": -25
+          },
+          {
+            "x": 47.86439177509726,
+            "y": 25
+          },
+          {
+            "x": 6.828390596172994,
+            "y": 53.5665294924554
+          }
+        ],
+        "box": {
+          "x": -106,
+          "y": 0
+        },
+        "choice": {
+          "dir": 3,
           "turn": 0,
           "dist": 0
         }

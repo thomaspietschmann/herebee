@@ -10,6 +10,7 @@
 library;
 
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:herebee_location/herebee_location.dart';
@@ -185,6 +186,36 @@ class RoomController extends ChangeNotifier {
   final StreamController<String> _panRequests = StreamController<String>.broadcast();
   Stream<String> get panRequests => _panRequests.stream;
 
+  final StreamController<String> _messageEvents = StreamController<String>.broadcast();
+  Stream<String> get messageEvents => _messageEvents.stream;
+
+  String? _ownMessage;
+  int _ownMessageAt = 0;
+
+  ({String text, int at})? get ownMessage {
+    final text = _ownMessage;
+    if (text == null) return null;
+    if (DateTime.now().millisecondsSinceEpoch - _ownMessageAt >= messageFor.inMilliseconds) return null;
+    return (text: text, at: _ownMessageAt);
+  }
+
+  void setOwnMessage(String? text) {
+    if (_disposed) return;
+    final clean = text == null ? null : sanitizeSharedMessage(text);
+    _ownMessage = clean;
+    if (clean != null) _ownMessageAt = max(DateTime.now().millisecondsSinceEpoch, _ownMessageAt + 1);
+    _touchSelf();
+    _flushSend();
+    notifyListeners();
+  }
+
+  bool get bubblesVisible => storage.bubblesVisible;
+
+  Future<void> setBubblesVisible(bool visible) async {
+    await storage.setBubblesVisible(visible);
+    if (!_disposed) notifyListeners();
+  }
+
   String get roomLink => AppConfig.roomLink(secret);
   String? get roomId => _keys?.roomId;
 
@@ -255,6 +286,10 @@ class RoomController extends ChangeNotifier {
     // Age markers once a second: freshness tiers change with time alone, and
     // ghosts past the linger window drop off on their own.
     _ageTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_ownMessage != null && ownMessage == null) {
+        _ownMessage = null;
+        _touchSelf();
+      }
       final removed = peers.tick(DateTime.now());
       if (removed.contains(_followSeed)) _followSeed = null;
       notifyListeners(); // also refreshes "last seen" in an open info box
@@ -267,7 +302,8 @@ class RoomController extends ChangeNotifier {
     // ourselves. (Only reachable once this client shares, in Phase 3.)
     if (update.seed == _selfSeed) return;
     _connSeed[id] = update.seed;
-    peers.upsert(update);
+    final known = peers[update.seed] != null;
+    if (peers.upsert(update) && known) _messageEvents.add(update.seed);
     if (update is StopUpdate && _followSeed == update.seed) _followSeed = null;
     if (_followSeed == update.seed) _panRequests.add(update.seed);
     notifyListeners();
@@ -409,6 +445,8 @@ class RoomController extends ChangeNotifier {
         hdg: pos.hdg,
         spd: pos.spd,
         at: DateTime.now().millisecondsSinceEpoch,
+        msg: ownMessage?.text,
+        msgAt: ownMessage?.at,
       ),
       isSelf: true,
     );
@@ -440,6 +478,7 @@ class RoomController extends ChangeNotifier {
       await _net?.broadcast(StopUpdate(_selfSeed!));
     }
     _lastPos = null;
+    _ownMessage = null;
     peers.remove(_selfSeed ?? '');
     _toggling = false;
     if (!_disposed) notifyListeners();
@@ -494,6 +533,8 @@ class RoomController extends ChangeNotifier {
         hdg: fix.hdg,
         spd: fix.spd,
         at: fix.at,
+        msg: ownMessage?.text,
+        msgAt: ownMessage?.at,
       ),
       isSelf: true,
     );
@@ -530,6 +571,8 @@ class RoomController extends ChangeNotifier {
       spd: pos.spd,
       at: DateTime.now().millisecondsSinceEpoch,
       name: storage.sharesName(_keys!.roomId) ? storage.ownName(_keys!.roomId) : null,
+      msg: ownMessage?.text,
+      msgAt: ownMessage?.at,
     )));
   }
 
@@ -636,6 +679,7 @@ class RoomController extends ChangeNotifier {
       unawaited(_net?.close());
     }
     unawaited(_panRequests.close());
+    unawaited(_messageEvents.close());
     super.dispose();
   }
 }

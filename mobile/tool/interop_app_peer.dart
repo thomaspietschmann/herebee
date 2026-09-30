@@ -26,6 +26,8 @@ final LocUpdate myUpdate = const LocUpdate(
   hdg: 91.5,
   spd: 2.5,
   at: 1700000000456,
+  msg: 'Komme gleich 👋',
+  msgAt: 1700000000400,
 );
 
 Future<void> main(List<String> args) async {

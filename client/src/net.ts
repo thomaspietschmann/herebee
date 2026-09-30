@@ -6,7 +6,7 @@
 import { decryptJson, encryptJson, type RoomKeys } from "./crypto.js";
 import type { ServerMessage } from "../../shared/messages.js";
 import type { PeerUpdate } from "./types.js";
-import { sanitizeSharedName } from "./names.js";
+import { sanitizeSharedMessage, sanitizeSharedName } from "./names.js";
 
 // Liveness: send a ping this often; consider the link dead if nothing at all has
 // arrived from the server within STALE_LIMIT (covers a silently dropped network
@@ -41,6 +41,11 @@ function validPeerUpdate(u: unknown): PeerUpdate | null {
   // A malformed name drops only the name, not the position.
   const name = sanitizeSharedName(o.name);
   if (name) update.name = name;
+  const msg = sanitizeSharedMessage(o.msg);
+  if (msg && typeof o.msgAt === "number" && Number.isFinite(o.msgAt)) {
+    update.msg = msg;
+    update.msgAt = o.msgAt;
+  }
   return update;
 }
 

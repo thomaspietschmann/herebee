@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:herebee_location/herebee_location.dart';
 import 'package:maplibre/maplibre.dart';
@@ -51,6 +52,7 @@ class RoomScreen extends StatefulWidget {
 class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   MapController? _map;
   StreamSubscription<String>? _panSub;
+  StreamSubscription<String>? _messageSub;
 
   /// The seed whose bubble menu is open, or null. Only ever one at a time.
   String? _openMenuSeed;
@@ -75,6 +77,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _panSub = c.panRequests.listen(_panTo);
+    _messageSub = c.messageEvents.listen(_onMessage);
     c.addListener(_onControllerChange);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenGate());
   }
@@ -111,6 +114,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_panSub?.cancel());
+    unawaited(_messageSub?.cancel());
     c.removeListener(_onControllerChange);
     _styleRetry?.cancel();
     super.dispose();
@@ -184,6 +188,31 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     );
     if (!mounted || choice == null) return;
     widget.onOpenRoom(choice.secret ?? generateSecret());
+  }
+
+  void _onMessage(String seed) {
+    if (!mounted) return;
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) return;
+    final entry = c.peers[seed];
+    final message = entry?.message;
+    if (entry == null || message == null) return;
+    final l = L.of(context);
+    final name = c.identityFor(seed).name;
+    unawaited(HapticFeedback.lightImpact());
+    unawaited(SemanticsService.sendAnnouncement(
+      View.of(context),
+      l.sayAnnounce(name, message),
+      Directionality.of(context),
+    ));
+    if (c.bubblesVisible && _onScreen(entry)) return;
+    _toast('$name: $message', actionLabel: l.menuZoomAria, onAction: () => _goTo(seed));
+  }
+
+  bool _onScreen(PeerEntry entry) {
+    final map = _map;
+    if (map == null) return false;
+    final p = map.toScreenLocations([Geographic(lon: entry.position.lng, lat: entry.position.lat)]).first;
+    return (Offset.zero & MediaQuery.sizeOf(context)).contains(p);
   }
 
   void _panTo(String seed) {
@@ -295,6 +324,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
           now: now,
           isSelf: entry.isSelf,
           menuOpen: entry.seed == _openMenuSeed,
+          bubblesVisible: c.bubblesVisible,
           onTap: () => setState(
             () => _openMenuSeed = _openMenuSeed == entry.seed ? null : entry.seed,
           ),
@@ -402,6 +432,14 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         },
         onZoom: () => _goTo(entry.seed),
         onToggleFollow: () => c.toggleFollow(entry.seed),
+        onSay: entry.isSelf && c.sharing
+            ? () async {
+                setState(() => _openMenuSeed = null);
+                final text = await showSaySheet(context, current: c.ownMessage?.text);
+                if (text == null || !mounted) return;
+                c.setOwnMessage(text.isEmpty ? null : text);
+              }
+            : null,
       );
 
   Rect _menuBounds(BuildContext context) {

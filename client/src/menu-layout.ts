@@ -23,6 +23,7 @@ export interface MenuLayoutInput {
   bubble: number;
   box: { w: number; h: number };
   previous?: MenuChoice | null;
+  count?: number;
 }
 
 export interface MenuLayout {
@@ -33,6 +34,7 @@ export interface MenuLayout {
 
 const SPREAD = 50;
 const GAP = 10;
+const BUBBLE_MARGIN = 4;
 const HYSTERESIS = 12;
 const ARC_DIRECTIONS = [-90, -45, -135, 0, 180, 45, 135, 90];
 const BOX_TURNS = [180, 135, -135, 90, -90];
@@ -45,6 +47,7 @@ interface Box {
 }
 
 const rad = (deg: number): number => (deg * Math.PI) / 180;
+const deg = (r: number): number => (r * 180) / Math.PI;
 
 function overflow(b: Box, bounds: Bounds): number {
   return (
@@ -86,12 +89,14 @@ function deflate(bounds: Bounds, by: number): Bounds {
 export function layoutMenu(input: MenuLayoutInput): MenuLayout {
   const { anchor, bounds, beeRadius, bubble, box } = input;
   const previous = input.previous ?? null;
+  const count = input.count ?? 3;
   const ring = beeRadius + GAP + bubble / 2;
+  const step = Math.max(SPREAD, deg(2 * Math.asin(Math.min(1, (bubble + BUBBLE_MARGIN) / (2 * ring)))));
   const boxDistances = [beeRadius + GAP, beeRadius + GAP + bubble + GAP];
   const strict = deflate(bounds, HYSTERESIS);
 
   const bubblesAt = (dir: number): Box[] =>
-    [dir - SPREAD, dir, dir + SPREAD].map((a) => ({
+    Array.from({ length: count }, (_, i) => dir + (i - (count - 1) / 2) * step).map((a) => ({
       x: anchor.x + Math.cos(rad(a)) * ring,
       y: anchor.y + Math.sin(rad(a)) * ring,
       w: bubble,
@@ -137,7 +142,7 @@ export function layoutMenu(input: MenuLayoutInput): MenuLayout {
     }
   }
   const shifted = shiftInside([...best!.bubbles, best!.box], bounds);
-  return result(anchor, shifted.slice(0, 3), shifted[3], best!.choice);
+  return result(anchor, shifted.slice(0, count), shifted[count], best!.choice);
 }
 
 function result(anchor: Point, bubbles: Box[], box: Box, choice: MenuChoice): MenuLayout {

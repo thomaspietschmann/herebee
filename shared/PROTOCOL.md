@@ -66,7 +66,9 @@ The server never sees these shapes. Reference: `client/src/types.ts`.
   "hdg": 180,    // heading in degrees, or null
   "spd": 1.4,    // speed in m/s, or null — gates whether hdg is shown
   "at": 1700000000000,    // client clock, ms
-  "name": "Anna" }        // optional: the sender's own name, only if they opted in
+  "name": "Anna",         // optional: the sender's own name, only if they opted in
+  "msg": "Bin gleich da", // optional: what the sender's bee is saying
+  "msgAt": 1699999990000 } // required with msg: sender-clock ms when it was said
 
 { "k": "stop", "seed": "<string>" }
 ```
@@ -88,6 +90,10 @@ the map (`validPeerUpdate` in `client/src/net.ts`):
   control, format (except ZWNJ/ZWJ) and surrogate characters are removed; runs
   of spaces collapse to one; the result is trimmed and capped at 40 code points. Empty → no name. A bad `name` drops only the name, never the frame.
   Render it as text only. `sharedNames` in `shared/vectors.json` pins the output.
+- `msg` (optional): the same sanitizer with a cap of 100 code points
+  (`sanitizeSharedMessage`), kept only together with a finite `msgAt`. A bad
+  `msg` or `msgAt` drops only the message, never the frame. `sharedMessages` in
+  `shared/vectors.json` pins the output.
 
 ### Shared names
 
@@ -98,6 +104,28 @@ means "no longer shared": fall back to the generated name. Receivers keep it in
 memory only. A name the receiver typed for that peer always wins, and avatar
 and colour stay derived from the seed, so a chosen name cannot pose as another
 bee. Old clients ignore the field.
+
+### Shared messages
+
+A message is state, not an event. It rides on every `loc` for as long as it is
+active, exactly like a shared name, so it inherits every delivery path a position
+already has: the send throttle, the stationary heartbeat, the answer to
+`request`, the reconnect replay and the relay's last-blob replay to newcomers. A
+missed frame costs nothing; the next one carries the message again. A `loc`
+*without* `msg` means "no message".
+
+- **Lifetime.** Ten minutes (`MSG_TTL_MS`). The sender stops attaching it after
+  that, or at once when the user clears it or stops sharing.
+- **Age without clock skew.** `at` and `msgAt` come from the same sender clock,
+  so a receiver computes `age = max(0, at − msgAt)` and never compares `msgAt`
+  with its own clock. It keeps `localAt = now − age` and drops the message at
+  `localAt + 10 min`, or at once if `age` already exceeds the lifetime.
+- **Identity.** `msgAt` identifies a message. The sender keeps it strictly
+  increasing. A larger `msgAt` is a new message (animate, announce), an equal one
+  is a repeat, a smaller one is stale and ignored.
+- **Only while sharing.** Watchers have no bee and send no `loc`, so they cannot
+  speak. A `stop` removes the bee and with it the message.
+- Receivers keep messages in memory only and render them as plain text.
 
 Anything malformed is dropped silently.
 
@@ -161,10 +189,11 @@ or peers time each other out inconsistently.
 | Watchdog tick | 5 s |
 | Reconnect backoff | 500 ms, doubling, capped at 15 s |
 | Resync debounce | 2 s |
-| Marker fresh → stale | 15 s |
+| Marker fresh → stale | 45 s |
 | Marker stale → ghost | 120 s |
 | Ghost removed | 20 min after its last fix |
 | Heading arrow shown | only when `spd` ≥ 1.5 m/s |
+| Message lifetime | 10 min |
 
 A peer is removed **only** on an explicit `stop`. A lost signal leaves a ghost at
 the last known position.
@@ -198,8 +227,8 @@ Exhaustive, by design:
 
 - the roomId (an opaque routing handle),
 - opaque ciphertext and its size (plaintext is padded with spaces to a multiple
-  of 256 bytes before encryption, so the size no longer tells a position from a
-  stop or reveals whether a name is attached),
+  of 768 bytes before encryption, so the size no longer tells a position from a
+  stop or reveals whether a name or a message is attached, or how long it is),
 - the `cid`, which links the reconnects of one tab or one app run and nothing
   beyond that,
 - connection timing and the client IP for the duration of the connection
@@ -214,7 +243,7 @@ is per room, `seed = HMAC-SHA256(deviceSecret, "herebee/seed/" + roomId)`,
 first 9 bytes, each byte in base 36, where `deviceSecret` is 32 random bytes that
 never leave the device. Names a user gives others, and their own name, are stored
 per room. Rooms can still be linked by a live position shared in two rooms at
-once, or by a name the user chooses to share in both. Timestamps (`at`) come from the sender;
+once, or by a name or message the user chooses to share in both. Timestamps (`at`) come from the sender;
 receivers cap them at five seconds in the future and drop frames older than the
 linger window (20 min), so a peer cannot pin its marker as "fresh" forever.
 

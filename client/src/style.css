@@ -208,6 +208,10 @@ body {
 .roster-fit:hover {
   color: #fff;
 }
+.roster-fit[aria-pressed="false"] {
+  opacity: 0.55;
+  filter: grayscale(1);
+}
 .roster-stack {
   display: inline-flex;
 }
@@ -266,6 +270,20 @@ body {
 }
 .party-name {
   flex: 1;
+}
+.party-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.party-say {
+  font: 500 12.5px/1.35 var(--sans);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .party.is-offline {
   color: var(--muted);
@@ -399,6 +417,7 @@ body {
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(2px);
+  padding-top: env(safe-area-inset-top);
 }
 .sheet.is-splash {
   align-items: center;
@@ -414,7 +433,7 @@ body {
   border-radius: var(--r-panel);
   box-shadow: var(--shadow);
   animation: rise 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  max-height: calc(100dvh - 24px);
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
 }
 .sheet.is-splash .sheet-panel {
@@ -499,6 +518,43 @@ body {
 .linkbox .btn-anchor {
   text-align: center;
   text-decoration: none;
+}
+.say-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+.linkbox input.say-input {
+  font: 14px/1.2 var(--sans);
+  padding-right: 42px;
+}
+.linkbox .say-x {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hair);
+  color: var(--mist);
+  font: 400 18px/1 var(--sans);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.linkbox .say-x[hidden] {
+  display: none;
+}
+.say-meta {
+  margin: 0;
+  text-align: right;
+  font: 500 11px/1 var(--sans);
+  color: var(--muted);
 }
 .btn.btn-gap-10 {
   margin-top: 10px;
@@ -609,6 +665,13 @@ body {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+.toast.is-action {
+  cursor: pointer;
+  max-width: min(360px, calc(100vw - 32px));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ============================================================
    Markers — building-block avatars with a presence pulse
@@ -708,8 +771,8 @@ body {
   z-index: 5;
   left: 50%;
   top: 50%;
-  width: 38px;
-  height: 38px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -719,7 +782,7 @@ body {
   background: var(--ink-glass);
   backdrop-filter: blur(14px);
   box-shadow: var(--shadow);
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
   opacity: 0;
@@ -776,6 +839,12 @@ body {
 .mk.has-menu .mk-label {
   opacity: 0;
 }
+.mk-infobox-say {
+  display: block;
+  color: var(--mist);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
 .mk-infobox-name {
   font-weight: 700;
   font-size: 12.5px;
@@ -783,6 +852,91 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.mk-say {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: 180px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1.5px solid var(--c);
+  background: var(--ink-glass);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  color: var(--mist);
+  font: 600 12px/1.35 var(--sans);
+  text-align: center;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease;
+}
+.mk-say.is-emoji {
+  font-size: 22px;
+  line-height: 1.1;
+  padding: 4px 8px;
+}
+.mk.has-say .mk-say {
+  opacity: 1;
+  visibility: visible;
+}
+.mk.has-say::before {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background: var(--c);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  pointer-events: none;
+}
+.mk.say-pop .mk-say {
+  animation: say-pop 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mk.has-menu .mk-say,
+.mk.has-menu::before {
+  opacity: 0;
+}
+.mk-say-dot {
+  position: absolute;
+  z-index: 3;
+  top: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c);
+  border: 2px solid var(--ink);
+  display: none;
+  pointer-events: none;
+}
+#map.bubbles-hidden .mk-say,
+#map.bubbles-hidden .mk.has-say::before {
+  display: none;
+}
+#map.bubbles-hidden .mk.has-say .mk-say-dot {
+  display: block;
+}
+@keyframes say-pop {
+  from {
+    transform: translateX(-50%) scale(0.3);
+    opacity: 0;
+  }
 }
 
 /* freshness tiers */
@@ -825,6 +979,9 @@ body {
   .beacon,
   .mk.is-fresh .mk-pulse,
   .btn-primary.is-sharing::before {
+    animation: none;
+  }
+  .mk.say-pop .mk-say {
     animation: none;
   }
   .mk-arrow,

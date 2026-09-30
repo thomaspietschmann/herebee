@@ -86,6 +86,8 @@ const NAME_SPACE = /[\p{Zs}\p{Zl}\p{Zp}\t\n\v\f\r\u0085]+/gu;
 // to disguise a name.
 const NAME_STRIP = /\p{Cc}|\p{Cs}|(?![\u200C\u200D])\p{Cf}/gu;
 
+export const SHARED_MESSAGE_MAX = 100;
+
 /**
  * Clean a name a peer chose to share, or null if nothing usable is left.
  *
@@ -94,9 +96,13 @@ const NAME_STRIP = /\p{Cc}|\p{Cs}|(?![\u200C\u200D])\p{Cf}/gu;
  * result is only ever rendered as text. The native apps must produce exactly the
  * same output; shared/vectors.json pins it.
  */
-export function sanitizeSharedName(raw: unknown): string | null {
+export function sanitizeSharedText(raw: unknown, max: number): string | null {
   if (typeof raw !== "string") return null;
   const cleaned = raw.replace(NAME_SPACE, " ").replace(NAME_STRIP, "").replace(/ {2,}/g, " ").trim();
-  const capped = Array.from(cleaned).slice(0, SHARED_NAME_MAX).join("").trim();
+  const capped = Array.from(cleaned).slice(0, max).join("").trim();
   return capped.length ? capped : null;
 }
+
+export const sanitizeSharedName = (raw: unknown): string | null => sanitizeSharedText(raw, SHARED_NAME_MAX);
+
+export const sanitizeSharedMessage = (raw: unknown): string | null => sanitizeSharedText(raw, SHARED_MESSAGE_MAX);

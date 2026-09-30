@@ -9,7 +9,7 @@ import { deriveRoomKeys, deriveRoomSeed, generateSecret, type RoomKeys } from ".
 import { NetClient } from "./net.js";
 import { createCoordinator } from "./coord.js";
 import { initMap } from "./map.js";
-import { LINGER_MS, MarkerManager, type MenuActions } from "./markers.js";
+import { LINGER_MS, MSG_TTL_MS, MarkerManager, relTime, type MenuActions } from "./markers.js";
 import { identityFromSeed, hueFromIndex } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
 import { UI } from "./ui.js";
@@ -25,6 +25,12 @@ function distanceMeters(a: [number, number], b: [number, number]): number {
   const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
+
+const esc = (s: string): string =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+type OwnMsg = { text: string; at: number };
+type Incoming = PeerUpdate & { msgAge?: number };
 
 function formatDistance(m: number): string {
   return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
@@ -107,12 +113,23 @@ type PeerSnap = {
   hdg: number | null;
   spd: number | null;
   at: number;
+  msg?: string;
+  msgAt?: number;
+  msgAge?: number;
 };
 type Bus =
   | { t: "hello" } // a tab just opened: leader, please send a snapshot
   | { t: "enter" } // a tab entered the room: the browser is now present
-  | { t: "snapshot"; peers: PeerSnap[]; self: Position | null; sharing: boolean; presence: number; connected: boolean }
-  | { t: "peer"; u: PeerUpdate } // leader -> followers: a peer update (never self)
+  | {
+      t: "snapshot";
+      peers: PeerSnap[];
+      self: Position | null;
+      sharing: boolean;
+      presence: number;
+      connected: boolean;
+      ownMsg: OwnMsg | null;
+    }
+  | { t: "peer"; u: Incoming } // leader -> followers: a peer update (never self)
   | { t: "self"; pos: Position | null } // leader -> followers: our own position
   | { t: "sharing"; on: boolean } // leader -> followers: sharing on/off
   | { t: "presence"; n: number }
@@ -120,7 +137,9 @@ type Bus =
   | { t: "fatal"; reason: string }
   | { t: "rename"; seed: string } // any tab: a local custom name changed
   | { t: "offline"; seed: string; off: boolean } // leader -> followers: a peer's link dropped/returned
-  | { t: "toggle-share" }; // follower -> leader: please flip sharing
+  | { t: "toggle-share" } // follower -> leader: please flip sharing
+  | { t: "say"; text: string | null }
+  | { t: "own-msg"; msg: OwnMsg | null };
 
 async function main(): Promise<void> {
   // Localize the static HUD (title, <html lang>, button labels, aria) up front.
@@ -145,6 +164,41 @@ async function main(): Promise<void> {
   const sharedNames = new Map<string, string>();
   // Our own name for someone always wins over what they call themselves.
   const resolveName = (seed: string) => customName(seed) || sharedNames.get(seed) || nameFromSeed(seed);
+
+  const peerSays = new Map<string, { text: string; at: number; localAt: number }>();
+  let ownMsg: OwnMsg | null = null;
+  const ownMsgActive = (): OwnMsg | null => (ownMsg && Date.now() - ownMsg.at < MSG_TTL_MS ? ownMsg : null);
+  const sayOf = (s: string): { text: string; localAt: number } | null => {
+    if (s === seed) {
+      const own = ownMsgActive();
+      return own ? { text: own.text, localAt: own.at } : null;
+    }
+    return peerSays.get(s) ?? null;
+  };
+
+  const BUBBLES_KEY = "herebee.bubbles";
+  let bubblesVisible = (() => {
+    try {
+      return localStorage.getItem(BUBBLES_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  })();
+  const applyBubbles = () => {
+    document.getElementById("map")!.classList.toggle("bubbles-hidden", !bubblesVisible);
+    ui.setBubblesVisible(bubblesVisible);
+  };
+  const toggleBubbles = () => {
+    bubblesVisible = !bubblesVisible;
+    try {
+      if (bubblesVisible) localStorage.removeItem(BUBBLES_KEY);
+      else localStorage.setItem(BUBBLES_KEY, "0");
+    } catch {
+      applyBubbles();
+      return;
+    }
+    applyBubbles();
+  };
 
   // Whether our own custom name goes out with our position. Off unless the user
   // said yes when naming themselves in this room.
@@ -193,7 +247,13 @@ async function main(): Promise<void> {
     // only, and let the UI spell out "X active · Y offline" — otherwise the
     // headline count and the number of markers/pips disagree.
     const sharers = [...roster.entries()]
-      .map(([s, v]) => ({ seed: s, color: v.color, name: v.name, offline: markers.status(s)?.offline ?? false }))
+      .map(([s, v]) => ({
+        seed: s,
+        color: v.color,
+        name: v.name,
+        offline: markers.status(s)?.offline ?? false,
+        say: sayOf(s)?.text,
+      }))
       .sort((a, b) => Number(a.offline) - Number(b.offline) || a.name.localeCompare(b.name));
     const onlineCount = sharers.filter((x) => !x.offline).length;
     const offlineCount = sharers.length - onlineCount;
@@ -220,7 +280,9 @@ async function main(): Promise<void> {
     onToggleShare: () => (coord.isLeader() ? toggleShare() : coord.post({ t: "toggle-share" } satisfies Bus)),
     onFitAll: fitAll,
     onGoTo: goTo,
+    onToggleBubbles: toggleBubbles,
   });
+  applyBubbles();
 
   // Derive the room keys from the fragment secret. A hand-edited / malformed
   // secret can't decode — show a friendly notice instead of failing silently.
@@ -244,6 +306,24 @@ async function main(): Promise<void> {
 
   // Remember (per room) whether we were sharing, and restore it after a reload.
   const shareKey = "herebee.sharing." + keys.roomId;
+  const sayKey = "herebee.say." + keys.roomId;
+  const rememberOwnMsg = () => {
+    try {
+      if (ownMsg) sessionStorage.setItem(sayKey, JSON.stringify(ownMsg));
+      else sessionStorage.removeItem(sayKey);
+    } catch {
+      return;
+    }
+  };
+  const restoreOwnMsg = (): OwnMsg | null => {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem(sayKey) ?? "null") as OwnMsg | null;
+      if (raw && typeof raw.text === "string" && typeof raw.at === "number" && Date.now() - raw.at < MSG_TTL_MS) return raw;
+    } catch {
+      return null;
+    }
+    return null;
+  };
   const rememberSharing = (on: boolean) => {
     try {
       if (on) sessionStorage.setItem(shareKey, "1");
@@ -259,11 +339,12 @@ async function main(): Promise<void> {
   // agnostic is what lets a promoted follower keep rendering seamlessly.
   let centeredOnSelf = false;
 
-  function renderPeer(update: PeerUpdate): void {
+  function renderPeer(update: Incoming): void {
     if (update.k === "stop") {
       markers.remove(update.seed); // active stop -> disappear now
       roster.delete(update.seed);
       sharedNames.delete(update.seed);
+      peerSays.delete(update.seed);
       if (followSeed === update.seed) followSeed = null;
       refreshRoster();
       return;
@@ -275,15 +356,57 @@ async function main(): Promise<void> {
     else sharedNames.delete(update.seed);
     const peer = identityFromSeed(update.seed, rosterName(update.seed), hueFromIndex(colorIndexFor(update.seed)));
     if (before !== update.name) markers.rename(update.seed, peer.name);
+    const known = markers.has(update.seed);
     markers.upsert(
       update.seed,
       peer,
       { lat: update.lat, lng: update.lng, acc: update.acc, hdg: update.hdg, spd: update.spd },
       update.at
     );
+    applyPeerSay(update, known, peer.name);
     roster.set(update.seed, { color: peer.color, name: rosterName(update.seed) });
     refreshRoster();
     maybeFollow(update.seed);
+  }
+
+  function applyPeerSay(update: Extract<PeerUpdate, { k: "loc" }> & { msgAge?: number }, known: boolean, name: string): void {
+    const prev = peerSays.get(update.seed);
+    const age =
+      update.msg && update.msgAt !== undefined
+        ? (update.msgAge ?? Math.max(0, update.at - update.msgAt))
+        : Infinity;
+    if (!update.msg || update.msgAt === undefined || age >= MSG_TTL_MS) {
+      if (prev) {
+        peerSays.delete(update.seed);
+        markers.say(update.seed, null, false);
+      }
+      return;
+    }
+    if (prev && update.msgAt < prev.at) return;
+    const fresh = !prev || update.msgAt > prev.at;
+    if (!fresh && prev.text === update.msg) return;
+    peerSays.set(update.seed, { text: update.msg, at: update.msgAt, localAt: Date.now() - age });
+    markers.say(update.seed, update.msg, fresh);
+    if (!fresh || !known) return;
+    ui.announce(t("sayAnnounce", { name, msg: update.msg }));
+    if (!bubblesVisible || !markers.isOnScreen(update.seed)) {
+      ui.toastAction(`${name}: ${update.msg}`, () => goTo(update.seed));
+    }
+  }
+
+  function paintOwnSay(pop: boolean): void {
+    if (markers.has(seed)) markers.say(seed, ownMsgActive()?.text ?? null, pop);
+    const entry = roster.get(seed);
+    if (entry) refreshRoster();
+  }
+
+  function setOwnMessage(text: string | null): void {
+    ownMsg = text ? { text, at: Math.max(Date.now(), (ownMsg?.at ?? 0) + 1) } : null;
+    rememberOwnMsg();
+    coord.post({ t: "own-msg", msg: ownMsg } satisfies Bus);
+    paintOwnSay(true);
+    refreshOpenMenu();
+    if (coord.isLeader() && lastPos) flushSend();
   }
 
   function renderSelf(pos: Position | null): void {
@@ -297,7 +420,9 @@ async function main(): Promise<void> {
     // Own marker label carries the localized "(du)/(you)" suffix (via rosterName)
     // so you can immediately tell which bee is you.
     const self = identityFromSeed(seed, rosterName(seed), hueFromIndex(colorIndexFor(seed)));
+    const known = markers.has(seed);
     markers.upsert(seed, self, pos, Date.now(), true);
+    if (!known) markers.say(seed, ownMsgActive()?.text ?? null, false);
     roster.set(seed, { color: self.color, name: rosterName(seed) });
     refreshRoster();
     if (!centeredOnSelf) {
@@ -373,6 +498,13 @@ async function main(): Promise<void> {
     const st = markers.status(s);
     if (!st) return "";
     const lines = [t("infoLastSeen", { t: st.lastSeen })];
+    const said = sayOf(s);
+    if (said) {
+      lines.unshift(
+        `<span class="mk-infobox-say">💬 ${esc(said.text)}</span>`,
+        t("infoSaid", { t: relTime(Date.now() - said.localAt) })
+      );
+    }
     if (s === seed) {
       lines.push(t(connected ? "connOn" : "connOff"));
     } else {
@@ -396,6 +528,15 @@ async function main(): Promise<void> {
       },
       onZoom: () => goTo(s),
       onToggleFollow: () => toggleFollow(s),
+      onSay:
+        s === seed
+          ? () => {
+              markers.closeMenu();
+              ui.openSay(ownMsgActive()?.text ?? null, (text) =>
+                coord.isLeader() ? setOwnMessage(text) : coord.post({ t: "say", text } satisfies Bus)
+              );
+            }
+          : undefined,
     };
   }
 
@@ -444,6 +585,11 @@ async function main(): Promise<void> {
     const update: PeerUpdate = { k: "loc", seed, lat: pos.lat, lng: pos.lng, acc: pos.acc, hdg: pos.hdg, spd: pos.spd, at: Date.now() };
     const name = sharesName() ? customName(seed) : null;
     if (name) update.name = name;
+    const own = ownMsgActive();
+    if (own) {
+      update.msg = own.text;
+      update.msgAt = own.at;
+    }
     return update;
   }
 
@@ -525,6 +671,11 @@ async function main(): Promise<void> {
     }
     if (lastPos) void net?.broadcast({ k: "stop", seed });
     lastPos = null;
+    if (ownMsg) {
+      ownMsg = null;
+      rememberOwnMsg();
+      coord.post({ t: "own-msg", msg: null } satisfies Bus);
+    }
     renderSelf(null);
     coord.post({ t: "self", pos: null } satisfies Bus);
     ui.setSharing(false);
@@ -552,8 +703,22 @@ async function main(): Promise<void> {
         hdg: e.pos.hdg,
         spd: e.pos.spd,
         at: e.at,
+        msg: peerSays.get(e.id)?.text,
+        msgAt: peerSays.get(e.id)?.at,
+        msgAge: (() => {
+          const said = peerSays.get(e.id);
+          return said ? Date.now() - said.localAt : undefined;
+        })(),
       }));
-    coord.post({ t: "snapshot", peers, self: lastPos, sharing: watchId !== null, presence, connected } satisfies Bus);
+    coord.post({
+      t: "snapshot",
+      peers,
+      self: lastPos,
+      sharing: watchId !== null,
+      presence,
+      connected,
+      ownMsg: ownMsgActive(),
+    } satisfies Bus);
   }
 
   /** Open the leader's socket (once) if the browser has entered. Idempotent. */
@@ -562,7 +727,10 @@ async function main(): Promise<void> {
     engineLive = true;
     net.connect();
     try {
-      if (sessionStorage.getItem(shareKey) === "1") leaderStartShare();
+      if (sessionStorage.getItem(shareKey) === "1") {
+        ownMsg = ownMsg ?? restoreOwnMsg();
+        leaderStartShare();
+      }
     } catch {
       /* private mode */
     }
@@ -575,7 +743,8 @@ async function main(): Promise<void> {
     net = new NetClient(keys, cid, {
       // Markers are keyed by identity seed (stable across reconnects), so a dropped
       // and restored connection updates the same marker instead of duplicating it.
-      onPeer(id, update: PeerUpdate) {
+      onPeer(id, raw: PeerUpdate) {
+        let update: Incoming = raw;
         // Ignore replays of our own identity. The server replays each peer's last
         // cached blob on join, so a lingering old socket would otherwise feed us
         // our own stale "stop"/ghost. Our own marker is owned by sharing.
@@ -583,7 +752,8 @@ async function main(): Promise<void> {
         if (update.k === "loc") {
           const now = Date.now();
           if (update.at < now - LINGER_MS) return;
-          update = { ...update, at: Math.min(update.at, now + 5000) };
+          const msgAge = update.msgAt !== undefined ? Math.max(0, update.at - update.msgAt) : undefined;
+          update = { ...update, at: Math.min(update.at, now + 5000), msgAge };
         }
         connSeed.set(id, update.seed); // so a later "left" for this id resolves to a marker
         markers.setOffline(update.seed, false); // fresh data => the link is fine again
@@ -641,8 +811,22 @@ async function main(): Promise<void> {
         if (coord.isLeader()) break; // only followers consume snapshots
         browserEntered = true;
         ui.dismissWelcome();
+        ownMsg = m.ownMsg;
         for (const p of m.peers) {
-          renderPeer({ k: "loc", seed: p.seed, name: p.name, lat: p.lat, lng: p.lng, acc: p.acc, hdg: p.hdg, spd: p.spd, at: p.at });
+          renderPeer({
+            k: "loc",
+            seed: p.seed,
+            name: p.name,
+            lat: p.lat,
+            lng: p.lng,
+            acc: p.acc,
+            hdg: p.hdg,
+            spd: p.spd,
+            at: p.at,
+            msg: p.msg,
+            msgAt: p.msgAt,
+            msgAge: p.msgAge,
+          });
         }
         renderSelf(m.self);
         ui.setSharing(m.sharing);
@@ -693,6 +877,17 @@ async function main(): Promise<void> {
       case "offline":
         if (!coord.isLeader()) markers.setOffline(m.seed, m.off);
         break;
+      case "say":
+        if (coord.isLeader()) setOwnMessage(m.text);
+        break;
+      case "own-msg":
+        if (!coord.isLeader()) {
+          ownMsg = m.msg;
+          rememberOwnMsg();
+          paintOwnSay(true);
+          refreshOpenMenu();
+        }
+        break;
     }
   });
 
@@ -730,8 +925,20 @@ async function main(): Promise<void> {
   // Age markers once a second; keep the roster in sync when peers time out. Runs
   // in every tab, since every tab renders its own markers.
   setInterval(() => {
+    const now = Date.now();
+    for (const [s, v] of peerSays) {
+      if (now - v.localAt < MSG_TTL_MS) continue;
+      peerSays.delete(s);
+      markers.say(s, null, false);
+    }
+    if (ownMsg && !ownMsgActive()) {
+      ownMsg = null;
+      rememberOwnMsg();
+      paintOwnSay(false);
+    }
     for (const id of markers.tick()) {
       for (const [c, s] of connSeed) if (s === id) connSeed.delete(c);
+      peerSays.delete(id);
       roster.delete(id);
       if (followSeed === id) followSeed = null;
     }

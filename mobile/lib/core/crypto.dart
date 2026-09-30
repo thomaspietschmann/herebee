@@ -77,7 +77,7 @@ Future<RoomKeys> deriveRoomKeys(String secretB64) async {
   return RoomKeys(roomId: bytesToB64url(raw), key: SecretKey(keyBytes));
 }
 
-const int padBlock = 256;
+const int padBlock = 768;
 
 Uint8List padPlaintext(List<int> clear) {
   final size = (clear.length + padBlock - 1) ~/ padBlock * padBlock;
