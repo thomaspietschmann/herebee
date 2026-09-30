@@ -28,7 +28,7 @@ export const lang: Lang = detectLang();
 
 // German is the source of truth and defines the key set.
 const de = {
-  title: "HereBee — flüchtig zusammenfinden",
+  title: "HereBee — Finden statt suchen",
   hint: "Jeder mit dem Link sieht, wo du bist, solange du teilst. Standorte werden Ende-zu-Ende verschlüsselt und nicht gespeichert.",
   shareLink: "Link teilen",
   shareLocation: "Standort teilen",
@@ -78,7 +78,7 @@ const de = {
   invalidCta: "Neuen Raum öffnen",
   infoTitle: "Wie privat ist das?",
   infoIntro:
-    "HereBee teilt Standorte <strong>flüchtig und Ende-zu-Ende-verschlüsselt</strong> zwischen aktiven Teilnehmern. Es ist bewusst datensparsam — aber nenne es nicht „vollständig anonym“.",
+    "HereBee teilt Standorte <strong>ohne Speicherung und Ende-zu-Ende-verschlüsselt</strong> zwischen aktiven Teilnehmern. Es ist bewusst datensparsam — aber nenne es nicht „vollständig anonym“.",
   infoFact1:
     "Der Server sieht <strong>weder Koordinaten noch Namen noch den Schlüssel</strong> — nur verschlüsselte Datenpakete.",
   infoFact2: "Der Schlüssel steckt im Link hinter <code>#</code> und wird nie an den Server gesendet.",
@@ -154,7 +154,7 @@ const de = {
 export type Key = keyof typeof de;
 
 const en: Record<Key, string> = {
-  title: "HereBee — meet up, fleetingly",
+  title: "HereBee — find, don't search",
   hint: "Anyone with the link can see where you are while you share. Locations are end-to-end encrypted and never stored.",
   shareLink: "Share link",
   shareLocation: "Share location",
@@ -272,7 +272,7 @@ const en: Record<Key, string> = {
 };
 
 const es: Record<Key, string> = {
-  title: "HereBee — encontrarse al instante",
+  title: "HereBee — encontrar sin buscar",
   hint: "Cualquiera con el enlace ve dónde estás mientras compartes. Las ubicaciones se cifran de extremo a extremo y no se guardan.",
   shareLink: "Compartir enlace",
   shareLocation: "Compartir ubicación",
@@ -390,7 +390,7 @@ const es: Record<Key, string> = {
 };
 
 const it: Record<Key, string> = {
-  title: "HereBee — ritrovarsi al volo",
+  title: "HereBee — trovarsi senza cercare",
   hint: "Chiunque abbia il link vede dove sei finché condividi. Le posizioni sono cifrate end-to-end e non vengono memorizzate.",
   shareLink: "Condividi link",
   shareLocation: "Condividi posizione",
@@ -508,7 +508,7 @@ const it: Record<Key, string> = {
 };
 
 const fr: Record<Key, string> = {
-  title: "HereBee — se retrouver en un instant",
+  title: "HereBee — trouver sans chercher",
   hint: "Toute personne ayant le lien voit où tu es tant que tu partages. Les positions sont chiffrées de bout en bout et ne sont pas conservées.",
   shareLink: "Partager le lien",
   shareLocation: "Partager ma position",
@@ -628,7 +628,7 @@ const fr: Record<Key, string> = {
 };
 
 const pt: Record<Key, string> = {
-  title: "HereBee — encontrar-se num instante",
+  title: "HereBee — encontrar sem procurar",
   hint: "Qualquer pessoa com o link vê onde estás enquanto partilhas. As localizações são cifradas de ponta a ponta e não são guardadas.",
   shareLink: "Partilhar link",
   shareLocation: "Partilhar localização",

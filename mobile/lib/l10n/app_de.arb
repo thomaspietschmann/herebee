@@ -1,6 +1,6 @@
 {
   "@@locale": "de",
-  "title": "HereBee — flüchtig zusammenfinden",
+  "title": "HereBee — Finden statt suchen",
   "hint": "Jeder mit dem Link sieht, wo du bist, solange du teilst. Standorte werden Ende-zu-Ende verschlüsselt und nicht gespeichert.",
   "shareLink": "Link teilen",
   "shareLocation": "Standort teilen",
@@ -88,7 +88,7 @@
   "invalidBody": "Der Raum-Schlüssel im Link fehlt oder ist unvollständig. Raum-Links werden automatisch erzeugt — man kann sie nicht von Hand eintippen.",
   "invalidCta": "Neuen Raum öffnen",
   "infoTitle": "Wie privat ist das?",
-  "infoIntro": "HereBee teilt Standorte <strong>flüchtig und Ende-zu-Ende-verschlüsselt</strong> zwischen aktiven Teilnehmern. Es ist bewusst datensparsam — aber nenne es nicht „vollständig anonym“.",
+  "infoIntro": "HereBee teilt Standorte <strong>ohne Speicherung und Ende-zu-Ende-verschlüsselt</strong> zwischen aktiven Teilnehmern. Es ist bewusst datensparsam — aber nenne es nicht „vollständig anonym“.",
   "@infoIntro": {
     "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text."
   },

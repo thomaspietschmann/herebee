@@ -29,16 +29,16 @@ export interface OgStrings {
 
 export const OG: Record<OgLang, OgStrings> = {
   de: {
-    title: "HereBee — flüchtig zusammenfinden",
+    title: "HereBee — Finden statt suchen",
     description:
-      "HereBee teilt Live-Standorte flüchtig per Link – privat, ohne Account und Ende-zu-Ende-verschlüsselt.",
+      "HereBee teilt Live-Standorte per Link – privat, ohne Account und Ende-zu-Ende-verschlüsselt.",
     ogDescription: "Privaten Raum teilen, Live-Standorte sehen, nichts speichern. Ende-zu-Ende-verschlüsselt.",
     imageAlt: "HereBee Logo auf einer dunklen Kartenansicht mit leuchtenden Standortpunkten",
     ogLocale: "de_DE",
     htmlLang: "de",
   },
   en: {
-    title: "HereBee — meet up in the moment",
+    title: "HereBee — find, don't search",
     description:
       "HereBee shares live locations by private link, with no account, ephemeral rooms, and end-to-end encryption.",
     ogDescription: "Share a private room, see live locations, and leave nothing behind. End-to-end encrypted.",
@@ -47,7 +47,7 @@ export const OG: Record<OgLang, OgStrings> = {
     htmlLang: "en",
   },
   es: {
-    title: "HereBee — encontrarse al instante",
+    title: "HereBee — encontrar sin buscar",
     description:
       "HereBee comparte ubicaciones en vivo de forma efímera mediante un enlace: privado, sin cuenta y cifrado de extremo a extremo.",
     ogDescription: "Comparte una sala privada, ve ubicaciones en vivo, nada se guarda. Cifrado de extremo a extremo.",
@@ -56,7 +56,7 @@ export const OG: Record<OgLang, OgStrings> = {
     htmlLang: "es",
   },
   it: {
-    title: "HereBee — ritrovarsi al volo",
+    title: "HereBee — trovarsi senza cercare",
     description:
       "HereBee condivide posizioni in tempo reale in modo effimero tramite un link: privato, senza account, cifrato end-to-end.",
     ogDescription: "Condividi una stanza privata, vedi le posizioni in tempo reale, nulla viene salvato. Cifrato end-to-end.",
@@ -65,7 +65,7 @@ export const OG: Record<OgLang, OgStrings> = {
     htmlLang: "it",
   },
   fr: {
-    title: "HereBee — se retrouver en un instant",
+    title: "HereBee — trouver sans chercher",
     description:
       "HereBee partage des positions en direct de façon éphémère via un lien — privé, sans compte, chiffré de bout en bout.",
     ogDescription: "Partage un salon privé, vois les positions en direct, rien n'est conservé. Chiffré de bout en bout.",
@@ -74,7 +74,7 @@ export const OG: Record<OgLang, OgStrings> = {
     htmlLang: "fr",
   },
   pt: {
-    title: "HereBee — encontrar-se num instante",
+    title: "HereBee — encontrar sem procurar",
     description:
       "O HereBee partilha localizações em tempo real de forma efémera através de um link — privado, sem conta, cifrado de ponta a ponta.",
     ogDescription: "Partilha uma sala privada, vê localizações em tempo real, nada é guardado. Cifrado de ponta a ponta.",
