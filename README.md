@@ -144,6 +144,29 @@ Plain HTTP to the development machine is allowed by a debug-only network
 security config on Android and by `NSAllowsLocalNetworking` on iOS. Release
 builds on Android refuse cleartext.
 
+### House numbers
+
+The Protomaps basemap carries house numbers only from zoom 15, and the extract
+stops at 14. House numbers therefore come from a separate, much smaller archive,
+`server/assets/tiles/addresses.pmtiles` (Europe: 104 million numbers in 1.1 GB),
+shown from zoom 17 on top of the basemap.
+
+It is built from OpenStreetMap with Planetiler, osmium and Geofabrik country
+extracts by `scripts/addresses/build.sh`, which filters each country to objects
+with `addr:housenumber`, merges them (dropping the duplicates where extracts
+overlap at borders) and builds one PMTiles layer `addresses` at zoom 14:
+
+```bash
+SNAPSHOT=260929 WORK=/some/scratch/dir scripts/addresses/build.sh
+```
+
+The result is published as a GitHub release asset (`addresses-europe-YYYYMMDD`)
+under the ODbL, like the OSM data it comes from. In production the container
+entrypoint downloads it into the tiles volume and checks its SHA-256; the pinned
+URL and checksum live in `scripts/entrypoint.sh` and can be overridden with
+`ADDRESSES_URL` / `ADDRESSES_SHA256` (an empty `ADDRESSES_URL` disables it). For
+local development, `ADDRESSES=1 npm run fetch-assets` fetches the same file.
+
 ## Tests
 
 | Command | What it checks |

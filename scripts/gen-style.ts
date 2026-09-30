@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import type { OgLang } from "../shared/og.js";
+import { ADDRESSES_SOURCE, withAddressLayer } from "../shared/addresses.js";
 
 /** Keep in sync with client/src/i18n.ts's SUPPORTED. */
 const LANGS: readonly OgLang[] = ["de", "en", "es", "it", "fr", "pt"];
@@ -38,6 +39,7 @@ const ORIGIN = "__HEREBEE_ORIGIN__";
  * though the server is now serving a completely different archive.
  */
 const TILES_VERSION = "__HEREBEE_TILES_VERSION__";
+const ADDRESSES_VERSION = "__HEREBEE_ADDRESSES_VERSION__";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "client", "dist", "style");
@@ -48,6 +50,7 @@ const OUT_DIR = join(HERE, "..", "client", "dist", "style");
 // native apps' MapLibre runtime does). If that function changes, change this
 // too — the apps and the browser must render the same map.
 function buildStyle(lang: OgLang): unknown {
+  const flavor = namedFlavor("light");
   return {
     version: 8,
     glyphs: `${ORIGIN}/basemaps/fonts/{fontstack}/{range}.pbf`,
@@ -59,8 +62,13 @@ function buildStyle(lang: OgLang): unknown {
         attribution:
           '<a href="https://protomaps.com">Protomaps</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       },
+      [ADDRESSES_SOURCE]: {
+        type: "vector",
+        url: `pmtiles://${ORIGIN}/tiles/addresses.pmtiles?v=${ADDRESSES_VERSION}`,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+      },
     },
-    layers: layers("protomaps", namedFlavor("light"), { lang }),
+    layers: withAddressLayer(layers("protomaps", flavor, { lang }), flavor),
   };
 }
 

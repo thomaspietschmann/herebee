@@ -7,11 +7,13 @@
 import maplibregl, { type Map as MlMap, type StyleSpecification } from "maplibre-gl";
 import { Protocol } from "pmtiles";
 import { layers, namedFlavor } from "@protomaps/basemaps";
+import { ADDRESSES_SOURCE, withAddressLayer } from "../../shared/addresses.js";
 
 const DACH_CENTER: [number, number] = [10.5, 50.6];
 
 function buildStyle(): StyleSpecification {
   const origin = location.origin;
+  const flavor = namedFlavor("light");
   return {
     version: 8,
     glyphs: `${origin}/basemaps/fonts/{fontstack}/{range}.pbf`,
@@ -23,8 +25,13 @@ function buildStyle(): StyleSpecification {
         attribution:
           '<a href="https://protomaps.com">Protomaps</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       },
+      [ADDRESSES_SOURCE]: {
+        type: "vector",
+        url: `pmtiles://${origin}/tiles/addresses.pmtiles`,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+      },
     },
-    layers: layers("protomaps", namedFlavor("light"), { lang: "de" }),
+    layers: withAddressLayer(layers("protomaps", flavor, { lang: "de" }), flavor) as StyleSpecification["layers"],
   };
 }
 

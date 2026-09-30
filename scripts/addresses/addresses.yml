@@ -1,0 +1,26 @@
+schema_name: HereBee addresses
+schema_description: House numbers only, for an overlay on the Protomaps basemap
+attribution: <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>
+sources:
+  osm:
+    type: osm
+    local_path: europe-addr.osm.pbf
+layers:
+  - id: addresses
+    features:
+      - source: osm
+        geometry: point
+        min_zoom: 14
+        include_when:
+          addr:housenumber: __any__
+        attributes:
+          - key: housenumber
+            tag_value: addr:housenumber
+      - source: osm
+        geometry: polygon_point_on_surface
+        min_zoom: 14
+        include_when:
+          addr:housenumber: __any__
+        attributes:
+          - key: housenumber
+            tag_value: addr:housenumber

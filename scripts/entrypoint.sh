@@ -55,4 +55,33 @@ else
   echo "[entrypoint] basemap present ($WANT, $(ls -lh "$TILE_FILE" | awk '{print $5}')), skipping extract"
 fi
 
+ADDR_FILE="$TILES_DIR/addresses.pmtiles"
+ADDR_PARAMS="$TILES_DIR/.addresses"
+ADDRESSES_URL="${ADDRESSES_URL-https://github.com/thomaspietschmann/herebee/releases/download/addresses-europe-20260929/addresses-europe-20260929.pmtiles}"
+ADDRESSES_SHA256="${ADDRESSES_SHA256-4b17203be05d6d8f17961308d7dee8256979ca4dca4ab996a3e43ab542058280}"
+ADDR_HAVE=""
+[ -f "$ADDR_PARAMS" ] && ADDR_HAVE="$(cat "$ADDR_PARAMS")"
+
+if [ -z "$ADDRESSES_URL" ]; then
+  echo "[entrypoint] ADDRESSES_URL empty — house numbers disabled"
+elif [ ! -s "$ADDR_FILE" ] || [ "$ADDR_HAVE" != "$ADDRESSES_SHA256" ]; then
+  echo "[entrypoint] house numbers need download — running in background as node…"
+  export ADDR_FILE ADDR_PARAMS ADDRESSES_URL ADDRESSES_SHA256
+  su-exec node:node sh -c '
+    rm -f "$ADDR_FILE.tmp"
+    if curl -fsSL -o "$ADDR_FILE.tmp" "$ADDRESSES_URL" \
+       && echo "$ADDRESSES_SHA256  $ADDR_FILE.tmp" | sha256sum -c - >/dev/null; then
+      mv "$ADDR_FILE.tmp" "$ADDR_FILE"
+      printf "%s" "$ADDRESSES_SHA256" > "$ADDR_PARAMS"
+      echo "[entrypoint] house numbers ready"
+      ls -lh "$ADDR_FILE" || true
+    else
+      echo "[entrypoint] house number download FAILED or checksum mismatch; keeping the previous file"
+      rm -f "$ADDR_FILE.tmp"
+    fi
+  ' &
+else
+  echo "[entrypoint] house numbers present ($(ls -lh "$ADDR_FILE" | awk '{print $5}')), skipping download"
+fi
+
 exec su-exec node:node npm run start

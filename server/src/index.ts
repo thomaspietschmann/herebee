@@ -64,11 +64,12 @@ const ORIGIN_PLACEHOLDER = "__HEREBEE_ORIGIN__";
  * allows, even after the server starts serving a completely different archive.
  */
 const TILES_VERSION_PLACEHOLDER = "__HEREBEE_TILES_VERSION__";
+const ADDRESSES_VERSION_PLACEHOLDER = "__HEREBEE_ADDRESSES_VERSION__";
 
 /** Opaque token that changes whenever server/assets/tiles/basemap.pmtiles is replaced. */
-function tilesVersion(): string {
+function tilesVersion(file = "basemap.pmtiles"): string {
   try {
-    const st = statSync(join(ASSETS_DIR, "tiles", "basemap.pmtiles"));
+    const st = statSync(join(ASSETS_DIR, "tiles", file));
     return `${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}`;
   } catch {
     return "0";
@@ -303,7 +304,13 @@ function serveStyle(req: IncomingMessage, res: ServerResponse, lang: string): vo
     styleCache.set(lang, raw);
   }
   const body = Buffer.from(
-    raw.split(ORIGIN_PLACEHOLDER).join(publicOrigin(req)).split(TILES_VERSION_PLACEHOLDER).join(tilesVersion()),
+    raw
+      .split(ORIGIN_PLACEHOLDER)
+      .join(publicOrigin(req))
+      .split(TILES_VERSION_PLACEHOLDER)
+      .join(tilesVersion())
+      .split(ADDRESSES_VERSION_PLACEHOLDER)
+      .join(tilesVersion("addresses.pmtiles")),
     "utf8"
   );
   res.setHeader("Content-Type", "application/json");

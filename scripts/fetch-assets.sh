@@ -72,5 +72,15 @@ if [ ! -d "$ASSETS/fonts" ] || [ ! -d "$ASSETS/sprites" ]; then
   rm -rf "$TMP"
 fi
 
+if [ "${ADDRESSES:-0}" = "1" ]; then
+  ADDR_URL="${ADDRESSES_URL:-https://github.com/thomaspietschmann/herebee/releases/download/addresses-europe-20260929/addresses-europe-20260929.pmtiles}"
+  ADDR_SHA="${ADDRESSES_SHA256:-4b17203be05d6d8f17961308d7dee8256979ca4dca4ab996a3e43ab542058280}"
+  ADDR_OUT="$ROOT/server/assets/tiles/addresses.pmtiles"
+  echo "→ fetching house numbers → $ADDR_OUT"
+  curl -fL -o "$ADDR_OUT.tmp" "$ADDR_URL"
+  echo "$ADDR_SHA  $ADDR_OUT.tmp" | shasum -a 256 -c -
+  mv "$ADDR_OUT.tmp" "$ADDR_OUT"
+fi
+
 echo "✓ assets ready in $ROOT/server/assets"
 ls -lh "$OUT"
