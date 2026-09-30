@@ -49,7 +49,7 @@ jobs:
             | grep -oE 'germany-[0-9]{6}\.osm\.pbf' | sed -E 's/germany-([0-9]{6}).*/\1/' | sort -u | tail -1)
           [ -n "$snap" ] || { echo "no snapshot found"; exit 1; }
           echo "snapshot=$snap" >> "$GITHUB_OUTPUT"
-          echo "tag=addresses-europe-20$snap" >> "$GITHUB_OUTPUT"
+          echo "tag=addresses-20$snap" >> "$GITHUB_OUTPUT"
           echo "Snapshot: $snap"
 
       - name: Build
@@ -84,16 +84,16 @@ jobs:
           DIR: ${{ runner.temp }}/addr
         run: |
           cat > notes.md <<NOTES
-          House numbers for Europe as a vector tile overlay (PMTiles, zoom 14) for the HereBee map.
+          House numbers for Europe and the Americas as a vector tile overlay (PMTiles, zoom 14) for the HereBee map.
 
-          - Source: OpenStreetMap, Geofabrik country extracts of snapshot $SNAP (all countries Geofabrik lists under Europe), deduplicated at borders with \`osmium merge\`.
+          - Source: OpenStreetMap, Geofabrik extracts of snapshot $SNAP (every country Geofabrik lists under Europe, North, Central and South America; US by state), deduplicated at borders with \`osmium merge\`.
           - Built with Planetiler by \`scripts/addresses/build.sh\` in this repository (workflow run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
           - SHA-256: \`$SHA\`
 
           **License:** Contains information from OpenStreetMap, © OpenStreetMap contributors, which is made available here under the Open Database License (ODbL) 1.0: https://opendatacommons.org/licenses/odbl/1-0/. This file is a derivative database and is likewise made available under the ODbL 1.0. See https://www.openstreetmap.org/copyright.
           NOTES
           gh release create "$TAG" --target "${{ github.sha }}" --latest=false \
-            --title "House numbers Europe (OSM $SNAP)" --notes-file notes.md \
+            --title "House numbers Europe and Americas (OSM $SNAP)" --notes-file notes.md \
             "$DIR/$TAG.pmtiles" "$DIR/$TAG.pmtiles.sha256"
 
       - name: Open a PR that pins the new archive
@@ -105,7 +105,7 @@ jobs:
         run: |
           url="https://github.com/${{ github.repository }}/releases/download/$TAG/$TAG.pmtiles"
           for f in scripts/entrypoint.sh scripts/fetch-assets.sh; do
-            sed -i -E "s#https://github.com/[^}\"]*/releases/download/addresses-europe-[0-9]+/addresses-europe-[0-9]+\.pmtiles#$url#; s#[0-9a-f]{64}(\}\")#$SHA\1#" "$f"
+            sed -i -E "s#https://github.com/[^}\"]*/releases/download/addresses-[a-z-]*[0-9]{8}/addresses-[a-z-]*[0-9]{8}\.pmtiles#$url#; s#[0-9a-f]{64}(\}\")#$SHA\1#" "$f"
           done
           git diff --stat
           git config user.name "github-actions[bot]"
