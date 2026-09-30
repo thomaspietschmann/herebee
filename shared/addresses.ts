@@ -1,5 +1,5 @@
 export const ADDRESSES_SOURCE = "addresses";
-export const ADDRESSES_MINZOOM = 17;
+export const ADDRESSES_MINZOOM = 15;
 
 interface AddressFlavor {
   address_label: string;

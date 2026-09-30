@@ -149,7 +149,7 @@ builds on Android refuse cleartext.
 The Protomaps basemap carries house numbers only from zoom 15, and the extract
 stops at 14. House numbers therefore come from a separate, much smaller archive,
 `server/assets/tiles/addresses.pmtiles` (Europe: 104 million numbers in 1.1 GB),
-shown from zoom 17 on top of the basemap.
+shown from zoom 15 on top of the basemap.
 
 It is built from OpenStreetMap with Planetiler, osmium and Geofabrik country
 extracts by `scripts/addresses/build.sh`, which filters each country to objects
