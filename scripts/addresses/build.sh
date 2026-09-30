@@ -39,6 +39,6 @@ done
 osmium merge filtered/*.osm.pbf -o europe-addr.osm.pbf --overwrite
 cp "$HERE/addresses.yml" addresses.yml
 out="addresses-europe-20${SNAPSHOT}.pmtiles"
-"$JAVA" -Xmx24g -jar planetiler.jar generate-custom --schema=addresses.yml --output="$out" --maxzoom=14 --force
+"$JAVA" ${JAVA_OPTS:--Xmx24g} -jar planetiler.jar generate-custom --schema=addresses.yml --output="$out" --maxzoom=14 --force
 sha256of "$out" > "$out.sha256"
 echo "built $WORK/$out"
