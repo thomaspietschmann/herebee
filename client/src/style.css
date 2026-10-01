@@ -53,6 +53,10 @@ body {
 #map {
   position: absolute;
   inset: 0;
+  background: #cccccc;
+}
+:root[data-map-theme="dark"] #map {
+  background: #0b0e12;
 }
 
 /* Map attribution is not shown on the map — it lives in the info sheet. */
@@ -484,6 +488,29 @@ body {
   font-size: 13.5px;
   line-height: 1.55;
   margin: 0 0 12px;
+}
+.segmented {
+  display: flex;
+  gap: 4px;
+  margin: 10px 0 18px;
+  padding: 4px;
+  border: 1px solid var(--hair);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+}
+.segmented .seg {
+  flex: 1;
+  padding: 9px 6px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font: 600 13px/1 var(--sans);
+  cursor: pointer;
+}
+.segmented .seg.is-active {
+  background: var(--beacon);
+  color: var(--ink);
 }
 .linkbox {
   display: flex;

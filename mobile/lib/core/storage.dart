@@ -1,5 +1,6 @@
 /// What this app persists in plain preferences: any names the user typed,
-/// whether their own name is shared, and whether speech bubbles are shown.
+/// whether their own name is shared, whether speech bubbles are shown, and
+/// which map style was picked.
 /// The user's own name and its sharing choice are kept per room, so a new room
 /// never knows what they called themselves elsewhere.
 ///
@@ -24,6 +25,9 @@ const String _ownNamePrefix = 'herebee.ownName.';
 const String _shareNamePrefix = 'herebee.shareName.';
 const String _legacyShareNameKey = 'herebee.shareName';
 const String _bubblesKey = 'herebee.bubbles';
+const String _mapThemeKey = 'herebee.mapTheme';
+
+enum MapThemePref { auto, light, dark }
 
 /// Matches the browser's token shape (see `mintToken` in client/src/main.ts).
 String mintToken() {
@@ -101,6 +105,20 @@ class Storage {
       await _prefs.remove(_bubblesKey);
     } else {
       await _prefs.setBool(_bubblesKey, false);
+    }
+  }
+
+  MapThemePref get mapTheme => switch (_prefs.getString(_mapThemeKey)) {
+        'light' => MapThemePref.light,
+        'dark' => MapThemePref.dark,
+        _ => MapThemePref.auto,
+      };
+
+  Future<void> setMapTheme(MapThemePref pref) async {
+    if (pref == MapThemePref.auto) {
+      await _prefs.remove(_mapThemeKey);
+    } else {
+      await _prefs.setString(_mapThemeKey, pref.name);
     }
   }
 

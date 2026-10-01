@@ -16,7 +16,7 @@ class AppConfig {
   );
 
   /// Sent as X-HereBee-Client on the WebSocket upgrade. Carries no identity.
-  static const String clientVersion = '0.0.15';
+  static const String clientVersion = '0.0.16';
 
   static String get wsUrl {
     final u = Uri.parse(origin);
@@ -26,7 +26,8 @@ class AppConfig {
 
   /// Generated per UI language by scripts/gen-style.ts; the server substitutes
   /// the real origin per request, so the URLs inside are absolute and ready.
-  static String styleUrl(String languageCode) => '$origin/style/$languageCode.json';
+  static String styleUrl(String languageCode, {bool dark = false}) =>
+      dark ? '$origin/style/dark/$languageCode.json' : '$origin/style/$languageCode.json';
 
   /// Shareable room link. The secret lives in the fragment, which is never sent
   /// to any server.

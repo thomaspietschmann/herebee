@@ -8,11 +8,11 @@
 import { deriveRoomKeys, deriveRoomSeed, generateSecret, type RoomKeys } from "./crypto.js";
 import { NetClient } from "./net.js";
 import { createCoordinator } from "./coord.js";
-import { initMap } from "./map.js";
+import { initMap, setMapTheme } from "./map.js";
 import { LINGER_MS, MSG_TTL_MS, MarkerManager, relTime, type MenuActions } from "./markers.js";
 import { identityFromSeed, hueFromIndex } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
-import { UI } from "./ui.js";
+import { UI, type MapThemePref } from "./ui.js";
 import { t, applyStaticI18n } from "./i18n.js";
 import type { PeerUpdate, Position } from "./types.js";
 
@@ -146,7 +146,44 @@ async function main(): Promise<void> {
   applyStaticI18n();
 
   // The map always renders first, so an unusable link never leaves a blank page.
-  const map = initMap(document.getElementById("map")!);
+  const THEME_KEY = "herebee.mapTheme";
+  const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  let themePref: MapThemePref = (() => {
+    try {
+      const v = localStorage.getItem(THEME_KEY);
+      return v === "light" || v === "dark" ? v : "auto";
+    } catch {
+      return "auto";
+    }
+  })();
+  const resolvedTheme = () => (themePref === "auto" ? (darkQuery.matches ? "dark" : "light") : themePref);
+  let shownTheme = resolvedTheme();
+  const map = initMap(document.getElementById("map")!, shownTheme);
+  document.documentElement.dataset.mapTheme = shownTheme;
+  const applyTheme = () => {
+    const next = resolvedTheme();
+    if (next === shownTheme) return;
+    shownTheme = next;
+    document.documentElement.dataset.mapTheme = next;
+    setMapTheme(map, next);
+  };
+  darkQuery.addEventListener("change", applyTheme);
+  window.addEventListener("storage", (e) => {
+    if (e.key !== THEME_KEY) return;
+    themePref = e.newValue === "light" || e.newValue === "dark" ? e.newValue : "auto";
+    applyTheme();
+  });
+  const setThemePref = (pref: MapThemePref) => {
+    themePref = pref;
+    try {
+      if (pref === "auto") localStorage.removeItem(THEME_KEY);
+      else localStorage.setItem(THEME_KEY, pref);
+    } catch {
+      applyTheme();
+      return;
+    }
+    applyTheme();
+  };
 
   // Local, client-only custom names (never sent anywhere). Our own name is kept
   // per room, so a new room never knows what we called ourselves elsewhere.
@@ -281,6 +318,8 @@ async function main(): Promise<void> {
     onFitAll: fitAll,
     onGoTo: goTo,
     onToggleBubbles: toggleBubbles,
+    mapTheme: () => themePref,
+    onMapTheme: setThemePref,
   });
   applyBubbles();
 

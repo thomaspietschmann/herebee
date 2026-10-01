@@ -20,9 +20,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { layers, namedFlavor } from "@protomaps/basemaps";
+import { layers } from "@protomaps/basemaps";
 import type { OgLang } from "../shared/og.js";
 import { ADDRESSES_SOURCE, withAddressLayer } from "../shared/addresses.js";
+import { MAP_THEMES, themeFlavor, themeSprite, type MapTheme } from "../shared/map-theme.js";
 
 /** Keep in sync with client/src/i18n.ts's SUPPORTED. */
 const LANGS: readonly OgLang[] = ["de", "en", "es", "it", "fr", "pt"];
@@ -49,12 +50,12 @@ const OUT_DIR = join(HERE, "..", "client", "dist", "style");
 // doesn't need one: it never persists a cross-session ambient cache the way the
 // native apps' MapLibre runtime does). If that function changes, change this
 // too — the apps and the browser must render the same map.
-function buildStyle(lang: OgLang): unknown {
-  const flavor = namedFlavor("light");
+function buildStyle(lang: OgLang, theme: MapTheme): unknown {
+  const flavor = themeFlavor(theme);
   return {
     version: 8,
     glyphs: `${ORIGIN}/basemaps/fonts/{fontstack}/{range}.pbf`,
-    sprite: `${ORIGIN}/basemaps/sprites/v4/light`,
+    sprite: `${ORIGIN}/basemaps/sprites/v4/${themeSprite(theme)}`,
     sources: {
       protomaps: {
         type: "vector",
@@ -72,9 +73,11 @@ function buildStyle(lang: OgLang): unknown {
   };
 }
 
-mkdirSync(OUT_DIR, { recursive: true });
-for (const lang of LANGS) {
-  const file = join(OUT_DIR, `${lang}.json`);
-  writeFileSync(file, JSON.stringify(buildStyle(lang)) + "\n", "utf8");
+for (const theme of MAP_THEMES) {
+  const dir = theme === "light" ? OUT_DIR : join(OUT_DIR, theme);
+  mkdirSync(dir, { recursive: true });
+  for (const lang of LANGS) {
+    writeFileSync(join(dir, `${lang}.json`), JSON.stringify(buildStyle(lang, theme)) + "\n", "utf8");
+  }
 }
-console.log(`wrote ${LANGS.length} style files to ${OUT_DIR}`);
+console.log(`wrote ${LANGS.length * MAP_THEMES.length} style files to ${OUT_DIR}`);

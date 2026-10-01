@@ -18,6 +18,7 @@ import '../../core/crypto.dart';
 import '../../core/names.dart';
 import '../../core/peer_state.dart';
 import '../../core/recent_rooms.dart';
+import '../../core/storage.dart';
 import '../../core/style_guard.dart';
 import '../../l10n/app_localizations.dart';
 import '../hud/hud.dart';
@@ -59,6 +60,11 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   bool _welcomeShown = false;
 
   String? _style;
+  int _styleGeneration = 0;
+  Geographic _mapCenter = _initialCenter;
+  double _mapZoom = _initialZoom;
+  bool? _styleDark;
+  bool? _styleLoadingDark;
   String? _styleLocale;
   bool _styleLoading = false;
   bool _styleFailed = false;
@@ -86,28 +92,62 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _styleLocale = Localizations.localeOf(context).languageCode;
-    if (_style == null && !_styleLoading) unawaited(_loadStyle());
+    _syncStyle();
   }
 
-  Future<void> _loadStyle() async {
+  bool _wantDark() => switch (c.mapTheme) {
+        MapThemePref.light => false,
+        MapThemePref.dark => true,
+        MapThemePref.auto => MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+      };
+
+  void _syncStyle() {
+    if (!mounted || _styleLocale == null) return;
+    if (_styleRetry?.isActive ?? false) return;
+    final dark = _wantDark();
+    if (_styleLoading) {
+      if (_styleLoadingDark == dark) return;
+    } else if (_style != null && _styleDark == dark) {
+      return;
+    }
+    unawaited(_loadStyle(dark));
+  }
+
+  Future<void> _loadStyle(bool dark) async {
     final locale = _styleLocale;
     if (locale == null) return;
     _styleLoading = true;
+    _styleLoadingDark = dark;
     _styleRetry?.cancel();
+    String? style;
     try {
-      final style = await StyleGuard(AppConfig.origin).fetch(AppConfig.styleUrl(locale));
-      if (!mounted) return;
-      setState(() {
-        _style = style;
-        _styleFailed = false;
-      });
+      style = await StyleGuard(AppConfig.origin).fetch(AppConfig.styleUrl(locale, dark: dark));
     } on StyleRejected {
-      if (!mounted) return;
-      setState(() => _styleFailed = true);
-      _styleRetry = Timer(const Duration(seconds: 10), () => unawaited(_loadStyle()));
-    } finally {
-      _styleLoading = false;
+      style = null;
     }
+    if (_styleLoadingDark != dark) return;
+    _styleLoading = false;
+    if (!mounted) return;
+    if (style == null) {
+      setState(() => _styleFailed = true);
+      _styleRetry = Timer(const Duration(seconds: 10), _syncStyle);
+      return;
+    }
+    final camera = _map?.camera;
+    setState(() {
+      if (camera != null) {
+        _mapCenter = camera.center;
+        _mapZoom = camera.zoom;
+      }
+      if (_style != null) {
+        _map = null;
+        _styleGeneration++;
+      }
+      _style = style;
+      _styleDark = dark;
+      _styleFailed = false;
+    });
+    _syncStyle();
   }
 
   @override
@@ -145,6 +185,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   void _onControllerChange() {
     if (!mounted) return;
     setState(() {});
+    _syncStyle();
     _maybeAutoFit();
 
     // The platform ended sharing without the user asking. Going quiet here would
@@ -348,10 +389,11 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
           // itself to something arbitrary instead of the screen.
           Positioned.fill(
             child: _style == null ? const SizedBox.shrink() : MapLibreMap(
+              key: ValueKey(_styleGeneration),
               options: MapOptions(
                 initStyle: _style!,
-                initCenter: _initialCenter,
-                initZoom: _initialZoom,
+                initCenter: _mapCenter,
+                initZoom: _mapZoom,
                 // Location comes from peers, not from the camera; keep the
                 // canvas gesture-friendly and upright, like the web client.
                 gestures: const MapGestures(pan: true, zoom: true, rotate: false, pitch: false),
@@ -390,7 +432,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
             onGoTo: _goTo,
             onShareLink: () => shareRoomLink(context, c.roomLink),
             onToggleShare: _toggleShare,
-            onInfo: () => showInfoSheet(context),
+            onInfo: () => showInfoSheet(context, controller: c),
             onRooms: _openRooms,
             brandKey: _brandKey,
             hintKey: _hintKey,

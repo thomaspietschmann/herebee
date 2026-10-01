@@ -213,6 +213,13 @@ class RoomController extends ChangeNotifier {
 
   bool get bubblesVisible => storage.bubblesVisible;
 
+  MapThemePref get mapTheme => storage.mapTheme;
+
+  Future<void> setMapTheme(MapThemePref pref) async {
+    await storage.setMapTheme(pref);
+    if (!_disposed) notifyListeners();
+  }
+
   Future<void> setBubblesVisible(bool visible) async {
     await storage.setBubblesVisible(visible);
     if (!_disposed) notifyListeners();

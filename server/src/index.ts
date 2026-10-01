@@ -291,17 +291,17 @@ function serveJson(res: ServerResponse, value: unknown, cacheSeconds = 0): void 
  */
 const styleCache = new Map<string, string>();
 
-function serveStyle(req: IncomingMessage, res: ServerResponse, lang: string): void {
-  let raw = styleCache.get(lang);
+function serveStyle(req: IncomingMessage, res: ServerResponse, name: string): void {
+  let raw = styleCache.get(name);
   if (raw === undefined) {
     try {
-      raw = readFileSync(join(CLIENT_DIST, "style", `${lang}.json`), "utf8");
+      raw = readFileSync(join(CLIENT_DIST, "style", `${name}.json`), "utf8");
     } catch {
       // Not built yet (e.g. `npm run start` without `npm run build`).
       res.writeHead(404).end("Not found");
       return;
     }
-    styleCache.set(lang, raw);
+    styleCache.set(name, raw);
   }
   const body = Buffer.from(
     raw
@@ -451,9 +451,10 @@ const httpServer = createServer((req, res) => {
   // rather than as a plain static file because the origin is substituted per
   // request (the file on disk holds a placeholder).
   if (path.startsWith("/style/") && path.endsWith(".json")) {
-    const lang = path.slice("/style/".length, -".json".length);
+    const name = path.slice("/style/".length, -".json".length);
+    const lang = name.startsWith("dark/") ? name.slice("dark/".length) : name;
     if (STYLE_LANGS.has(lang)) {
-      serveStyle(req, res, lang);
+      serveStyle(req, res, name);
       return;
     }
     res.writeHead(404).end("Not found");

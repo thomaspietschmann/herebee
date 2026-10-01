@@ -3,6 +3,7 @@
 /// `client/src/ui.ts`.
 library;
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/deep_links.dart';
 import '../../core/names.dart';
 import '../../core/recent_rooms.dart';
+import '../../core/storage.dart';
 import '../map/bee_marker.dart';
 import '../room/room_controller.dart';
 import '../../l10n/app_localizations.dart';
@@ -214,7 +216,7 @@ Future<void> showInvalidLinkSheet(BuildContext context) => _splash(
       },
     );
 
-Future<void> showInfoSheet(BuildContext context) => _sheet<void>(
+Future<void> showInfoSheet(BuildContext context, {RoomController? controller}) => _sheet<void>(
       context,
       builder: (context) {
         final l = L.of(context);
@@ -222,6 +224,12 @@ Future<void> showInfoSheet(BuildContext context) => _sheet<void>(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (controller != null) ...[
+              Text(l.mapTheme, style: _h2),
+              const SizedBox(height: 10),
+              _MapThemePicker(controller: controller),
+              const SizedBox(height: 20),
+            ],
             Text(l.infoTitle, style: _h2),
             const SizedBox(height: 10),
             MarkupText(l.infoIntro, style: _body),
@@ -356,7 +364,7 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
             p('<strong>Auf dem Gerät gespeichert.</strong> Der geheime Geräteschlüssel in der sicheren '
                 'Ablage des Geräts (Keychain bzw. Keystore) sowie pro Raum die Namen, die du anderen '
                 'Teilnehmern gegeben hast, dein eigener Name und ob du ihn teilst, sowie ob Sprechblasen '
-                'angezeigt werden. Außerdem die letzten fünf Räume, '
+                'angezeigt werden und welcher Kartenstil gewählt ist. Außerdem die letzten fünf Räume, '
                 'die du betreten hast, samt Schlüssel und den Bienen, die du dort getroffen hast – '
                 'für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore); jeder '
                 'Eintrag lässt sich jederzeit löschen. Keine Standorthistorie, keine Protokolle.'),
@@ -396,6 +404,76 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
         );
       },
     );
+
+class _MapThemePicker extends StatefulWidget {
+  const _MapThemePicker({required this.controller});
+
+  final RoomController controller;
+
+  @override
+  State<_MapThemePicker> createState() => _MapThemePickerState();
+}
+
+class _MapThemePickerState extends State<_MapThemePicker> {
+  late MapThemePref _pref = widget.controller.mapTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    Widget seg(MapThemePref pref, String label) {
+      final active = pref == _pref;
+      return Expanded(
+        child: Semantics(
+          button: true,
+          selected: active,
+          child: GestureDetector(
+            key: ValueKey('map-theme-${pref.name}'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              setState(() => _pref = pref);
+              unawaited(widget.controller.setMapTheme(pref));
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: active ? tokens.beacon : Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: active ? tokens.ink : tokens.muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: tokens.ink,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: tokens.hair),
+      ),
+      child: Row(
+        children: [
+          seg(MapThemePref.auto, l.mapThemeAuto),
+          const SizedBox(width: 4),
+          seg(MapThemePref.light, l.mapThemeLight),
+          const SizedBox(width: 4),
+          seg(MapThemePref.dark, l.mapThemeDark),
+        ],
+      ),
+    );
+  }
+}
 
 /// Returns the new name, an empty string to reset to the generated one, or null
 /// if the user cancelled. Names are local to this device and never transmitted.

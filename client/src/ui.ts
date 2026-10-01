@@ -9,7 +9,11 @@ export interface UIHandlers {
   onFitAll: () => void; // zoom the map so every shared marker fits on screen
   onGoTo: (seed: string) => void; // fly the map to one participant's marker
   onToggleBubbles: () => void;
+  mapTheme: () => MapThemePref;
+  onMapTheme: (pref: MapThemePref) => void;
 }
+
+export type MapThemePref = "auto" | "light" | "dark";
 
 interface Sharer {
   seed: string;
@@ -406,8 +410,15 @@ export class UI {
   }
 
   private openInfo(): void {
+    const current = this.h.mapTheme();
+    const choice = (pref: MapThemePref, key: "mapThemeAuto" | "mapThemeLight" | "mapThemeDark") =>
+      `<button type="button" class="seg${pref === current ? " is-active" : ""}" data-theme="${pref}" aria-pressed="${pref === current}">${t(key)}</button>`;
     this.sheetBody.innerHTML = `
-      <h2>${t("infoTitle")}</h2>
+      <h2>${t("mapTheme")}</h2>
+      <div class="segmented" role="group" aria-label="${t("mapTheme")}">
+        ${choice("auto", "mapThemeAuto")}${choice("light", "mapThemeLight")}${choice("dark", "mapThemeDark")}
+      </div>
+      <h2 class="sheet-section">${t("infoTitle")}</h2>
       <p>${t("infoIntro")}</p>
       <ul class="facts">
         <li>${t("infoFact1")}</li>
@@ -422,6 +433,16 @@ export class UI {
       })}</p>
       <p class="sheet-foot"><button type="button" class="linklike" id="open-legal">${t("legalLink")}</button></p>`;
     this.openSheet();
+    this.sheetBody.querySelectorAll<HTMLElement>(".seg[data-theme]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const pref = el.dataset.theme as MapThemePref;
+        this.h.onMapTheme(pref);
+        this.sheetBody.querySelectorAll<HTMLElement>(".seg[data-theme]").forEach((b) => {
+          b.classList.toggle("is-active", b === el);
+          b.setAttribute("aria-pressed", String(b === el));
+        });
+      });
+    });
     document.getElementById("open-legal")!.addEventListener("click", () => this.openLegal());
   }
 
@@ -500,7 +521,7 @@ export class UI {
       Räumen teilst, oder an einem Namen, den du selbst in mehreren Räumen teilst.</p>
       <p><strong>Im Browser gespeichert.</strong> Im lokalen Speicher deines Browsers (localStorage)
       liegen der geheime Geräteschlüssel sowie pro Raum die Namen, die du anderen Teilnehmern gegeben
-      hast, dein eigener Name und ob du ihn teilst, außerdem ob Sprechblasen angezeigt werden. Nur für
+      hast, dein eigener Name und ob du ihn teilst, außerdem ob Sprechblasen angezeigt werden und welcher Kartenstil gewählt ist. Nur für
       den geöffneten Tab (sessionStorage) kommen ein zufälliges Token für die Wiederverbindung, die
       Angabe, ob du gerade teilst, und deine aktuelle Nachricht bis zu ihrem Ablauf hinzu. Das ist für die Funktion technisch erforderlich (§ 25 Abs. 2 TDDDG), verlässt den
       Browser nur verschlüsselt an die Teilnehmer bzw. als Token an den Server und lässt sich über die
@@ -524,6 +545,7 @@ export class UI {
   private openSheet(kind?: "splash"): void {
     this.sheet.classList.toggle("is-splash", kind === "splash");
     this.sheet.hidden = false;
+    this.sheet.querySelector<HTMLElement>(".sheet-panel")!.scrollTop = 0;
   }
   private closeSheet(): void {
     this.sheet.hidden = true;

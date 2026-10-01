@@ -6,18 +6,19 @@
  */
 import maplibregl, { type Map as MlMap, type StyleSpecification } from "maplibre-gl";
 import { Protocol } from "pmtiles";
-import { layers, namedFlavor } from "@protomaps/basemaps";
+import { layers } from "@protomaps/basemaps";
 import { ADDRESSES_SOURCE, withAddressLayer } from "../../shared/addresses.js";
+import { themeFlavor, themeSprite, type MapTheme } from "../../shared/map-theme.js";
 
 const DACH_CENTER: [number, number] = [10.5, 50.6];
 
-function buildStyle(): StyleSpecification {
+function buildStyle(theme: MapTheme): StyleSpecification {
   const origin = location.origin;
-  const flavor = namedFlavor("light");
+  const flavor = themeFlavor(theme);
   return {
     version: 8,
     glyphs: `${origin}/basemaps/fonts/{fontstack}/{range}.pbf`,
-    sprite: `${origin}/basemaps/sprites/v4/light`,
+    sprite: `${origin}/basemaps/sprites/v4/${themeSprite(theme)}`,
     sources: {
       protomaps: {
         type: "vector",
@@ -35,13 +36,17 @@ function buildStyle(): StyleSpecification {
   };
 }
 
-export function initMap(container: HTMLElement): MlMap {
+export function setMapTheme(map: MlMap, theme: MapTheme): void {
+  map.setStyle(buildStyle(theme));
+}
+
+export function initMap(container: HTMLElement, theme: MapTheme): MlMap {
   const protocol = new Protocol();
   maplibregl.addProtocol("pmtiles", protocol.tile);
 
   const map = new maplibregl.Map({
     container,
-    style: buildStyle(),
+    style: buildStyle(theme),
     center: DACH_CENTER,
     zoom: 5.2,
     // No on-map attribution badge — it's shown in the "i" info sheet instead
