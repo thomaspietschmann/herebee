@@ -40,6 +40,9 @@ That word would be a lie.
   IP for the duration of the connection. The app does not log IPs, but your
   proxy, host, load balancer, or platform may keep infrastructure logs. No
   client can hide your IP from its own infrastructure without Tor or a VPN.
+- **Other servers are warned about.** The apps can use any server that runs
+  HereBee, but only `herebee.app` is covered by this statement. Choosing
+  another one, or opening a link that names one, shows a warning first.
 - **Self-hosted maps.** Tiles, fonts and sprites are served by this app. No tile
   CDN can profile which areas you pan across.
 
@@ -58,6 +61,14 @@ client builds its MapLibre style in the browser. The native apps fetch the same
 style, generated at build time, from `/style/{lang}.json`. The server
 substitutes the real origin into it per request, so one build serves every
 domain.
+
+Settings → Kartenstil offers four styles: automatic (follows the system),
+light, dark and Synthwave. Dark and Synthwave are served from
+`/style/dark/{lang}.json` and `/style/synthwave/{lang}.json`; the palettes live in
+`shared/map-theme.ts`. Synthwave also restyles the whole chrome in neon green
+and hot pink with monospace labels and a faint floor grid, on the web
+(`:root[data-map-theme="synthwave"]` in `client/src/style.css`) and in the apps
+(`HereBeeTokens.synthwave` in `mobile/lib/ui/tokens.dart`).
 
 ## Repository layout
 
@@ -144,6 +155,31 @@ Plain HTTP to the development machine is allowed by a debug-only network
 security config on Android and by `NSAllowsLocalNetworking` on iOS. Release
 builds on Android refuse cleartext.
 
+### Other servers
+
+Anyone can run HereBee. The official server is `https://herebee.app`
+(`OFFICIAL_ORIGIN` in `shared/server.ts`, `AppConfig.officialOrigin` in the
+app). The apps can use any other server that runs this web app:
+
+- **Settings → Server.** The address is checked against `/healthz` first. A
+  server other than the official one needs a confirmed warning, and it applies
+  to new rooms. Rooms already remembered keep their server.
+- **Room links name their server.** `https://other.example/r/#<secret>` (pasted)
+  or `herebee://r?server=https%3A%2F%2Fother.example#<secret>` open the room on
+  that server, again only after the warning. The web page on another server
+  builds that `herebee://` link for its "open in the app" button.
+- Every room on such a server repeats the warning in its entry gate. The web
+  app shows the same warning in its entry gate and settings whenever it is not
+  served from the official host, which includes `localhost` during development.
+
+For the apps to work against your server, it must be HTTPS (release builds
+refuse cleartext) and, if `ALLOWED_ORIGINS` is set, it must include
+`app://herebee`.
+
+The payloads stay end-to-end encrypted on any server. The warning exists
+because the operator sees IPs, room timing and, through the tiles, roughly which
+area people look at. In a browser it also serves the code that handles the key.
+
 ### House numbers
 
 The Protomaps basemap carries house numbers only from zoom 15, and the extract
@@ -171,7 +207,7 @@ local development, `ADDRESSES=1 npm run fetch-assets` fetches the same file.
 
 | Command | What it checks |
 |---|---|
-| `npm test` | `tsc --noEmit` plus `test/vectors.test.ts`: the web code reproduces `shared/vectors.json`. |
+| `npm test` | `tsc --noEmit`, `test/vectors.test.ts` (the web code reproduces `shared/vectors.json`) and `test/crash.test.ts` (validation, limits and mail of `/api/crash`). |
 | `cd mobile && flutter test` | Dart unit tests: the same vectors, protocol validation, deep-link parsing, the sharing state machine, the dependency audit (no Play Services, Firebase or analytics), widgets and locales. |
 | `cd mobile && flutter test integration_test/room_flow_test.dart --dart-define=HEREBEE_ORIGIN=... --dart-define=HEREBEE_SECRET=...` | On a booted simulator or device, with a relay and `fake-peer.ts` running: enters the room and asserts the peer's bee appears under the locally derived nickname. Also shares its own position where location is pre-granted. |
 | `npm run test:interop` | Starts a relay with the production origin policy, then a Node web peer and the app's real `NetClient` join one room and decrypt each other. Needs a Flutter toolchain (`FLUTTER` and `DART` env override the path). |
@@ -231,6 +267,46 @@ WebSocket upgrade.
 | `MAX_CONNS` | `10000` | Global WebSocket ceiling |
 | `MAX_ROOMS` | `5000` | Maximum concurrent rooms |
 | `MAX_CONNS_PER_ROOM` | `100` | Maximum members per room |
+| `SMTP_URL` | unset | SMTP connection URL for crash-report mail, e.g. `smtps://user:pass@mail.example.org:465` (percent-encode `@` in the user). Unset: `POST /api/crash` answers 503. |
+| `CRASH_MAIL_TO` | `thomas@pietschie.de` | Recipient of crash reports. Self-hosters set their own. |
+| `CRASH_MAIL_FROM` | SMTP user | Sender address, e.g. `HereBee <crash@example.org>`. Defaults to the SMTP user if that is an address, else `CRASH_MAIL_TO`. |
+| `CRASH_MAX_PER_HOUR` | `30` | Global cap on crash mails per hour; on top of 5 reports per IP per hour. |
+
+### Crash reports
+
+The Android app uses [ACRA](https://github.com/ACRA/acra) with its consent
+dialog only. After a crash the next screen asks whether to send a report; it
+names the server, lists what is included and offers an optional comment.
+Nothing leaves the phone unless the user taps Send, and a declined report is
+deleted on the next start. An accepted report goes as JSON to `POST /api/crash`
+on the HereBee server the app is using (default `https://herebee.app`), never
+to a third party. It contains the app version, package name, Android version,
+device brand and model, the stack trace and its hash, the crash time and the
+comment. No logcat, device or installation ids, settings, preferences,
+locations, names or room data; room-link fragments and coordinate-like numbers
+are redacted before sending.
+
+The server validates the report, emails it as plain text to `CRASH_MAIL_TO`
+and forgets it. Neither the report nor the sender's IP is logged or stored.
+Set `SMTP_URL` to enable it; without it the endpoint answers 503 and the app
+keeps the accepted report to retry later.
+
+**Dart errors (iOS and Android).** An uncaught Dart error does not kill the app,
+so ACRA never sees it. `mobile/lib/core/crash_reporter.dart` catches it
+(`FlutterError.onError`, `PlatformDispatcher.onError`) and asks in the same
+words, at most once per app session. On Send it posts to the same endpoint
+with `source: "dart"`: app version, OS version, the error and its trace, the
+crash time and the comment, redacted by the same rules. Nothing is stored on
+the device; a declined or unanswered report is gone. Release builds ask; debug
+builds only with `--dart-define=HEREBEE_CRASH_REPORTS=true`.
+`--dart-define=HEREBEE_CRASH_SELFTEST=true` throws one test error four seconds
+after launch to try the flow end to end; `adb shell am crash app.herebee` does
+the same for ACRA.
+
+Both send to the server in effect: the one chosen in the settings, else the
+built-in default. The app mirrors it under `herebee.reportOrigin` so the
+native sender reads the same one. Native C/C++ crashes (Flutter engine,
+MapLibre) and native iOS crashes are not covered.
 
 ### Deep-link association files
 
@@ -245,7 +321,7 @@ never receives a page instead of JSON.
 ### Android
 
 Pushing a tag `android-vX.Y.Z` runs `.github/workflows/release-android.yml`. It
-builds a signed release APK with Flutter 3.44.0 and JDK 21, verifies that the
+builds a signed release APK with Flutter 3.47.5 and JDK 21, verifies that the
 APK is not debug-signed, and attaches it to a GitHub Release of the same name.
 It is deliberately not marked as a pre-release, because updaters such as
 Obtainium skip pre-releases by default.

@@ -371,10 +371,45 @@ body {
   width: 48px;
   height: 48px;
   padding: 0;
-  font-family: var(--mono);
-  font-style: italic;
-  font-size: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mist);
+}
+.btn-icon svg {
+  width: 22px;
+  height: 22px;
+}
+/* A server other than the official one: said in the entry gate and in settings. */
+.server-warn {
+  margin: 14px 0 0;
+  text-align: left;
+  color: var(--mist);
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 90, 77, 0.45);
+  border-radius: 12px;
+  background: rgba(255, 90, 77, 0.1);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.server-warn h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--signal);
+}
+.server-warn p {
+  margin: 0;
+}
+.server-warn p + p {
+  margin-top: 6px;
+}
+.server-line {
+  margin: 0;
   color: var(--muted);
+  font-size: 13px;
+}
+.server-line code {
+  color: var(--mist);
 }
 .btn-primary {
   position: relative;
@@ -511,6 +546,27 @@ body {
 .segmented .seg.is-active {
   background: var(--beacon);
   color: var(--ink);
+}
+/* Four choices (map style): smaller labels so they fit on a phone, and a 2x2
+   grid on the narrowest screens where four segments can't hold "Automatisch". */
+.segmented-4 {
+  gap: 2px;
+}
+.segmented-4 .seg {
+  min-width: 0;
+  padding: 9px 1px;
+  font-size: 11px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 374px) {
+  .segmented-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 18px;
+  }
 }
 .linkbox {
   display: flex;
@@ -1026,4 +1082,155 @@ body {
   .btn {
     font-size: 15.5px;
   }
+}
+
+/* ============================================================
+   Synthwave map style ("Grid Toxic"), html[data-map-theme="synthwave"].
+   The only map style that also restyles the chrome: near-black glass,
+   neon-green outlines and accents, hot-pink primary with a green ring,
+   uppercase monospace labels, squarer corners and a faint floor grid.
+   Extra tokens: --primary-bg / --primary-ink / --primary-ring (primary
+   button), --glow-a (pink) / --glow-b (green), --grid-* (outlines, grid).
+   Keep in step with mobile/lib/ui/tokens.dart (HereBeeTokens.synthwave).
+   ============================================================ */
+:root[data-map-theme="synthwave"] {
+  --ink: #010403;
+  --ink-2: #06100b;
+  --ink-glass: rgba(1, 6, 4, 0.84);
+  --hair: rgba(57, 255, 20, 0.4);
+  --mist: #eefff2;
+  --muted: #8fd0a2;
+  --signal: #ff2bd6;
+  --beacon: #39ff14;
+  --primary-bg: #ff2bd6;
+  --primary-ink: #1a0016;
+  --primary-ring: #39ff14;
+  --glow-a: rgba(255, 43, 214, 0.6);
+  --glow-b: rgba(57, 255, 20, 0.42);
+  --grid-outline: rgba(57, 255, 20, 0.75);
+  --grid-outline-panel: rgba(57, 255, 20, 0.6);
+  --grid-line: rgba(255, 43, 214, 0.3);
+  --grid-wash: rgba(255, 43, 214, 0.14);
+  --grid-panel-line: rgba(57, 255, 20, 0.05);
+  --sans: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r-pill: 10px;
+  --r-panel: 12px;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+:root[data-map-theme="synthwave"] #map {
+  background: #010403;
+}
+/* Floor grid rising from the bottom edge, fading out towards the middle. */
+:root[data-map-theme="synthwave"] #app::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 55%;
+  z-index: 5;
+  pointer-events: none;
+  background:
+    linear-gradient(0deg, var(--grid-wash), transparent 70%),
+    repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 32px);
+  -webkit-mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
+  mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
+}
+:root[data-map-theme="synthwave"] .wordmark {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+}
+:root[data-map-theme="synthwave"] .wordmark b {
+  color: var(--beacon);
+  text-shadow: 0 0 10px var(--beacon);
+}
+:root[data-map-theme="synthwave"] .btn {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 13px;
+}
+:root[data-map-theme="synthwave"] .brand,
+:root[data-map-theme="synthwave"] .roster,
+:root[data-map-theme="synthwave"] .roster-fit,
+:root[data-map-theme="synthwave"] .hint,
+:root[data-map-theme="synthwave"] .btn:not(.btn-primary) {
+  border-color: var(--grid-outline);
+  box-shadow: 0 0 0 1px var(--hair), 0 0 16px var(--glow-b), var(--shadow);
+}
+:root[data-map-theme="synthwave"] .hint {
+  border-color: var(--hair);
+  box-shadow: none;
+}
+:root[data-map-theme="synthwave"] .btn-icon {
+  color: var(--beacon);
+}
+:root[data-map-theme="synthwave"] .btn-primary:not(.is-sharing) {
+  background: var(--primary-bg);
+  color: var(--primary-ink);
+  font-weight: 760;
+  box-shadow: 0 0 0 2px var(--primary-ring), 0 0 22px var(--glow-a), 0 0 2px var(--glow-a), var(--shadow);
+}
+:root[data-map-theme="synthwave"] .btn-primary.is-sharing {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 1.5px var(--signal), 0 0 18px var(--glow-a), var(--shadow);
+}
+:root[data-map-theme="synthwave"] .beacon,
+:root[data-map-theme="synthwave"] .btn-primary.is-sharing::before {
+  animation-name: beat-synth;
+}
+@keyframes beat-synth {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 43, 214, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(255, 43, 214, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 43, 214, 0);
+  }
+}
+:root[data-map-theme="synthwave"] .roster-fit:hover,
+:root[data-map-theme="synthwave"] .party:hover {
+  color: var(--beacon);
+}
+:root[data-map-theme="synthwave"] .sheet-panel {
+  background-color: #030a06;
+  background-image:
+    repeating-linear-gradient(90deg, var(--grid-panel-line) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(0deg, var(--grid-panel-line) 0 1px, transparent 1px 24px);
+  border-color: var(--grid-outline-panel);
+  box-shadow: 0 0 0 1px var(--hair), 0 0 40px var(--glow-a), var(--shadow);
+}
+:root[data-map-theme="synthwave"] .sheet h2 {
+  text-shadow: 0 0 12px var(--glow-a);
+}
+:root[data-map-theme="synthwave"] .segmented .seg.is-active {
+  box-shadow: 0 0 12px var(--glow-b);
+}
+/* Monospace runs wide: "Automatisch" must still fit a quarter of a phone. */
+:root[data-map-theme="synthwave"] .segmented-4 .seg {
+  font-size: 10.5px;
+  letter-spacing: -0.04em;
+}
+:root[data-map-theme="synthwave"] .server-warn {
+  border-color: rgba(255, 43, 214, 0.55);
+  background: rgba(255, 43, 214, 0.1);
+}
+:root[data-map-theme="synthwave"] .toast {
+  background: var(--beacon);
+  color: var(--ink);
+  box-shadow: 0 0 18px var(--glow-b), var(--shadow);
+}
+:root[data-map-theme="synthwave"] .mk-disc {
+  box-shadow: 0 0 14px var(--c), 0 0 3px var(--c), 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+:root[data-map-theme="synthwave"] .mk-bubble-follow.is-following {
+  box-shadow: 0 0 0 4px rgba(57, 255, 20, 0.35), var(--shadow);
+}
+:root[data-map-theme="synthwave"] .linkbox input:focus,
+:root[data-map-theme="synthwave"] .btn:focus-visible {
+  outline: 2px solid var(--beacon);
+  outline-offset: 2px;
 }

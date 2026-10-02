@@ -16,33 +16,64 @@ library;
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'app_config.dart';
+import 'core/crash_reporter.dart';
 import 'core/crypto.dart';
 import 'core/deep_links.dart';
 import 'ui/tokens.dart' as tokens;
 import 'core/names.dart';
 import 'core/recent_rooms.dart';
 import 'core/storage.dart';
+import 'features/crash/crash_prompt.dart';
 import 'features/room/room_controller.dart';
 import 'features/room/room_screen.dart';
+import 'features/sheets/sheets.dart';
 import 'features/start/start_screen.dart';
 import 'l10n/app_localizations.dart';
 
 const String _secretOverride = String.fromEnvironment('HEREBEE_SECRET');
 
+/// `--dart-define=HEREBEE_CRASH_SELFTEST=true` throws one uncaught error a few
+/// seconds after launch, to try the error-report dialog end to end. Compiled
+/// out otherwise.
+const bool _crashSelfTest = bool.fromEnvironment('HEREBEE_CRASH_SELFTEST');
+
+/// Error reports are asked for in release builds. A debug build fails loudly
+/// on its own; `--dart-define=HEREBEE_CRASH_REPORTS=true` turns them on there.
+const bool _crashReports = !kDebugMode || _crashSelfTest || bool.fromEnvironment('HEREBEE_CRASH_REPORTS');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final storage = await Storage.open();
-  runApp(HereBeeApp(storage: storage, recent: RecentRooms(SecureSecretStore())));
+  CrashReporter? crashes;
+  if (_crashReports) {
+    crashes = CrashReporter(serverOrigin: () => storage.serverOrigin)..install();
+  }
+  runApp(HereBeeApp(storage: storage, recent: RecentRooms(SecureSecretStore()), crashes: crashes));
+  if (_crashSelfTest) {
+    // Carries a room link and a coordinate on purpose: both must arrive redacted.
+    Timer(const Duration(seconds: 4), () {
+      throw StateError('crash self-test at 52.520008,13.404954 https://herebee.app/r/#$_selfTestSecret');
+    });
+  }
 }
 
+const String _selfTestSecret = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
 class HereBeeApp extends StatelessWidget {
-  HereBeeApp({required this.storage, RecentRooms? recent, super.key})
+  HereBeeApp({required this.storage, RecentRooms? recent, this.crashes, super.key})
       : recent = recent ?? RecentRooms(MemorySecretStore());
 
   final Storage storage;
+
+  /// Asks before reporting an uncaught Dart error; null disables it.
+  final CrashReporter? crashes;
+
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   /// Defaults to a memory-only list, which is what tests and the widget harness
   /// want. Production passes the secure-storage-backed one.
@@ -50,18 +81,32 @@ class HereBeeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      onGenerateTitle: (context) => L.of(context).title,
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        L.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: L.supportedLocales,
-      theme: _theme(),
-      home: _RoomHost(storage: storage, recent: recent),
+    final crashes = this.crashes;
+    // The synthwave map style restyles the whole chrome, so the app theme
+    // follows the stored preference live.
+    return ValueListenableBuilder<MapThemePref>(
+      valueListenable: storage.mapThemeListenable,
+      builder: (context, pref, _) => MaterialApp(
+        navigatorKey: _navigatorKey,
+        builder: crashes == null
+            ? null
+            : (context, child) => CrashPrompt(
+                  reporter: crashes,
+                  navigatorKey: _navigatorKey,
+                  child: child ?? const SizedBox.shrink(),
+                ),
+        onGenerateTitle: (context) => L.of(context).title,
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          L.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: L.supportedLocales,
+        theme: themeFor(pref),
+        home: _RoomHost(storage: storage, recent: recent),
+      ),
     );
   }
 }
@@ -118,7 +163,7 @@ class _RoomHostState extends State<_RoomHost> {
     _linkSub = _appLinks.uriLinkStream.listen(_onLink);
 
     if (_secretOverride.isNotEmpty) {
-      _openRoom(_secretOverride);
+      _openRoom(_secretOverride, widget.storage.serverOrigin);
       return;
     }
     if (initial != null) {
@@ -131,7 +176,7 @@ class _RoomHostState extends State<_RoomHost> {
     await widget.recent.load();
     if (!mounted || _secret != null) return; // a link arrived meanwhile
     if (widget.recent.rooms.isEmpty) {
-      _openRoom(generateSecret());
+      _openRoom(generateSecret(), widget.storage.serverOrigin);
     } else {
       setState(() => _choosing = true);
     }
@@ -146,9 +191,7 @@ class _RoomHostState extends State<_RoomHost> {
   void _onLink(Uri uri) {
     final secret = secretFromLink(uri);
     if (secret != null) {
-      // Tapping the link for the room you are already in should do nothing,
-      // not throw you out and back in again.
-      if (secret != _secret) _openRoom(secret);
+      unawaited(_openLinked(secret, linkOrigin(uri)));
       return;
     }
     if (looksLikeRoomLink(uri)) {
@@ -165,10 +208,51 @@ class _RoomHostState extends State<_RoomHost> {
       return;
     }
     // Not a room link at all (the bare site). Only mint a room if we have none.
-    if (_secret == null) _openRoom(generateSecret());
+    if (_secret == null) _openRoom(generateSecret(), widget.storage.serverOrigin);
   }
 
-  void _openRoom(String secret) {
+  /// Opens a room someone handed over, on the server the link names (null: the
+  /// configured one). A server other than the official one is followed only
+  /// after a warning, unless the user already chose that server themselves.
+  /// Declining keeps the current room, or opens a fresh one on the user's own
+  /// server when there is none yet.
+  Future<void> _openLinked(String secret, String? linkedOrigin) async {
+    final origin = linkedOrigin ?? widget.storage.serverOrigin;
+    // Tapping the link for the room you are already in should do nothing,
+    // not throw you out and back in again.
+    if (secret == _secret && origin == _controller?.origin) return;
+    if (!await _acceptServer(origin, fromLink: true)) {
+      if (_secret == null && mounted) _openRoom(generateSecret(), widget.storage.serverOrigin);
+      return;
+    }
+    if (mounted) _openRoom(secret, origin);
+  }
+
+  /// Whether the room may open on [origin]. The official server and the one the
+  /// user configured need no question; anything else is warned about first.
+  Future<bool> _acceptServer(String origin, {required bool fromLink}) async {
+    if (AppConfig.isOfficial(origin) || origin == widget.storage.serverOrigin) return true;
+    // The first frame may not be up yet when a launch link arrives.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return false;
+    return showServerWarning(context, origin: origin, fromLink: fromLink);
+  }
+
+  /// A choice from the start screen or the rooms sheet.
+  Future<void> _choose(RoomsChoice choice) async {
+    final secret = choice.secret;
+    if (secret == null) {
+      _openRoom(generateSecret(), widget.storage.serverOrigin);
+      return;
+    }
+    final origin = choice.origin ?? widget.storage.serverOrigin;
+    // A remembered room was accepted when it was first entered.
+    if (!choice.remembered && !await _acceptServer(origin, fromLink: true)) return;
+    if (!mounted || (secret == _secret && origin == _controller?.origin)) return;
+    _openRoom(secret, origin);
+  }
+
+  void _openRoom(String secret, String origin) {
     // Switching rooms is a full teardown: the old socket, its peers and its
     // sharing state must not bleed into the new room.
     _controller?.dispose();
@@ -178,7 +262,8 @@ class _RoomHostState extends State<_RoomHost> {
       storage: widget.storage,
       languageCode: Localizations.localeOf(context).languageCode,
       youSuffix: L.of(context).youSuffix,
-      onEntered: (roomId) => unawaited(recent.touch(secret, roomId: roomId)),
+      origin: origin,
+      onEntered: (roomId) => unawaited(recent.touch(secret, roomId: roomId, origin: origin)),
     );
     // Remember who was met here, so the rooms list can say more than a date.
     // sawPeers() is a no-op unless something is new, so a listener that fires
@@ -213,7 +298,7 @@ class _RoomHostState extends State<_RoomHost> {
       return StartScreen(
         recent: widget.recent,
         nameFor: _nameFor,
-        onChoose: (choice) => _openRoom(choice.secret ?? generateSecret()),
+        onChoose: (choice) => unawaited(_choose(choice)),
       );
     }
     final controller = _controller;
@@ -226,9 +311,7 @@ class _RoomHostState extends State<_RoomHost> {
       key: ValueKey(_secret),
       controller: controller,
       recent: widget.recent,
-      onOpenRoom: (secret) {
-        if (secret != _secret) _openRoom(secret);
-      },
+      onOpenRoom: (choice) => unawaited(_choose(choice)),
     );
   }
 }
@@ -264,28 +347,40 @@ class _BrokenLinkScreen extends StatelessWidget {
   }
 }
 
-ThemeData _theme() {
-  const pill = StadiumBorder();
-  const label = TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: -0.15);
+/// The app theme for a map-style preference: synthwave restyles the chrome,
+/// every other choice keeps the standard look.
+ThemeData themeFor(MapThemePref pref) =>
+    _theme(pref == MapThemePref.synthwave ? tokens.HereBeeTokens.synthwave : tokens.HereBeeTokens.standard);
+
+ThemeData _theme(tokens.HereBeeTokens t) {
+  final pill = t.pill();
+  final label = TextStyle(
+    fontSize: t.uppercase ? 13 : 15,
+    fontWeight: FontWeight.w600,
+    letterSpacing: t.uppercase ? 1 : -0.15,
+  );
   const size = Size(48, 48);
   const padding = EdgeInsets.symmetric(horizontal: 22);
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: tokens.ink,
+    fontFamily: t.fontFamily,
+    fontFamilyFallback: t.fontFamilyFallback,
+    scaffoldBackgroundColor: t.ink,
+    extensions: [t],
     colorScheme: ColorScheme.fromSeed(
-      seedColor: tokens.signal,
+      seedColor: t.signal,
       brightness: Brightness.dark,
     ).copyWith(
-      primary: tokens.signal,
-      onPrimary: tokens.onSignal,
-      surface: tokens.ink2,
-      onSurface: tokens.mist,
+      primary: t.signal,
+      onPrimary: t.onSignal,
+      surface: t.ink2,
+      onSurface: t.mist,
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: tokens.signal,
-        foregroundColor: tokens.onSignal,
+        backgroundColor: t.signal,
+        foregroundColor: t.onSignal,
         minimumSize: size,
         padding: const EdgeInsets.symmetric(horizontal: 26),
         shape: pill,
@@ -294,9 +389,9 @@ ThemeData _theme() {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        backgroundColor: tokens.inkGlass,
-        foregroundColor: tokens.mist,
-        side: const BorderSide(color: tokens.hair),
+        backgroundColor: t.inkGlass,
+        foregroundColor: t.mist,
+        side: BorderSide(color: t.outline),
         minimumSize: size,
         padding: padding,
         shape: pill,
@@ -304,25 +399,25 @@ ThemeData _theme() {
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: tokens.mist, textStyle: label),
+      style: TextButton.styleFrom(foregroundColor: t.mist, textStyle: label),
     ),
-    snackBarTheme: const SnackBarThemeData(
-      backgroundColor: tokens.mist,
-      contentTextStyle: TextStyle(color: tokens.ink, fontSize: 13, fontWeight: FontWeight.w600),
-      actionTextColor: tokens.ink,
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: t.toastBg,
+      contentTextStyle: TextStyle(color: t.toastFg, fontSize: 13, fontWeight: FontWeight.w600),
+      actionTextColor: t.toastFg,
       shape: pill,
       elevation: 0,
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: tokens.ink,
+      fillColor: t.ink,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: tokens.hair),
+        borderSide: BorderSide(color: t.hair),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: tokens.hair),
+        borderSide: BorderSide(color: t.hair),
       ),
     ),
   );

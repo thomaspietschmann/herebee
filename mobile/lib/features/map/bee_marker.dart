@@ -82,6 +82,7 @@ class BeeMarker extends StatelessWidget {
         : switch (tier) { Tier.fresh => (1.0, 0.0), Tier.stale => (0.75, 0.0), Tier.ghost => (0.5, 0.9) };
 
     final message = entry.message;
+    final t = HereBeeTokens.of(context);
     final suffix = statusSuffix(entry, now, l);
     final label = suffix == null ? identity.name : '${identity.name} · $suffix';
 
@@ -90,11 +91,16 @@ class BeeMarker extends StatelessWidget {
       height: _discSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: ink2,
-        border: Border.all(color: entry.offline ? signal : color, width: isSelf ? 3 : 2.5),
-        boxShadow: const [
-          BoxShadow(color: Color(0x66000000), blurRadius: 14, offset: Offset(0, 4)),
-          BoxShadow(color: Color(0x4D000000), spreadRadius: 1),
+        color: t.ink2,
+        border: Border.all(color: entry.offline ? t.signal : color, width: isSelf ? 3 : 2.5),
+        boxShadow: [
+          // Synthwave: the identity colour glows around the disc.
+          if (t.chromeGlow.isNotEmpty) ...[
+            BoxShadow(color: color, blurRadius: 14),
+            BoxShadow(color: color, blurRadius: 3),
+          ],
+          const BoxShadow(color: Color(0x66000000), blurRadius: 14, offset: Offset(0, 4)),
+          const BoxShadow(color: Color(0x4D000000), spreadRadius: 1),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -103,9 +109,9 @@ class BeeMarker extends StatelessWidget {
 
     final tag = DecoratedBox(
       decoration: BoxDecoration(
-        color: isSelf ? mist : inkGlass,
+        color: isSelf ? t.mist : t.inkGlass,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: hair),
+        border: Border.all(color: t.hair),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -114,7 +120,7 @@ class BeeMarker extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: isSelf ? ink : mist,
+            color: isSelf ? t.ink : t.mist,
             fontSize: 11,
             fontWeight: FontWeight.w600,
             height: 1,
@@ -178,7 +184,7 @@ class BeeMarker extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: color,
                               shape: BoxShape.circle,
-                              border: Border.all(color: ink, width: 2),
+                              border: Border.all(color: t.ink, width: 2),
                             ),
                           ),
                         ),
@@ -217,6 +223,7 @@ class _SayBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = HereBeeTokens.of(context);
     final emoji = isEmojiOnly(text);
     final bubble = Column(
       mainAxisSize: MainAxisSize.min,
@@ -225,7 +232,7 @@ class _SayBubble extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 180),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: inkGlass,
+              color: t.inkGlass,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: color, width: 1.5),
               boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 14, offset: Offset(0, 4))],
@@ -241,7 +248,7 @@ class _SayBubble extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: emoji
                     ? const TextStyle(fontSize: 22, height: 1.1)
-                    : const TextStyle(color: mist, fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
+                    : TextStyle(color: t.mist, fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
               ),
             ),
           ),

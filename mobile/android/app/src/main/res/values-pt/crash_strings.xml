@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crash_dialog_title">O HereBee falhou</string>
+    <string name="crash_dialog_text">Quer enviar um relatório de falha para ajudar a corrigir o erro?\n\nEle vai para o servidor HereBee que esta app usa (%1$s), que o envia por e-mail ao operador. Contém a versão da app, a versão do Android, a marca e o modelo do dispositivo, o registo técnico do erro e o seu comentário, se escrever um.\n\nNão contém localização, nomes nem dados de salas. Nada é enviado se não tocar em Enviar.</string>
+    <string name="crash_dialog_comment">Opcional: o que estava a fazer? (Não introduza dados pessoais.)</string>
+    <string name="crash_dialog_send">Enviar</string>
+    <string name="crash_dialog_dont_send">Não enviar</string>
+</resources>

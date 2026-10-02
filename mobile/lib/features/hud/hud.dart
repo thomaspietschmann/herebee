@@ -81,15 +81,6 @@ class Hud extends StatelessWidget {
   }
 }
 
-const Color _glass = inkGlass;
-const Color _hair = hair;
-const Color _ink = ink;
-const Color _mist = mist;
-const Color _muted = muted;
-const Color _beacon = beacon;
-const Color _signal = signal;
-const List<BoxShadow> _shadow = shadow;
-
 const double _controlHeight = 48;
 
 class _ConnChip extends StatelessWidget {
@@ -100,25 +91,26 @@ class _ConnChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final t = HereBeeTokens.of(context);
     final (color, text) = switch (state) {
-      LinkState.on => (_beacon, l.connOn),
-      LinkState.off => (_signal, l.connOff),
-      LinkState.connecting => (_muted, l.connConnecting),
+      LinkState.on => (t.beacon, l.connOn),
+      LinkState.off => (t.signal, l.connOff),
+      LinkState.connecting => (t.muted, l.connConnecting),
     };
     // The brand chip doubles as the way to your rooms. A dedicated button
     // would cost HUD space; the chip is already the one fixed landmark.
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: _glass,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _hair),
-        boxShadow: _shadow,
+        color: t.inkGlass,
+        borderRadius: BorderRadius.circular(t.pillRadius),
+        border: Border.all(color: t.outline),
+        boxShadow: [...t.shadow, ...t.chromeGlow],
       ),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
           key: const ValueKey('rooms-chip'),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(t.pillRadius),
           onTap: onTap,
           child: Semantics(
             button: true,
@@ -149,10 +141,9 @@ class _ConnChip extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: color,
                               shape: BoxShape.circle,
-                              border: Border.all(color: _ink, width: 2),
+                              border: Border.all(color: t.ink, width: 2),
                               boxShadow: [
-                                if (state == LinkState.on)
-                                  const BoxShadow(color: _beacon, blurRadius: 8),
+                                if (state == LinkState.on) BoxShadow(color: t.beacon, blurRadius: 8),
                               ],
                             ),
                           ),
@@ -161,21 +152,25 @@ class _ConnChip extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(width: 9),
-                  const Text.rich(
+                  Text.rich(
                     TextSpan(
                       children: [
-                        TextSpan(text: 'Here'),
+                        TextSpan(text: t.label('Here')),
                         TextSpan(
-                          text: 'Bee',
-                          style: TextStyle(fontWeight: FontWeight.w800, color: _beacon),
+                          text: t.label('Bee'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: t.beacon,
+                            shadows: t.chromeGlow.isEmpty ? null : [Shadow(color: t.beacon, blurRadius: 10)],
+                          ),
                         ),
                       ],
                     ),
                     style: TextStyle(
-                      color: _mist,
-                      fontSize: 15,
+                      color: t.mist,
+                      fontSize: t.uppercase ? 13 : 15,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
+                      letterSpacing: t.uppercase ? 1.8 : -0.3,
                     ),
                   ),
                 ],
@@ -202,6 +197,7 @@ class _RosterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final t = HereBeeTokens.of(context);
     final roster = controller.roster();
     final sharerPips = roster.take(5).toList();
     final hollow = math.min(controller.watchers, math.max(0, 5 - sharerPips.length));
@@ -219,7 +215,7 @@ class _RosterButton extends StatelessWidget {
       children: [
         _GlassButton(
           onTap: () => _openRoster(context),
-          shape: const StadiumBorder(side: BorderSide(color: _hair)),
+          shape: t.pill(BorderSide(color: t.outline)),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(10, 7, 14, 7),
             child: Row(
@@ -231,7 +227,7 @@ class _RosterButton extends StatelessWidget {
                   const SizedBox(width: 9),
                 ],
                 Text(count,
-                    style: const TextStyle(color: _mist, fontSize: 12.5, fontWeight: FontWeight.w600, height: 1)),
+                    style: TextStyle(color: t.mist, fontSize: 12.5, fontWeight: FontWeight.w600, height: 1)),
               ],
             ),
           ),
@@ -243,11 +239,11 @@ class _RosterButton extends StatelessWidget {
           excludeSemantics: true,
           child: _GlassButton(
             onTap: onFitAll,
-            shape: const CircleBorder(side: BorderSide(color: _hair)),
-            child: const SizedBox(
+            shape: CircleBorder(side: BorderSide(color: t.outline)),
+            child: SizedBox(
               width: 46,
               height: 46,
-              child: Center(child: Icon(Icons.fullscreen_rounded, color: _mist, size: 26)),
+              child: Center(child: Icon(Icons.fullscreen_rounded, color: t.mist, size: 26)),
             ),
           ),
         ),
@@ -260,14 +256,14 @@ class _RosterButton extends StatelessWidget {
           child: _GlassButton(
             key: const ValueKey('bubbles-toggle'),
             onTap: () => controller.setBubblesVisible(!controller.bubblesVisible),
-            shape: const CircleBorder(side: BorderSide(color: _hair)),
+            shape: CircleBorder(side: BorderSide(color: t.outline)),
             child: SizedBox(
               width: 46,
               height: 46,
               child: Center(
                 child: Icon(
                   controller.bubblesVisible ? Icons.chat_bubble_rounded : Icons.chat_bubble_outline_rounded,
-                  color: controller.bubblesVisible ? _mist : _muted,
+                  color: controller.bubblesVisible ? t.mist : t.muted,
                   size: 21,
                 ),
               ),
@@ -302,15 +298,16 @@ class _BeatState extends State<_Beat> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: _c,
         builder: (context, _) {
+          final signal = HereBeeTokens.of(context).signal;
           final t = Curves.easeOut.transform((_c.value / 0.7).clamp(0.0, 1.0));
           return Container(
             width: 9,
             height: 9,
             decoration: BoxDecoration(
-              color: _signal,
+              color: signal,
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: _signal.withValues(alpha: 0.55 * (1 - t)), spreadRadius: 9 * t),
+                BoxShadow(color: signal.withValues(alpha: 0.55 * (1 - t)), spreadRadius: 9 * t),
               ],
             ),
           );
@@ -326,8 +323,9 @@ class _Pip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = HereBeeTokens.of(context);
     final watcher = color == null;
-    final fill = watcher ? ink2 : (offline ? Color.lerp(color, _muted, 0.85)! : color!);
+    final fill = watcher ? t.ink2 : (offline ? Color.lerp(color, t.muted, 0.85)! : color!);
     return Opacity(
       opacity: offline ? 0.5 : 1,
       child: Container(
@@ -336,7 +334,7 @@ class _Pip extends StatelessWidget {
         decoration: BoxDecoration(
           color: fill,
           shape: BoxShape.circle,
-          border: Border.all(color: watcher ? _muted : _ink, width: 2),
+          border: Border.all(color: watcher ? t.muted : t.ink, width: 2),
         ),
       ),
     );
@@ -351,14 +349,20 @@ class _GlassButton extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(999)), boxShadow: _shadow),
-        child: Material(
-          color: _glass,
-          shape: shape,
-          child: InkWell(customBorder: shape, onTap: onTap, child: child),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final t = HereBeeTokens.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(shape is CircleBorder ? 999 : t.pillRadius),
+        boxShadow: [...t.shadow, ...t.chromeGlow],
+      ),
+      child: Material(
+        color: t.inkGlass,
+        shape: shape,
+        child: InkWell(customBorder: shape, onTap: onTap, child: child),
+      ),
+    );
+  }
 }
 
 class _Dock extends StatelessWidget {
@@ -386,6 +390,7 @@ class _Dock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final t = HereBeeTokens.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -399,16 +404,16 @@ class _Dock extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 440),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: _glass,
+                  color: t.inkGlass,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _hair),
+                  border: Border.all(color: t.hair),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   child: Text(
                     l.hint,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: _muted, fontSize: 12, height: 1.45),
+                    style: TextStyle(color: t.muted, fontSize: 12, height: 1.45),
                   ),
                 ),
               ),
@@ -422,9 +427,21 @@ class _Dock extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // The share glyph of the platform people are on: iOS's box with
+              // an arrow, Android's three connected dots.
               _DockButton(
+                key: const ValueKey('share-link'),
                 onTap: onShareLink,
-                child: Text(l.shareLink, maxLines: 1),
+                round: true,
+                semanticLabel: l.shareLink,
+                child: Icon(
+                  switch (Theme.of(context).platform) {
+                    TargetPlatform.iOS || TargetPlatform.macOS => Icons.ios_share,
+                    _ => Icons.share,
+                  },
+                  color: t.dockIcon,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 10),
               // The primary action. It reads "Stop sharing" while active, so
@@ -433,23 +450,16 @@ class _Dock extends StatelessWidget {
                 onTap: busy ? null : onToggleShare,
                 primary: true,
                 sharing: sharing,
-                child: Text(sharing ? l.stopSharing : l.shareLocation, maxLines: 1),
+                child: Text(t.label(sharing ? l.stopSharing : l.shareLocation), maxLines: 1),
               ),
               const SizedBox(width: 10),
+              // Settings, and the privacy explainer below them.
               _DockButton(
+                key: const ValueKey('settings'),
                 onTap: onInfo,
                 round: true,
                 semanticLabel: l.infoAria,
-                child: const Text(
-                  'i',
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontSize: 17,
-                    color: _muted,
-                    fontFamily: 'Menlo',
-                    fontFamilyFallback: ['monospace'],
-                  ),
-                ),
+                child: Icon(Icons.settings_outlined, color: t.dockIcon, size: 22),
               ),
             ],
           ),
@@ -467,6 +477,7 @@ class _DockButton extends StatelessWidget {
     this.sharing = false,
     this.round = false,
     this.semanticLabel,
+    super.key,
   });
 
   final VoidCallback? onTap;
@@ -478,17 +489,21 @@ class _DockButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = HereBeeTokens.of(context);
     final filled = primary && !sharing;
-    final Color fill = filled ? _signal : (primary ? ink2 : _glass);
-    final Color fg = filled ? onSignal : _mist;
-    final shape = round
-        ? const CircleBorder(side: BorderSide(color: _hair))
-        : StadiumBorder(side: BorderSide(color: filled ? Colors.transparent : _hair));
+    final Color fill = filled ? t.signal : (primary ? t.ink2 : t.inkGlass);
+    final Color fg = filled ? t.onSignal : t.mist;
+    final Color edge = filled ? Colors.transparent : (primary ? t.sharingBorder : t.outline);
+    final shape = round ? t.round(BorderSide(color: edge)) : t.pill(BorderSide(color: edge));
+    final glow = filled ? t.primaryGlow : t.chromeGlow;
     return Semantics(
       button: true,
       label: semanticLabel,
       child: DecoratedBox(
-        decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(999)), boxShadow: _shadow),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(t.pillRadius),
+          boxShadow: [...t.shadow, ...glow],
+        ),
         child: Material(
           color: fill,
           shape: shape,
@@ -507,9 +522,9 @@ class _DockButton extends StatelessWidget {
                     child: DefaultTextStyle.merge(
                       style: TextStyle(
                         color: fg,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.15,
+                        fontSize: t.uppercase ? 13 : 15,
+                        fontWeight: t.uppercase && filled ? FontWeight.w800 : FontWeight.w600,
+                        letterSpacing: t.uppercase ? 1 : -0.15,
                       ),
                       child: primary && sharing
                           ? Row(

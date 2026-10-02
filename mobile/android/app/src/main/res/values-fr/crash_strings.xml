@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crash_dialog_title">HereBee a planté</string>
+    <string name="crash_dialog_text">Voulez-vous envoyer un rapport de plantage pour aider à corriger l\'erreur ?\n\nIl est envoyé au serveur HereBee utilisé par cette app (%1$s), qui le transmet par e-mail à l\'exploitant. Il contient la version de l\'app, la version d\'Android, la marque et le modèle de l\'appareil, la trace technique de l\'erreur et votre commentaire, si vous en écrivez un.\n\nIl ne contient ni position, ni noms, ni données de salon. Rien n\'est envoyé si vous n\'appuyez pas sur Envoyer.</string>
+    <string name="crash_dialog_comment">Facultatif : que faisiez-vous ? (N\'indiquez pas de données personnelles.)</string>
+    <string name="crash_dialog_send">Envoyer</string>
+    <string name="crash_dialog_dont_send">Ne pas envoyer</string>
+</resources>

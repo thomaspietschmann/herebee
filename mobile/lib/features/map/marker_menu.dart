@@ -37,10 +37,6 @@ class MarkerMenuData {
 }
 
 const double _bubbleSize = 46;
-const Color _glass = inkGlass;
-const Color _hair = hair;
-const Color _mist = mist;
-const Color _beacon = beacon;
 const Curve _pop = Cubic(0.34, 1.56, 0.64, 1);
 List<Offset> _collapsed(int nodes) => List.filled(nodes, Offset.zero);
 
@@ -308,13 +304,14 @@ class _InfoBox extends StatelessWidget {
               : l.statusNoSignal);
     }
 
+    final t = HereBeeTokens.of(context);
     return Semantics(
       container: true,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: _glass,
+          color: t.inkGlass,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _hair),
+          border: Border.all(color: t.hair),
           boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 10))],
         ),
         child: Padding(
@@ -337,21 +334,21 @@ class _InfoBox extends StatelessWidget {
                 Text(
                   '💬 $message',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: _mist, fontSize: 12, fontWeight: FontWeight.w600, height: 1.4),
+                  style: TextStyle(color: t.mist, fontSize: 12, fontWeight: FontWeight.w600, height: 1.4),
                 ),
                 if (messageAge != null)
                   Text(
                     l.infoSaid(relTime(messageAge, l)),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: _mist, fontSize: 11.5, fontWeight: FontWeight.w500, height: 1.5),
+                    style: TextStyle(color: t.mist, fontSize: 11.5, fontWeight: FontWeight.w500, height: 1.5),
                   ),
               ],
               for (final line in lines)
                 Text(
                   line,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: _mist,
+                  style: TextStyle(
+                    color: t.mist,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
                     height: 1.5,
@@ -381,6 +378,7 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = HereBeeTokens.of(context);
     return Semantics(
       button: true,
       label: label,
@@ -395,10 +393,10 @@ class _Bubble extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: active ? _beacon : _glass,
-            border: Border.all(color: active ? _beacon : _hair),
+            color: active ? t.beacon : t.inkGlass,
+            border: Border.all(color: active ? t.beacon : t.hair),
             boxShadow: [
-              if (active) const BoxShadow(color: Color(0x5934E1B4), spreadRadius: 4),
+              if (active) BoxShadow(color: t.beacon.withValues(alpha: 0.35), spreadRadius: 4),
               const BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 10)),
             ],
           ),

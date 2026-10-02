@@ -83,4 +83,36 @@ void main() {
     }
     expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
+
+  // The app module's own native code: opt-in crash reports via ACRA's consent
+  // dialog, delivered by our own sender to the HereBee server. No hosted crash
+  // service, no ACRA sender that could point elsewhere (http/mail plugins).
+  test('Android app module: crash reports only via ACRA dialog to the HereBee server', () {
+    final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+    final declared = RegExp(r'''(implementation|api|runtimeOnly)\s*\(\s*"([^"]+)"''')
+        .allMatches(gradle)
+        .map((m) => m.group(2)!)
+        .toList();
+    for (final dep in declared) {
+      for (final needle in [...forbiddenNative, 'bugsnag', 'instabug', 'appcenter', 'datadog']) {
+        expect(dep.toLowerCase(), isNot(contains(needle.toLowerCase())),
+            reason: 'android/app declares $dep');
+      }
+      if (dep.startsWith('ch.acra:')) {
+        expect(dep, startsWith('ch.acra:acra-dialog:'),
+            reason: 'only the consent dialog is allowed from ACRA, not $dep');
+      }
+    }
+
+    // Every absolute URL in the app's own Kotlin/Java sources must be HereBee's.
+    final urls = <String>[];
+    for (final f in Directory('android/app/src').listSync(recursive: true).whereType<File>()) {
+      if (!(f.path.endsWith('.kt') || f.path.endsWith('.java'))) continue;
+      for (final m in RegExp(r'https?://[A-Za-z0-9.\-]+').allMatches(f.readAsStringSync())) {
+        urls.add('${f.path}: ${m.group(0)}');
+      }
+    }
+    final foreign = urls.where((u) => !u.endsWith('://herebee.app')).toList();
+    expect(foreign, isEmpty, reason: foreign.join('\n'));
+  });
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crash_dialog_title">HereBee si è chiusa in modo anomalo</string>
+    <string name="crash_dialog_text">Vuoi inviare una segnalazione dell\'errore per aiutare a correggerlo?\n\nViene inviata al server HereBee usato da questa app (%1$s), che la inoltra via e-mail al gestore. Contiene la versione dell\'app, la versione di Android, marca e modello del dispositivo, la traccia tecnica dell\'errore e il tuo commento, se ne scrivi uno.\n\nNon contiene posizione, nomi né dati delle stanze. Non viene inviato nulla se non tocchi Invia.</string>
+    <string name="crash_dialog_comment">Facoltativo: cosa stavi facendo? (Non inserire dati personali.)</string>
+    <string name="crash_dialog_send">Invia</string>
+    <string name="crash_dialog_dont_send">Non inviare</string>
+</resources>

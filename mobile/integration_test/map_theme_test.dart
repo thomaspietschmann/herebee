@@ -32,10 +32,11 @@ Future<void> tapWhenOnScreen(WidgetTester tester, Finder finder) async {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('the map style can be switched to dark and back from the info sheet', (tester) async {
+  testWidgets('the map style can be switched to dark, synthwave and back from the settings', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final storage = await Storage.open();
     if (_startTheme == 'dark') await storage.setMapTheme(MapThemePref.dark);
+    if (_startTheme == 'synthwave') await storage.setMapTheme(MapThemePref.synthwave);
     await tester.pumpWidget(HereBeeApp(storage: storage));
 
     final enter = find.text('Enter room');
@@ -49,7 +50,7 @@ void main() {
     debugPrint('THEME light');
     await pumpUntil(tester, () => false, timeout: Duration(seconds: _holdSeconds));
 
-    await tapWhenOnScreen(tester, find.text('i'));
+    await tapWhenOnScreen(tester, find.byKey(const ValueKey('settings')));
     await tapWhenOnScreen(tester, find.byKey(const ValueKey('map-theme-dark')));
     expect(storage.mapTheme, MapThemePref.dark);
     debugPrint('THEME sheet');
@@ -58,7 +59,14 @@ void main() {
     debugPrint('THEME dark');
     await pumpUntil(tester, () => false, timeout: Duration(seconds: _holdSeconds));
 
-    await tapWhenOnScreen(tester, find.text('i'));
+    await tapWhenOnScreen(tester, find.byKey(const ValueKey('settings')));
+    await tapWhenOnScreen(tester, find.byKey(const ValueKey('map-theme-synthwave')));
+    expect(storage.mapTheme, MapThemePref.synthwave);
+    await tapWhenOnScreen(tester, find.byTooltip('Close'));
+    debugPrint('THEME synthwave');
+    await pumpUntil(tester, () => false, timeout: Duration(seconds: _holdSeconds));
+
+    await tapWhenOnScreen(tester, find.byKey(const ValueKey('settings')));
     await tapWhenOnScreen(tester, find.byKey(const ValueKey('map-theme-auto')));
     expect(storage.mapTheme, MapThemePref.auto);
     await tapWhenOnScreen(tester, find.byTooltip('Close'));

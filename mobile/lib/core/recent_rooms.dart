@@ -17,6 +17,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../app_config.dart';
+
 /// Where the encoded list lives. One value, read once, rewritten on change.
 abstract class SecretStore {
   Future<String?> read();
@@ -66,10 +68,15 @@ class RecentRoom {
     required this.lastEntered,
     this.seeds = const [],
     this.roomId = '',
+    this.origin = AppConfig.defaultOrigin,
   });
 
   final String secret;
   final String roomId;
+
+  /// The server the room lives on. The same secret on another server is a
+  /// different room, so re-entering must go back to this one.
+  final String origin;
   final DateTime lastEntered;
 
   /// Identity seeds of peers seen in this room, newest first, capped. Names are
@@ -82,6 +89,9 @@ class RecentRoom {
         't': lastEntered.millisecondsSinceEpoch,
         'p': seeds,
         if (roomId.isNotEmpty) 'r': roomId,
+        // Entries from before servers were selectable carry no origin; they
+        // were all on the default server.
+        if (origin != AppConfig.defaultOrigin) 'o': origin,
       };
 
   static RecentRoom? fromJson(Object? raw) {
@@ -90,12 +100,14 @@ class RecentRoom {
     final t = raw['t'];
     final p = raw['p'];
     final r = raw['r'];
+    final o = raw['o'];
     if (s is! String || s.isEmpty || t is! int) return null;
     return RecentRoom(
       secret: s,
       lastEntered: DateTime.fromMillisecondsSinceEpoch(t),
       seeds: p is List ? p.whereType<String>().toList() : const [],
       roomId: r is String ? r : '',
+      origin: (o is String ? normalizeOrigin(o) : null) ?? AppConfig.defaultOrigin,
     );
   }
 }
@@ -140,13 +152,14 @@ class RecentRooms extends ChangeNotifier {
 
   /// Record that the user entered [secret] now. Moves it to the front and
   /// keeps whatever was known about it.
-  Future<void> touch(String secret, {String roomId = ''}) async {
+  Future<void> touch(String secret, {String roomId = '', String? origin}) async {
     final existing = byId(secret);
     final updated = RecentRoom(
       secret: secret,
       lastEntered: _clock(),
       seeds: existing?.seeds ?? const [],
       roomId: roomId.isNotEmpty ? roomId : existing?.roomId ?? '',
+      origin: origin ?? existing?.origin ?? AppConfig.defaultOrigin,
     );
     await _replace([updated, ...rooms.where((r) => r.secret != secret)]);
   }
@@ -163,7 +176,8 @@ class RecentRooms extends ChangeNotifier {
     await _replace([
       for (final r in rooms)
         if (r.secret == secret)
-          RecentRoom(secret: r.secret, lastEntered: r.lastEntered, seeds: merged, roomId: r.roomId)
+          RecentRoom(
+              secret: r.secret, lastEntered: r.lastEntered, seeds: merged, roomId: r.roomId, origin: r.origin)
         else
           r,
     ]);

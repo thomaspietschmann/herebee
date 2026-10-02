@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crash_dialog_title">HereBee ist abgestürzt</string>
+    <string name="crash_dialog_text">Möchtest du einen Absturzbericht senden, damit der Fehler behoben werden kann?\n\nEr geht an den HereBee-Server, den diese App nutzt (%1$s), und wird von dort per E-Mail an den Betreiber geschickt. Er enthält App-Version, Android-Version, Hersteller und Modell des Geräts, den technischen Fehlerverlauf und deinen Kommentar, falls du einen schreibst.\n\nEr enthält keinen Standort, keine Namen und keine Raumdaten. Ohne „Senden“ wird nichts übertragen.</string>
+    <string name="crash_dialog_comment">Optional: Was hast du gerade gemacht? (Bitte keine persönlichen Daten eingeben.)</string>
+    <string name="crash_dialog_send">Senden</string>
+    <string name="crash_dialog_dont_send">Nicht senden</string>
+</resources>

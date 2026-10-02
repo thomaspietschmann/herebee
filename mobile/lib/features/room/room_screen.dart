@@ -14,7 +14,6 @@ import 'package:herebee_location/herebee_location.dart';
 import 'package:maplibre/maplibre.dart';
 
 import '../../app_config.dart';
-import '../../core/crypto.dart';
 import '../../core/names.dart';
 import '../../core/peer_state.dart';
 import '../../core/recent_rooms.dart';
@@ -26,6 +25,8 @@ import '../map/auto_fit.dart';
 import '../map/bee_marker.dart';
 import '../map/marker_menu.dart';
 import '../sheets/sheets.dart';
+import '../../ui/floor_grid.dart';
+import '../../ui/tokens.dart';
 import 'room_controller.dart';
 
 /// Matches the web client's initial view (see client/src/map.ts).
@@ -43,8 +44,8 @@ class RoomScreen extends StatefulWidget {
   final RoomController controller;
   final RecentRooms recent;
 
-  /// Switch to another room (a remembered one, or a freshly minted secret).
-  final void Function(String secret) onOpenRoom;
+  /// Switch to another room: a remembered one, a pasted link, or a new one.
+  final void Function(RoomsChoice choice) onOpenRoom;
 
   @override
   State<RoomScreen> createState() => _RoomScreenState();
@@ -63,8 +64,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   int _styleGeneration = 0;
   Geographic _mapCenter = _initialCenter;
   double _mapZoom = _initialZoom;
-  bool? _styleDark;
-  bool? _styleLoadingDark;
+  String? _styleTheme;
+  String? _styleLoadingTheme;
   String? _styleLocale;
   bool _styleLoading = false;
   bool _styleFailed = false;
@@ -95,37 +96,39 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     _syncStyle();
   }
 
-  bool _wantDark() => switch (c.mapTheme) {
-        MapThemePref.light => false,
-        MapThemePref.dark => true,
-        MapThemePref.auto => MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+  /// The map theme to show, as named in the style URL.
+  String _wantTheme() => switch (c.mapTheme) {
+        MapThemePref.light => 'light',
+        MapThemePref.dark => 'dark',
+        MapThemePref.synthwave => 'synthwave',
+        MapThemePref.auto => MediaQuery.platformBrightnessOf(context) == Brightness.dark ? 'dark' : 'light',
       };
 
   void _syncStyle() {
     if (!mounted || _styleLocale == null) return;
     if (_styleRetry?.isActive ?? false) return;
-    final dark = _wantDark();
+    final theme = _wantTheme();
     if (_styleLoading) {
-      if (_styleLoadingDark == dark) return;
-    } else if (_style != null && _styleDark == dark) {
+      if (_styleLoadingTheme == theme) return;
+    } else if (_style != null && _styleTheme == theme) {
       return;
     }
-    unawaited(_loadStyle(dark));
+    unawaited(_loadStyle(theme));
   }
 
-  Future<void> _loadStyle(bool dark) async {
+  Future<void> _loadStyle(String theme) async {
     final locale = _styleLocale;
     if (locale == null) return;
     _styleLoading = true;
-    _styleLoadingDark = dark;
+    _styleLoadingTheme = theme;
     _styleRetry?.cancel();
     String? style;
     try {
-      style = await StyleGuard(AppConfig.origin).fetch(AppConfig.styleUrl(locale, dark: dark));
+      style = await StyleGuard(c.origin).fetch(AppConfig.styleUrl(c.origin, locale, theme: theme));
     } on StyleRejected {
       style = null;
     }
-    if (_styleLoadingDark != dark) return;
+    if (_styleLoadingTheme != theme) return;
     _styleLoading = false;
     if (!mounted) return;
     if (style == null) {
@@ -144,7 +147,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         _styleGeneration++;
       }
       _style = style;
-      _styleDark = dark;
+      _styleTheme = theme;
       _styleFailed = false;
     });
     _syncStyle();
@@ -212,7 +215,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       return;
     }
     // Nothing has touched the network yet; entering is the user's decision.
-    await showWelcomeSheet(context);
+    await showWelcomeSheet(context, origin: c.origin);
     if (!mounted) return;
     await c.enter();
   }
@@ -228,7 +231,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
               nameFromSeed(seed, c.languageCode),
     );
     if (!mounted || choice == null) return;
-    widget.onOpenRoom(choice.secret ?? generateSecret());
+    widget.onOpenRoom(choice);
   }
 
   void _onMessage(String seed) {
@@ -379,9 +382,11 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final l = L.of(context);
     final openSeed = _openMenuSeed;
     final openEntry = openSeed == null ? null : c.peers[openSeed];
+    final tk = HereBeeTokens.of(context);
+    final gridLine = tk.gridLine;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0E1116),
+      backgroundColor: tk.ink,
       body: Stack(
         children: [
           // Positioned.fill, not a bare child: a Stack hands non-positioned
@@ -418,6 +423,16 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
               ],
             ),
           ),
+          // Synthwave's floor grid: over the map, under the HUD, never in the
+          // way of a touch.
+          if (gridLine != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: MediaQuery.sizeOf(context).height * 0.55,
+              child: IgnorePointer(child: FloorGrid(line: gridLine, wash: tk.gridWash)),
+            ),
           if (_styleFailed && _style == null)
             Positioned(
               left: 16,

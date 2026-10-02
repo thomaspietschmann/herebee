@@ -13,6 +13,7 @@ import { randomBytes } from "node:crypto";
 import { WebSocketServer, type WebSocket } from "ws";
 import { clientMessageSchema, ROOM_ID_LENGTH } from "../../shared/messages.js";
 import { negotiate, OG } from "../../shared/og.js";
+import { createCrashHandler, crashOptionsFromEnv } from "./crash.js";
 import { envInt } from "./env.js";
 import { isValidRoomId } from "./roomId.js";
 import { type Conn, joinRoom, leaveRoom, relay, send } from "./relay.js";
@@ -49,6 +50,8 @@ const APP_ORIGIN = "app://herebee";
 
 /** UI languages with a generated map style. Keep in sync with client/src/i18n.ts. */
 const STYLE_LANGS = new Set(["de", "en", "es", "it", "fr", "pt"]);
+/** Map themes besides light, served from /style/{theme}/{lang}.json. Keep in sync with shared/map-theme.ts. */
+const STYLE_THEME_DIRS = new Set(["dark", "synthwave"]);
 
 /** Placeholder written by scripts/gen-style.ts, replaced per request. */
 const ORIGIN_PLACEHOLDER = "__HEREBEE_ORIGIN__";
@@ -426,6 +429,14 @@ function serveIndexHtml(req: IncomingMessage, res: ServerResponse, filePath: str
   res.end(body);
 }
 
+// Opt-in crash reports from the apps, mailed to the operator (see crash.ts).
+// Without SMTP_URL the endpoint answers 503 and everything else is unaffected.
+const crashOptions = crashOptionsFromEnv();
+const handleCrash = createCrashHandler({
+  ...crashOptions,
+  globalLimit: envInt("CRASH_MAX_PER_HOUR", 30),
+});
+
 const httpServer = createServer((req, res) => {
   securityHeaders(res);
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -439,6 +450,11 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
+  if (path === "/api/crash") {
+    handleCrash(req, res, clientIp(req));
+    return;
+  }
+
   // Deep-link association files for the native apps. Must come before the static
   // handler, which would otherwise fall through to index.html and hand Apple /
   // Google an HTML page (a silent, hard-to-debug verification failure).
@@ -447,13 +463,16 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
-  // Generated map style for the native apps: /style/{lang}.json. Handled here
-  // rather than as a plain static file because the origin is substituted per
-  // request (the file on disk holds a placeholder).
+  // Generated map style for the native apps: /style/{lang}.json (light) or
+  // /style/{theme}/{lang}.json (dark, synthwave). Handled here rather than as a
+  // plain static file because the origin is substituted per request (the file
+  // on disk holds a placeholder).
   if (path.startsWith("/style/") && path.endsWith(".json")) {
     const name = path.slice("/style/".length, -".json".length);
-    const lang = name.startsWith("dark/") ? name.slice("dark/".length) : name;
-    if (STYLE_LANGS.has(lang)) {
+    const parts = name.split("/");
+    const lang = parts[parts.length - 1];
+    const themeOk = parts.length === 1 || (parts.length === 2 && STYLE_THEME_DIRS.has(parts[0]));
+    if (themeOk && STYLE_LANGS.has(lang)) {
       serveStyle(req, res, name);
       return;
     }

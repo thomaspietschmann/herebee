@@ -1,14 +1,17 @@
 name: herebee
 description: "Ephemeral, end-to-end-encrypted live location sharing."
 publish_to: 'none'
-version: 0.0.16+16
+version: 0.0.17+17
 
 environment:
   sdk: ^3.12.0
 
-# Dependency policy (see docs/mobile-plan.md §3): no analytics, no crash
-# reporting, no Google Play Services. Every addition here is a privacy decision,
-# not just a build decision. test/dependency_audit_test.dart enforces it.
+# Dependency policy (see docs/mobile-plan.md §3): no analytics, no Google Play
+# Services, no hosted crash reporting. The only crash reporting is ACRA on
+# Android (declared in android/app/build.gradle.kts, not here): opt-in per crash
+# via its dialog, sent only to the HereBee server the app uses. Every addition
+# here is a privacy decision, not just a build decision.
+# test/dependency_audit_test.dart enforces it.
 dependencies:
   flutter:
     sdk: flutter

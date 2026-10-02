@@ -4,9 +4,13 @@ Flutter app for iOS and Android. See the [root README](../README.md) for what
 HereBee is, the privacy statement, deployment and releases, and
 [`docs/mobile-plan.md`](../docs/mobile-plan.md) for the design decisions.
 
-The app talks to one origin only, `https://herebee.app` by default. Override it
-with `--dart-define=HEREBEE_ORIGIN` for a local relay. All commands run from
-this directory.
+Each room talks to one origin only: relay, style, glyphs, sprites and tiles.
+By default that is the official server `https://herebee.app`. In the settings
+(gear button) the user can pick any other server that runs the HereBee web
+app, and a room link from another server opens the room there. Both ask first
+with a warning that privacy cannot be guaranteed on a server other than the
+official one. Override the default with `--dart-define=HEREBEE_ORIGIN` for a
+local relay. All commands run from this directory.
 
 | Command | Purpose |
 |---|---|

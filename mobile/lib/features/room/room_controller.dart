@@ -62,6 +62,7 @@ class RoomController extends ChangeNotifier {
     required this.storage,
     required this.languageCode,
     required this.youSuffix,
+    this.origin = AppConfig.defaultOrigin,
     this.onEntered,
     NetClientFactory? netClientFactory,
     DateTime Function()? clock,
@@ -91,6 +92,12 @@ class RoomController extends ChangeNotifier {
 
   final String secret;
   final Storage storage;
+
+  /// The server this room lives on: relay, map style and tiles all come from
+  /// here, and the shared link names it.
+  final String origin;
+
+  bool get officialServer => AppConfig.isOfficial(origin);
 
   /// Drives which nickname set is used, exactly as the browser's device locale
   /// does. Peers may therefore see different (but stable) names for each other.
@@ -225,7 +232,7 @@ class RoomController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  String get roomLink => AppConfig.roomLink(secret);
+  String get roomLink => AppConfig.roomLink(origin, secret);
   String? get roomId => _keys?.roomId;
 
   Future<void> init() async {
@@ -257,7 +264,7 @@ class RoomController extends ChangeNotifier {
     onEntered?.call(_keys!.roomId);
 
     final net = _newNetClient(
-      endpoint: AppConfig.wsUrl,
+      endpoint: AppConfig.wsUrl(origin),
       keys: _keys!,
       cid: await storage.cid(),
       clientLabel: '${defaultTargetPlatform.name}/${AppConfig.clientVersion}',

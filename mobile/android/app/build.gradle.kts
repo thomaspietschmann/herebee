@@ -78,3 +78,17 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Opt-in crash reports (docs/mobile-plan.md §3): ACRA core plus its consent
+    // dialog. Sent only after the user agrees, to the HereBee server itself via
+    // app.herebee.crash.HereBeeReportSender. No acra-http/-mail, no Google or
+    // third-party endpoint. Depends only on androidx.annotation and kotlin-stdlib.
+    // 5.13.1 rather than 5.14.x: 5.14 demands compileSdk 37, the app pins 36.
+    // 5.13.1 leaks its build-time annotation processor (auto-service, and with
+    // it Guava) into the runtime classpath; nothing needs it at runtime.
+    implementation("ch.acra:acra-dialog:5.13.1") {
+        exclude(group = "com.google.auto.service")
+        exclude(group = "com.google.auto")
+    }
+}

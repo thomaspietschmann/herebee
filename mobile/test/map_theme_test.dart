@@ -17,8 +17,21 @@ void main() {
     expect((await SharedPreferences.getInstance()).getKeys(), isNot(contains('herebee.mapTheme')));
   });
 
-  test('the dark style lives next to the light one on the same origin', () {
-    expect(AppConfig.styleUrl('de'), '${AppConfig.origin}/style/de.json');
-    expect(AppConfig.styleUrl('de', dark: true), '${AppConfig.origin}/style/dark/de.json');
+  test('synthwave is stored by name and read back after a restart', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = await Storage.open();
+    await storage.setMapTheme(MapThemePref.synthwave);
+    expect(storage.mapTheme, MapThemePref.synthwave);
+    expect(storage.mapThemeListenable.value, MapThemePref.synthwave);
+    expect((await SharedPreferences.getInstance()).getString('herebee.mapTheme'), 'synthwave');
+    expect((await Storage.open()).mapTheme, MapThemePref.synthwave);
+  });
+
+  test('the other styles live next to the light one on the same origin', () {
+    const origin = AppConfig.officialOrigin;
+    expect(AppConfig.styleUrl(origin, 'de'), '$origin/style/de.json');
+    expect(AppConfig.styleUrl(origin, 'de', theme: 'light'), '$origin/style/de.json');
+    expect(AppConfig.styleUrl(origin, 'de', theme: 'dark'), '$origin/style/dark/de.json');
+    expect(AppConfig.styleUrl(origin, 'en', theme: 'synthwave'), '$origin/style/synthwave/en.json');
   });
 }

@@ -5,7 +5,7 @@
   "shareLink": "Link teilen",
   "shareLocation": "Standort teilen",
   "stopSharing": "Teilen stoppen",
-  "infoAria": "Wie anonym ist das?",
+  "infoAria": "Einstellungen",
   "mapAria": "Karte mit den Standorten der Raumteilnehmer",
   "close": "Schließen",
   "connOn": "Verbunden",
@@ -195,6 +195,7 @@
   "mapThemeAuto": "Automatisch",
   "mapThemeLight": "Hell",
   "mapThemeDark": "Dunkel",
+  "mapThemeSynthwave": "Synthwave",
   "bubblesShow": "Sprechblasen einblenden",
   "bubblesHide": "Sprechblasen ausblenden",
   "infoSaid": "gesagt {t}",
@@ -254,5 +255,47 @@
       }
     }
   },
-  "infoFactRecent": "Die App merkt sich die letzten fünf Räume samt Schlüssel für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore), damit du sie wieder betreten kannst. Jeder Eintrag lässt sich jederzeit löschen — tippe dafür oben links auf HereBee."
+  "infoFactRecent": "Die App merkt sich die letzten fünf Räume samt Schlüssel für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore), damit du sie wieder betreten kannst. Jeder Eintrag lässt sich jederzeit löschen — tippe dafür oben links auf HereBee.",
+  "serverTitle": "Server",
+  "serverOfficial": "offizieller Server",
+  "serverUnofficial": "nicht der offizielle Server",
+  "serverWarnTitle": "Nicht der offizielle Server",
+  "serverWarnBody": "<strong>{host}</strong> ist nicht der offizielle HereBee-Server ({official}). Standorte, Namen und Nachrichten bleiben Ende-zu-Ende-verschlüsselt, aber der Betreiber sieht deine IP-Adresse, wann du in welchem Raum bist und über die geladenen Kartenkacheln grob deine Region. Ob er Logs führt, weißt du nicht. <strong>Der Datenschutz kann nicht gewährleistet werden.</strong>",
+  "@serverWarnBody": {
+    "description": "Contains inline markup (<strong>/<em>/<code>); render as rich text.",
+    "placeholders": {
+      "host": {
+        "type": "String"
+      },
+      "official": {
+        "type": "String"
+      }
+    }
+  },
+  "serverWarnWeb": "Im Browser kommt außerdem der Programmcode dieser Seite von diesem Server. Ein unehrlicher Betreiber könnte so auch an den Raum-Schlüssel kommen.",
+  "serverWarnLink": "Dieser Link nutzt einen anderen Server als den offiziellen.",
+  "serverWarnContinue": "Trotzdem verwenden",
+  "serverWarnCancel": "Abbrechen",
+  "serverHint": "Die App funktioniert mit jedem Server, auf dem die HereBee-Web-Anwendung läuft. Relay, Karte und Kartenkacheln kommen dann von dort.",
+  "serverPlaceholder": "z. B. herebee.example.org",
+  "serverUse": "Übernehmen",
+  "serverReset": "Offiziellen Server verwenden",
+  "serverInvalid": "Das ist keine gültige Server-Adresse (https:// erforderlich).",
+  "serverUnreachable": "Unter dieser Adresse antwortet kein HereBee-Server.",
+  "serverChecking": "Server wird geprüft…",
+  "serverSaved": "Server gespeichert. Neue Räume nutzen ihn.",
+  "crashTitle": "In HereBee ist ein Fehler aufgetreten",
+  "crashBody": "Möchtest du einen Fehlerbericht senden, damit der Fehler behoben werden kann?\n\nEr geht an den HereBee-Server, den diese App nutzt ({host}), und wird von dort per E-Mail an den Betreiber geschickt. Er enthält App-Version, Betriebssystem-Version, den technischen Fehlerverlauf und deinen Kommentar, falls du einen schreibst.\n\nEr enthält keinen Standort, keine Namen und keine Raumdaten. Ohne „Senden“ wird nichts übertragen.",
+  "@crashBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "crashComment": "Optional: Was hast du gerade gemacht? (Bitte keine persönlichen Daten eingeben.)",
+  "crashSend": "Senden",
+  "crashDontSend": "Nicht senden",
+  "crashSent": "Danke, der Fehlerbericht wurde gesendet.",
+  "crashSendFailed": "Der Fehlerbericht konnte nicht gesendet werden."
 }

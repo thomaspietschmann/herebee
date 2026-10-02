@@ -7,6 +7,7 @@
 /// from client/src/i18n.ts actually gets exercised.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,10 +80,33 @@ void main() {
     await tester.pump();
 
     expect(find.text('HereBee'), findsOneWidget, reason: 'wordmark, split into two spans');
-    expect(find.text('Link teilen'), findsOneWidget);
+    // Share and settings are icons; their names live in the semantics tree.
+    expect(find.bySemanticsLabel('Link teilen'), findsOneWidget);
+    expect(find.bySemanticsLabel('Einstellungen'), findsOneWidget);
+    expect(find.byIcon(Icons.share), findsOneWidget, reason: "Android's share glyph");
+    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
     // Nothing has connected yet, so the chip must not claim otherwise.
     expect(find.bySemanticsLabel('Verbindung…'), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets('the share button uses the iOS glyph on iOS', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    final controller = await makeController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(harness(Hud(
+      controller: controller,
+      onFitAll: () {},
+      onGoTo: (_) {},
+      onShareLink: () {},
+      onToggleShare: () {},
+      onInfo: () {},
+      onRooms: () {},
+    )));
+    await tester.pump();
+    expect(find.byIcon(Icons.ios_share), findsOneWidget);
+    expect(find.byIcon(Icons.share), findsNothing);
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('the entry gate explains presence before anything connects', (tester) async {

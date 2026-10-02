@@ -3,6 +3,18 @@
  * Holds no app state beyond the DOM — main.ts drives it.
  */
 import { t } from "./i18n.js";
+import { OFFICIAL_ORIGIN, isOfficialOrigin } from "../../shared/server.js";
+
+/** Apple devices. iPads report a Mac user agent, and the Mac shares with the same glyph. */
+const APPLE = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+
+/**
+ * The share glyph people know from their own platform: Apple's box with an
+ * arrow, elsewhere Android's three connected dots.
+ */
+const SHARE_ICON = APPLE
+  ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M8.5 10H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5"/></svg>'
+  : '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>';
 
 export interface UIHandlers {
   onToggleShare: () => void;
@@ -13,7 +25,7 @@ export interface UIHandlers {
   onMapTheme: (pref: MapThemePref) => void;
 }
 
-export type MapThemePref = "auto" | "light" | "dark";
+export type MapThemePref = "auto" | "light" | "dark" | "synthwave";
 
 interface Sharer {
   seed: string;
@@ -51,7 +63,10 @@ export class UI {
 
   constructor(private readonly h: UIHandlers) {
     this.geoBtn.addEventListener("click", () => h.onToggleShare());
-    this.shareBtn.addEventListener("click", () => this.copyLink());
+    this.shareBtn.innerHTML = SHARE_ICON;
+    this.shareBtn.title = t("shareLink");
+    this.infoBtn.title = t("infoAria");
+    this.shareBtn.addEventListener("click", () => void this.shareLink());
     this.infoBtn.addEventListener("click", () => this.openInfo());
     this.roster.addEventListener("click", () => this.openParticipants());
     this.fitAllBtn.addEventListener("click", () => this.h.onFitAll());
@@ -255,8 +270,18 @@ export class UI {
     }, 2200);
   }
 
-  private async copyLink(): Promise<void> {
+  /** The platform share sheet where there is one, else the clipboard. */
+  private async shareLink(): Promise<void> {
     const url = location.href;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ url });
+        return;
+      } catch (e) {
+        // Dismissing the sheet is a normal answer, not a reason to copy.
+        if (e instanceof DOMException && e.name === "AbortError") return;
+      }
+    }
     try {
       await navigator.clipboard.writeText(url);
       this.toast(t("linkCopied"));
@@ -292,6 +317,7 @@ export class UI {
       <img class="splash-logo" src="/brand/herebee-logo.png" alt="" aria-hidden="true" />
       <h2>${t("welcomeTitle")}</h2>
       <p>${t("welcomeIntro")}</p>
+      ${this.serverWarning()}
       <ul class="facts">
         <li>${t("welcomeFact1")}</li>
         <li>${t("welcomeFact2")}</li>
@@ -323,10 +349,29 @@ export class UI {
       /iPhone|iPad|iPod/.test(navigator.userAgent) ||
       (navigator.userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
     if (!ios || !location.hash) return "";
-    const href = this.esc(`herebee://r${location.hash}`);
+    // The app talks to the official server unless told otherwise, so a room on
+    // another server must name it, or the app would open an empty namesake.
+    const server = isOfficialOrigin(location.origin) ? "" : `?server=${encodeURIComponent(location.origin)}`;
+    const href = this.esc(`herebee://r${server}${location.hash}`);
     return `
       <div class="linkbox linkbox-app">
         <a class="btn btn-fill btn-anchor" href="${href}">${t("welcomeOpenApp")}</a>
+      </div>`;
+  }
+
+  /**
+   * The warning for a page served by anyone but the official server. Empty on
+   * the official one. In a browser the server also delivers the code that
+   * handles the key, which is why the web version says more than the app's.
+   */
+  private serverWarning(): string {
+    if (isOfficialOrigin(location.origin)) return "";
+    const host = this.esc(location.host);
+    return `
+      <div class="server-warn" role="note">
+        <h3>${t("serverWarnTitle")}</h3>
+        <p>${t("serverWarnBody", { host, official: new URL(OFFICIAL_ORIGIN).host })}</p>
+        <p>${t("serverWarnWeb")}</p>
       </div>`;
   }
 
@@ -411,13 +456,24 @@ export class UI {
 
   private openInfo(): void {
     const current = this.h.mapTheme();
-    const choice = (pref: MapThemePref, key: "mapThemeAuto" | "mapThemeLight" | "mapThemeDark") =>
+    const choice = (
+      pref: MapThemePref,
+      key: "mapThemeAuto" | "mapThemeLight" | "mapThemeDark" | "mapThemeSynthwave"
+    ) =>
       `<button type="button" class="seg${pref === current ? " is-active" : ""}" data-theme="${pref}" aria-pressed="${pref === current}">${t(key)}</button>`;
     this.sheetBody.innerHTML = `
       <h2>${t("mapTheme")}</h2>
-      <div class="segmented" role="group" aria-label="${t("mapTheme")}">
-        ${choice("auto", "mapThemeAuto")}${choice("light", "mapThemeLight")}${choice("dark", "mapThemeDark")}
+      <div class="segmented segmented-4" role="group" aria-label="${t("mapTheme")}">
+        ${choice("auto", "mapThemeAuto")}${choice("light", "mapThemeLight")}${choice("dark", "mapThemeDark")}${choice(
+          "synthwave",
+          "mapThemeSynthwave"
+        )}
       </div>
+      <h2 class="sheet-section">${t("serverTitle")}</h2>
+      <p class="server-line"><code>${this.esc(location.host)}</code> · ${t(
+        isOfficialOrigin(location.origin) ? "serverOfficial" : "serverUnofficial"
+      )}</p>
+      ${this.serverWarning()}
       <h2 class="sheet-section">${t("infoTitle")}</h2>
       <p>${t("infoIntro")}</p>
       <ul class="facts">

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ACRA crash-report dialog (see HereBeeApplication.kt). %1$s is the server host. -->
+<resources>
+    <string name="crash_dialog_title">HereBee crashed</string>
+    <string name="crash_dialog_text">Would you like to send a crash report so the error can be fixed?\n\nIt goes to the HereBee server this app uses (%1$s), which emails it to the operator. It contains the app version, Android version, device brand and model, the technical error trace and your comment, if you write one.\n\nIt contains no location, no names and no room data. Nothing is sent unless you tap Send.</string>
+    <string name="crash_dialog_comment">Optional: what were you doing? (Please don\'t enter personal data.)</string>
+    <string name="crash_dialog_send">Send</string>
+    <string name="crash_dialog_dont_send">Don\'t send</string>
+</resources>

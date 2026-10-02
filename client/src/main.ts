@@ -141,6 +141,11 @@ type Bus =
   | { t: "say"; text: string | null }
   | { t: "own-msg"; msg: OwnMsg | null };
 
+/** A stored map-theme preference; anything unknown (or nothing) means "auto". */
+function parseThemePref(v: string | null): MapThemePref {
+  return v === "light" || v === "dark" || v === "synthwave" ? v : "auto";
+}
+
 async function main(): Promise<void> {
   // Localize the static HUD (title, <html lang>, button labels, aria) up front.
   applyStaticI18n();
@@ -150,8 +155,7 @@ async function main(): Promise<void> {
   const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
   let themePref: MapThemePref = (() => {
     try {
-      const v = localStorage.getItem(THEME_KEY);
-      return v === "light" || v === "dark" ? v : "auto";
+      return parseThemePref(localStorage.getItem(THEME_KEY));
     } catch {
       return "auto";
     }
@@ -170,7 +174,7 @@ async function main(): Promise<void> {
   darkQuery.addEventListener("change", applyTheme);
   window.addEventListener("storage", (e) => {
     if (e.key !== THEME_KEY) return;
-    themePref = e.newValue === "light" || e.newValue === "dark" ? e.newValue : "auto";
+    themePref = parseThemePref(e.newValue);
     applyTheme();
   });
   const setThemePref = (pref: MapThemePref) => {

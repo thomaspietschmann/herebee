@@ -24,8 +24,9 @@ class StartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = HereBeeTokens.of(context);
     return Scaffold(
-      backgroundColor: ink,
+      backgroundColor: t.ink,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -51,15 +52,20 @@ class StartScreen extends StatelessWidget {
                       child: Image.asset('assets/brand/herebee-logo.png', fit: BoxFit.cover),
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 26),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 26),
                     child: Text.rich(
                       TextSpan(children: [
-                        TextSpan(text: 'Here'),
-                        TextSpan(text: 'Bee', style: TextStyle(fontWeight: FontWeight.w800, color: beacon)),
+                        TextSpan(text: t.label('Here')),
+                        TextSpan(
+                            text: t.label('Bee'), style: TextStyle(fontWeight: FontWeight.w800, color: t.beacon)),
                       ]),
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: mist, fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                      style: TextStyle(
+                          color: t.mist,
+                          fontSize: t.uppercase ? 22 : 26,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: t.uppercase ? 3 : -0.5),
                     ),
                   ),
                   RoomsPicker(recent: recent, nameFor: nameFor, onChoose: onChoose),

@@ -1,6 +1,6 @@
 /// What this app persists in plain preferences: any names the user typed,
-/// whether their own name is shared, whether speech bubbles are shown, and
-/// which map style was picked.
+/// whether their own name is shared, whether speech bubbles are shown, which
+/// map style was picked, and which server new rooms use.
 /// The user's own name and its sharing choice are kept per room, so a new room
 /// never knows what they called themselves elsewhere.
 ///
@@ -13,6 +13,9 @@ library;
 
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
+import '../app_config.dart';
 import 'crypto.dart';
 import 'recent_rooms.dart';
 
@@ -27,7 +30,17 @@ const String _legacyShareNameKey = 'herebee.shareName';
 const String _bubblesKey = 'herebee.bubbles';
 const String _mapThemeKey = 'herebee.mapTheme';
 
-enum MapThemePref { auto, light, dark }
+/// The server new rooms use, when the user chose one.
+const String serverOriginKey = 'herebee.origin';
+
+/// The server in effect, chosen or built in, mirrored for the Android crash
+/// reporter (ACRA runs natively and cannot compute the default itself). It
+/// reads `flutter.herebee.reportOrigin` from FlutterSharedPreferences; keep
+/// the key in step with CrashOrigin in HereBeeReportSender.kt.
+const String reportOriginKey = 'herebee.reportOrigin';
+
+/// Stored as its name ('light', 'dark', 'synthwave'); auto is the absence of a value.
+enum MapThemePref { auto, light, dark, synthwave }
 
 /// Matches the browser's token shape (see `mintToken` in client/src/main.ts).
 String mintToken() {
@@ -47,7 +60,15 @@ class Storage {
     for (final key in prefs.getKeys().toList()) {
       if (RegExp(r'^herebee\.name\.[^.]+$').hasMatch(key)) await prefs.remove(key);
     }
-    return Storage(prefs, device ?? SecureSecretStore('herebee.device'));
+    final storage = Storage(prefs, device ?? SecureSecretStore('herebee.device'));
+    await storage._mirrorReportOrigin();
+    return storage;
+  }
+
+  Future<void> _mirrorReportOrigin() async {
+    if (_prefs.getString(reportOriginKey) != serverOrigin) {
+      await _prefs.setString(reportOriginKey, serverOrigin);
+    }
   }
 
   final SharedPreferences _prefs;
@@ -111,8 +132,12 @@ class Storage {
   MapThemePref get mapTheme => switch (_prefs.getString(_mapThemeKey)) {
         'light' => MapThemePref.light,
         'dark' => MapThemePref.dark,
+        'synthwave' => MapThemePref.synthwave,
         _ => MapThemePref.auto,
       };
+
+  /// [mapTheme], live: the app chrome follows it (synthwave restyles it).
+  late final ValueNotifier<MapThemePref> mapThemeListenable = ValueNotifier(mapTheme);
 
   Future<void> setMapTheme(MapThemePref pref) async {
     if (pref == MapThemePref.auto) {
@@ -120,6 +145,26 @@ class Storage {
     } else {
       await _prefs.setString(_mapThemeKey, pref.name);
     }
+    mapThemeListenable.value = pref;
+  }
+
+  /// The server new rooms open on: the user's choice, or the default.
+  String get serverOrigin {
+    final stored = _prefs.getString(serverOriginKey);
+    return (stored == null ? null : normalizeOrigin(stored)) ?? AppConfig.defaultOrigin;
+  }
+
+  /// Whether the server in use was chosen by the user rather than built in.
+  bool get serverChosen => _prefs.getString(serverOriginKey) != null;
+
+  /// Stores [origin] as the server for new rooms; null goes back to the default.
+  Future<void> setServerOrigin(String? origin) async {
+    if (origin == null || origin == AppConfig.defaultOrigin) {
+      await _prefs.remove(serverOriginKey);
+    } else {
+      await _prefs.setString(serverOriginKey, origin);
+    }
+    await _mirrorReportOrigin();
   }
 
   Future<void> _setOrRemove(String key, String? name) async {

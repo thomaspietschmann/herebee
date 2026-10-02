@@ -4,12 +4,15 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../app_config.dart';
 import '../../core/deep_links.dart';
 import '../../core/names.dart';
 import '../../core/recent_rooms.dart';
@@ -17,26 +20,31 @@ import '../../core/storage.dart';
 import '../map/bee_marker.dart';
 import '../room/room_controller.dart';
 import '../../l10n/app_localizations.dart';
-import '../../ui/tokens.dart' as tokens;
+import '../../ui/floor_grid.dart';
+import '../../ui/tokens.dart';
 import '../../util/markup.dart';
 
-const Color _sheetBg = tokens.ink2;
 
-Widget _panel(BuildContext context, Widget child, {required bool closable, EdgeInsets? padding}) =>
-    DecoratedBox(
+HereBeeTokens _tk(BuildContext context) => HereBeeTokens.of(context);
+
+Widget _panel(BuildContext context, Widget child, {required bool closable, EdgeInsets? padding}) {
+  final t = _tk(context);
+  final grid = t.panelGridLine;
+  return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(tokens.panelRadius),
-        boxShadow: tokens.shadow,
+        borderRadius: BorderRadius.circular(t.panelRadius),
+        boxShadow: [...t.shadow, ...t.sheetGlow],
       ),
       child: Material(
-        color: tokens.ink2,
+        color: t.sheetBg,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(tokens.panelRadius),
-          side: const BorderSide(color: tokens.hair),
+          borderRadius: BorderRadius.circular(t.panelRadius),
+          side: BorderSide(color: t.panelBorder),
         ),
         child: Stack(
           children: [
+            if (grid != null) Positioned.fill(child: IgnorePointer(child: PanelGrid(line: grid))),
             SingleChildScrollView(
               padding: padding ?? const EdgeInsets.fromLTRB(22, 26, 22, 24),
               child: child,
@@ -52,7 +60,7 @@ Widget _panel(BuildContext context, Widget child, {required bool closable, EdgeI
                     padding: EdgeInsets.zero,
                     tooltip: L.of(context).close,
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Text('×', style: TextStyle(color: tokens.muted, fontSize: 22, height: 1)),
+                    icon: Text('×', style: TextStyle(color: _tk(context).muted, fontSize: 22, height: 1)),
                   ),
                 ),
               ),
@@ -60,6 +68,7 @@ Widget _panel(BuildContext context, Widget child, {required bool closable, EdgeI
         ),
       ),
     );
+}
 
 Future<T?> _sheet<T>(
   BuildContext context, {
@@ -123,12 +132,20 @@ Future<void> _splash(BuildContext context, {required WidgetBuilder builder}) => 
       ),
     );
 
-TextStyle get _body => const TextStyle(color: tokens.muted, fontSize: 13.5, height: 1.55);
-TextStyle get _h2 => const TextStyle(
-    color: tokens.mist, fontSize: 19, fontWeight: FontWeight.w700, letterSpacing: -0.38);
+TextStyle _body(BuildContext context) => TextStyle(color: _tk(context).muted, fontSize: 13.5, height: 1.55);
+TextStyle _h2(BuildContext context) {
+  final t = _tk(context);
+  return TextStyle(
+    color: t.mist,
+    fontSize: 19,
+    fontWeight: FontWeight.w700,
+    letterSpacing: t.uppercase ? 0 : -0.38,
+    shadows: t.sheetGlow.isEmpty ? null : const [Shadow(color: Color(0x99FF2BD6), blurRadius: 12)],
+  );
+}
 
-Widget _fact(String markup, {bool warn = false}) => DecoratedBox(
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: tokens.hair))),
+Widget _fact(BuildContext context, String markup, {bool warn = false}) => DecoratedBox(
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: _tk(context).hair))),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
@@ -140,24 +157,106 @@ Widget _fact(String markup, {bool warn = false}) => DecoratedBox(
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: warn ? tokens.signal : tokens.beacon,
+                  color: warn ? _tk(context).signal : _tk(context).beacon,
                   shape: BoxShape.circle,
                 ),
               ),
             ),
             Expanded(
               child: MarkupText(markup,
-                  style: const TextStyle(color: tokens.mist, fontSize: 13, height: 1.5)),
+                  style: TextStyle(color: _tk(context).mist, fontSize: 13, height: 1.5)),
             ),
           ],
         ),
       ),
     );
 
+/// What a server other than the official one means for privacy. Shown in the
+/// entry gate of every room on such a server, in the settings, and in the
+/// question before switching to one.
+Widget _serverWarningBox(BuildContext context, String origin) {
+  final l = L.of(context);
+  return Container(
+    key: const ValueKey('server-warning'),
+    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+    decoration: BoxDecoration(
+      color: _tk(context).signal.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: _tk(context).signal.withValues(alpha: 0.45)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: _tk(context).signal, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(l.serverWarnTitle,
+                  style: TextStyle(color: _tk(context).signal, fontSize: 14, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        MarkupText(
+          l.serverWarnBody(AppConfig.hostOf(origin), AppConfig.hostOf(AppConfig.officialOrigin)),
+          style: TextStyle(color: _tk(context).mist, fontSize: 13, height: 1.5),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Asks before the app talks to [origin], which is not the official server.
+/// [fromLink] says the server came from a room link rather than from the user.
+/// True means "use it anyway".
+Future<bool> showServerWarning(BuildContext context, {required String origin, required bool fromLink}) async {
+  final ok = await _sheet<bool>(
+    context,
+    dismissible: false,
+    builder: (context) {
+      final l = L.of(context);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (fromLink) ...[
+            Text(l.serverWarnLink, style: _body(context)),
+            const SizedBox(height: 12),
+          ],
+          _serverWarningBox(context, origin),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const ValueKey('server-warning-cancel'),
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(l.serverWarnCancel, maxLines: 1),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  key: const ValueKey('server-warning-continue'),
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: FittedBox(child: Text(l.serverWarnContinue, maxLines: 1)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
+  return ok ?? false;
+}
+
 /// The entry gate. Nothing has touched the network when this opens, and it
 /// cannot be dismissed without a decision: becoming present is visible to the
-/// whole room, so it must be deliberate.
-Future<void> showWelcomeSheet(BuildContext context) => _splash(
+/// whole room, so it must be deliberate. On a server other than the official
+/// one it says so every time, not only when the server was first accepted.
+Future<void> showWelcomeSheet(BuildContext context, {String origin = AppConfig.officialOrigin}) => _splash(
       context,
       builder: (context) {
         final l = L.of(context);
@@ -181,13 +280,17 @@ Future<void> showWelcomeSheet(BuildContext context) => _splash(
                 child: Image.asset('assets/brand/herebee-logo.png', fit: BoxFit.cover),
               ),
             ),
-            Text(l.welcomeTitle, style: _h2, textAlign: TextAlign.center),
+            Text(l.welcomeTitle, style: _h2(context), textAlign: TextAlign.center),
             const SizedBox(height: 4),
-            Text(l.welcomeIntro, style: _body, textAlign: TextAlign.center),
+            Text(l.welcomeIntro, style: _body(context), textAlign: TextAlign.center),
+            if (!AppConfig.isOfficial(origin)) ...[
+              const SizedBox(height: 14),
+              _serverWarningBox(context, origin),
+            ],
             const SizedBox(height: 20),
-            _fact(l.welcomeFact1),
-            _fact(l.welcomeFact2),
-            _fact(l.welcomeFact3),
+            _fact(context, l.welcomeFact1),
+            _fact(context, l.welcomeFact2),
+            _fact(context, l.welcomeFact3),
             const SizedBox(height: 18),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -208,9 +311,9 @@ Future<void> showInvalidLinkSheet(BuildContext context) => _splash(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l.invalidTitle, style: _h2, textAlign: TextAlign.center),
+            Text(l.invalidTitle, style: _h2(context), textAlign: TextAlign.center),
             const SizedBox(height: 4),
-            Text(l.invalidBody, style: _body, textAlign: TextAlign.center),
+            Text(l.invalidBody, style: _body(context), textAlign: TextAlign.center),
           ],
         );
       },
@@ -225,25 +328,29 @@ Future<void> showInfoSheet(BuildContext context, {RoomController? controller}) =
           mainAxisSize: MainAxisSize.min,
           children: [
             if (controller != null) ...[
-              Text(l.mapTheme, style: _h2),
+              Text(l.mapTheme, style: _h2(context)),
               const SizedBox(height: 10),
               _MapThemePicker(controller: controller),
               const SizedBox(height: 20),
+              Text(l.serverTitle, style: _h2(context)),
+              const SizedBox(height: 10),
+              _ServerSetting(controller: controller),
+              const SizedBox(height: 20),
             ],
-            Text(l.infoTitle, style: _h2),
+            Text(l.infoTitle, style: _h2(context)),
             const SizedBox(height: 10),
-            MarkupText(l.infoIntro, style: _body),
+            MarkupText(l.infoIntro, style: _body(context)),
             const SizedBox(height: 14),
-            _fact(l.infoFact1),
-            _fact(l.infoFact2),
-            _fact(l.infoFact3),
-            _fact(l.infoFactRecent),
-            _fact(l.infoFact4, warn: true),
-            _fact(l.infoFact5, warn: true),
+            _fact(context, l.infoFact1),
+            _fact(context, l.infoFact2),
+            _fact(context, l.infoFact3),
+            _fact(context, l.infoFactRecent),
+            _fact(context, l.infoFact4, warn: true),
+            _fact(context, l.infoFact5, warn: true),
             const SizedBox(height: 6),
             Text(
               l.mapCredits('Protomaps', 'OpenStreetMap'),
-              style: const TextStyle(color: tokens.muted, fontSize: 12),
+              style: TextStyle(color: _tk(context).muted, fontSize: 12),
             ),
             const SizedBox(height: 14),
             TextButton(
@@ -279,20 +386,20 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
       builder: (context) {
         Widget p(String markup) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: MarkupText(markup, style: _body),
+              child: MarkupText(markup, style: _body(context)),
             );
         Widget ph(String text) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(text,
-                  style: const TextStyle(
-                      color: tokens.signal, fontSize: 13, fontStyle: FontStyle.italic)),
+                  style: TextStyle(
+                      color: _tk(context).signal, fontSize: 13, fontStyle: FontStyle.italic)),
             );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Impressum', style: _h2),
+            Text('Impressum', style: _h2(context)),
             const SizedBox(height: 10),
             p('Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz).'),
             p('<strong>Hinweis:</strong> HereBee befindet sich in aktiver Entwicklung und wird '
@@ -305,7 +412,7 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
             p('<strong>Kontakt:</strong>'),
             ph('[E-Mail – wird vor Veröffentlichung ergänzt]'),
             const SizedBox(height: 14),
-            Text('Datenschutzerklärung', style: _h2),
+            Text('Datenschutzerklärung', style: _h2(context)),
             const SizedBox(height: 10),
             p('<strong>Verantwortlicher</strong> im Sinne der DSGVO ist der im Impressum genannte '
                 'Diensteanbieter.'),
@@ -321,15 +428,15 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'Aktualisierungen kommen ausschließlich über den jeweiligen App-Store bzw. das '
                 'signierte Installationspaket.'),
             p('<strong>Welche Daten verarbeitet werden:</strong>'),
-            _fact('<strong>IP-Adresse</strong> – vorübergehend, um die WebSocket-Verbindung '
+            _fact(context, '<strong>IP-Adresse</strong> – vorübergehend, um die WebSocket-Verbindung '
                 'aufzubauen und die Zahl gleichzeitiger Verbindungen pro IP zu begrenzen '
                 '(Missbrauchsschutz). Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Die Anwendung '
                 'selbst speichert die IP nicht. Da die Kartenkacheln vom selben Server geladen '
                 'werden, kann dieser anhand der angefragten Kacheln grob erkennen, welche Region du '
                 'ansiehst; die Koordinaten selbst bleiben Ende-zu-Ende-verschlüsselt.'),
-            _fact('<strong>Verschlüsselte Standort-, Namens- und Nachrichtendaten</strong> – werden nur '
+            _fact(context, '<strong>Verschlüsselte Standort-, Namens- und Nachrichtendaten</strong> – werden nur '
                 'weitergeleitet, nicht gespeichert und sind für den Betreiber nicht lesbar.'),
-            _fact('<strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, '
+            _fact(context, '<strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, '
                 'sobald der letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine '
                 'Historie, keine Speicherung von Koordinaten oder Namen.'),
             p('<strong>Standortfreigabe.</strong> Die App greift auf die Ortungsdienste des '
@@ -383,10 +490,24 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
                 'IP-Adresse) im Auftrag des Verantwortlichen verarbeiten; hierzu besteht ein '
                 'Auftragsverarbeitungsvertrag nach Art. 28 DSGVO. Rechtsgrundlage: Art. 6 Abs. 1 '
                 'lit. f DSGVO.'),
+            p('<strong>Andere Server.</strong> Die App kann statt des offiziellen Servers '
+                '(herebee.app) jeden anderen Server nutzen, auf dem HereBee läuft, wenn du ihn '
+                'einstellst oder einen Raum-Link eines anderen Servers öffnest. Die App warnt '
+                'vorher. Für einen solchen Server ist allein dessen Betreiber verantwortlich; diese '
+                'Erklärung gilt dann nicht. Standorte, Namen und Nachrichten bleiben auch dort '
+                'Ende-zu-Ende-verschlüsselt, aber der Betreiber sieht deine IP-Adresse, wann du in '
+                'welchem Raum bist und über die geladenen Kartenkacheln grob deine Region.'),
+            p('<strong>Absturzberichte (Android).</strong> Stürzt die App ab, fragt sie, ob ein '
+                'Bericht gesendet werden soll. Nur wenn du zustimmst, geht er an den Server, den '
+                'die App gerade nutzt, und von dort per E-Mail an dessen Betreiber. Er enthält '
+                'App- und Android-Version, Gerätemodell, den technischen Fehlerverlauf und einen '
+                'optionalen Kommentar, aber keine Standorte, Namen, Nachrichten oder '
+                'Raum-Schlüssel. Rechtsgrundlage: Einwilligung, Art. 6 Abs. 1 lit. a DSGVO.'),
             p('<strong>Keine Cookies, kein Tracking.</strong> HereBee setzt keine Cookies, nutzt '
-                'keine Analyse-, Absturzberichts- oder Tracking-Dienste und bindet keine fremden '
-                'CDNs ein. Karten, Schriften und Symbole werden selbst gehostet. Die App enthält '
-                'keine Bibliotheken von Google Play Services oder vergleichbaren Drittanbietern.'),
+                'keine Analyse- oder Tracking-Dienste und keine fremden Absturzberichts-Dienste '
+                'und bindet keine fremden CDNs ein. Karten, Schriften und Symbole werden selbst '
+                'gehostet. Die App enthält keine Bibliotheken von Google Play Services oder '
+                'vergleichbaren Drittanbietern.'),
             p('<strong>Speicherdauer.</strong> Auf dem Server speichert die Anwendung über die aktive '
                 'Sitzung hinaus nichts. Die Daten auf deinem Gerät bleiben, bis du sie löschst; '
                 'gemerkte Räume verfallen nach drei Tagen von selbst. Für etwaige Infrastruktur-Logs '
@@ -405,6 +526,153 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
       },
     );
 
+/// The server new rooms open on, and the room's own server if it differs.
+///
+/// A server is taken only after it answered /healthz like a HereBee server and,
+/// unless it is the official one, after the warning was confirmed. The open
+/// room keeps its server: its link and its peers live there.
+class _ServerSetting extends StatefulWidget {
+  const _ServerSetting({required this.controller});
+
+  final RoomController controller;
+
+  @override
+  State<_ServerSetting> createState() => _ServerSettingState();
+}
+
+class _ServerSettingState extends State<_ServerSetting> {
+  late final TextEditingController _input =
+      TextEditingController(text: AppConfig.hostOf(widget.controller.storage.serverOrigin));
+  String? _error;
+  bool _checking = false;
+
+  @override
+  void dispose() {
+    _input.dispose();
+    super.dispose();
+  }
+
+  Future<void> _apply(String text) async {
+    final l = L.of(context);
+    final storage = widget.controller.storage;
+    final origin = normalizeOrigin(text);
+    if (origin == null) {
+      setState(() => _error = l.serverInvalid);
+      return;
+    }
+    if (origin == storage.serverOrigin) {
+      setState(() => _error = null);
+      return;
+    }
+    setState(() {
+      _error = null;
+      _checking = true;
+    });
+    final reachable = await isHereBeeServer(origin);
+    if (!mounted) return;
+    setState(() => _checking = false);
+    if (!reachable) {
+      setState(() => _error = l.serverUnreachable);
+      return;
+    }
+    if (!AppConfig.isOfficial(origin) &&
+        !await showServerWarning(context, origin: origin, fromLink: false)) {
+      return;
+    }
+    await storage.setServerOrigin(origin);
+    if (!mounted) return;
+    _input.text = AppConfig.hostOf(origin);
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l.serverSaved), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  Future<void> _reset() async {
+    await widget.controller.storage.setServerOrigin(null);
+    if (!mounted) return;
+    _input.text = AppConfig.hostOf(widget.controller.storage.serverOrigin);
+    setState(() => _error = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final storage = widget.controller.storage;
+    final configured = storage.serverOrigin;
+    final roomOrigin = widget.controller.origin;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(l.serverHint, style: _body(context)),
+        const SizedBox(height: 10),
+        TextField(
+          key: const ValueKey('server-input'),
+          controller: _input,
+          enabled: !_checking,
+          style: TextStyle(color: _tk(context).mist),
+          keyboardType: TextInputType.url,
+          autocorrect: false,
+          textInputAction: TextInputAction.done,
+          onSubmitted: _apply,
+          decoration: InputDecoration(
+            prefixIcon: Icon(
+              AppConfig.isOfficial(configured) ? Icons.verified_user_outlined : Icons.warning_amber_rounded,
+              color: AppConfig.isOfficial(configured) ? _tk(context).beacon : _tk(context).signal,
+            ),
+            hintText: l.serverPlaceholder,
+            hintStyle: TextStyle(color: _tk(context).muted),
+            helperText: _checking
+                ? l.serverChecking
+                : (AppConfig.isOfficial(configured) ? l.serverOfficial : l.serverUnofficial),
+            helperStyle: TextStyle(color: AppConfig.isOfficial(configured) ? _tk(context).muted : _tk(context).signal),
+            errorText: _error,
+            suffixIcon: IconButton(
+              tooltip: l.serverUse,
+              icon: Icon(Icons.check, color: _tk(context).mist),
+              onPressed: _checking ? null : () => _apply(_input.text),
+            ),
+          ),
+        ),
+        if (storage.serverChosen && !AppConfig.isOfficial(configured))
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(onPressed: _reset, child: Text(l.serverReset)),
+          ),
+        if (!AppConfig.isOfficial(roomOrigin)) ...[
+          const SizedBox(height: 10),
+          _serverWarningBox(context, roomOrigin),
+        ],
+      ],
+    );
+  }
+}
+
+/// Whether [origin] answers like a HereBee server. Only the liveness probe is
+/// fetched: it carries nothing about anyone, and a wrong address fails fast
+/// rather than at the first room.
+Future<bool> isHereBeeServer(String origin, {HttpClient? client}) async {
+  final http = client ?? HttpClient();
+  http.connectionTimeout = const Duration(seconds: 8);
+  try {
+    final req = await http.getUrl(Uri.parse(AppConfig.healthUrl(origin))).timeout(const Duration(seconds: 8));
+    req.followRedirects = false;
+    final res = await req.close().timeout(const Duration(seconds: 8));
+    if (res.statusCode != HttpStatus.ok) {
+      await res.drain<void>();
+      return false;
+    }
+    final body = await res.transform(utf8.decoder).join().timeout(const Duration(seconds: 8));
+    final decoded = jsonDecode(body);
+    return decoded is Map && decoded['ok'] == true;
+  } catch (_) {
+    return false;
+  } finally {
+    if (client == null) http.close(force: true);
+  }
+}
+
 class _MapThemePicker extends StatefulWidget {
   const _MapThemePicker({required this.controller});
 
@@ -420,6 +688,7 @@ class _MapThemePickerState extends State<_MapThemePicker> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final t = _tk(context);
     Widget seg(MapThemePref pref, String label) {
       final active = pref == _pref;
       return Expanded(
@@ -435,18 +704,25 @@ class _MapThemePickerState extends State<_MapThemePicker> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 160),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: active ? tokens.beacon : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
+                color: active ? t.beacon : Colors.transparent,
+                borderRadius: BorderRadius.circular(t.pillRadius),
+                boxShadow: active ? t.chromeGlow : null,
               ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: active ? tokens.ink : tokens.muted,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              // Four choices share a phone-wide row; a long label ("Automatisch")
+              // shrinks rather than wrapping or clipping on a narrow screen.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: active ? t.ink : t.muted,
+                    fontSize: t.uppercase ? 11 : 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -458,9 +734,9 @@ class _MapThemePickerState extends State<_MapThemePicker> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: tokens.ink,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: tokens.hair),
+        color: t.ink,
+        borderRadius: BorderRadius.circular(t.pillRadius),
+        border: Border.all(color: t.hair),
       ),
       child: Row(
         children: [
@@ -469,6 +745,8 @@ class _MapThemePickerState extends State<_MapThemePicker> {
           seg(MapThemePref.light, l.mapThemeLight),
           const SizedBox(width: 4),
           seg(MapThemePref.dark, l.mapThemeDark),
+          const SizedBox(width: 4),
+          seg(MapThemePref.synthwave, l.mapThemeSynthwave),
         ],
       ),
     );
@@ -491,18 +769,18 @@ Future<String?> showRenameSheet(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l.renameTitle, style: _h2),
+          Text(l.renameTitle, style: _h2(context)),
           const SizedBox(height: 8),
-          Text(l.renameBody, style: _body),
+          Text(l.renameBody, style: _body(context)),
           const SizedBox(height: 14),
           TextField(
             controller: controller,
             autofocus: true,
             maxLength: 40,
-            style: const TextStyle(color: tokens.mist),
+            style: TextStyle(color: _tk(context).mist),
             decoration: InputDecoration(
               hintText: l.renamePlaceholder,
-              hintStyle: const TextStyle(color: tokens.muted),
+              hintStyle: TextStyle(color: _tk(context).muted),
             ),
             onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
           ),
@@ -536,9 +814,9 @@ Future<String?> showSaySheet(BuildContext context, {required String? current}) {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l.sayTitle, style: _h2),
+          Text(l.sayTitle, style: _h2(context)),
           const SizedBox(height: 8),
-          Text(l.sayBody, style: _body),
+          Text(l.sayBody, style: _body(context)),
           const SizedBox(height: 14),
           TextField(
             key: const ValueKey('say-input'),
@@ -546,10 +824,10 @@ Future<String?> showSaySheet(BuildContext context, {required String? current}) {
             autofocus: true,
             maxLength: sharedMessageMax,
             textInputAction: TextInputAction.send,
-            style: const TextStyle(color: tokens.mist),
+            style: TextStyle(color: _tk(context).mist),
             decoration: InputDecoration(
               hintText: l.sayPlaceholder,
-              hintStyle: const TextStyle(color: tokens.muted),
+              hintStyle: TextStyle(color: _tk(context).muted),
               suffixIcon: ValueListenableBuilder<TextEditingValue>(
                 valueListenable: controller,
                 builder: (context, value, _) => value.text.isEmpty
@@ -557,7 +835,7 @@ Future<String?> showSaySheet(BuildContext context, {required String? current}) {
                     : IconButton(
                         key: const ValueKey('say-clear-input'),
                         tooltip: l.sayClearInput,
-                        icon: const Icon(Icons.close_rounded, color: tokens.muted, size: 20),
+                        icon: Icon(Icons.close_rounded, color: _tk(context).muted, size: 20),
                         onPressed: controller.clear,
                       ),
               ),
@@ -597,9 +875,9 @@ Future<bool> askShareName(BuildContext context, String name) async {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 18),
-          Text(l.shareNameTitle, style: _h2),
+          Text(l.shareNameTitle, style: _h2(context)),
           const SizedBox(height: 8),
-          Text(l.shareNameBody(name), style: _body),
+          Text(l.shareNameBody(name), style: _body(context)),
           const SizedBox(height: 18),
           Row(
             children: [
@@ -654,8 +932,14 @@ Future<void> shareRoomLink(BuildContext context, String link) async {
 /// What the user picked in the rooms sheet: a remembered room's secret, or
 /// null for "open a new room".
 class RoomsChoice {
-  const RoomsChoice(this.secret);
+  const RoomsChoice(this.secret, {this.origin, this.remembered = false});
   final String? secret;
+
+  /// The server the room lives on; null for the configured one.
+  final String? origin;
+
+  /// A room from the recent list, whose server was accepted on first entry.
+  final bool remembered;
 }
 
 /// Recent rooms and the way to a fresh one. Opened from the brand chip.
@@ -710,7 +994,7 @@ class RoomsPicker extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l.roomsTitle, style: _h2),
+            Text(l.roomsTitle, style: _h2(context)),
             const SizedBox(height: 14),
             FilledButton.icon(
               onPressed: () => onChoose(const RoomsChoice(null)),
@@ -718,18 +1002,18 @@ class RoomsPicker extends StatelessWidget {
               label: Text(l.roomsNew),
             ),
             const SizedBox(height: 10),
-            _RoomLinkField(onSecret: (secret) => onChoose(RoomsChoice(secret))),
+            _RoomLinkField(onRoom: (secret, origin) => onChoose(RoomsChoice(secret, origin: origin))),
             if (rooms.isNotEmpty) ...[
               const SizedBox(height: 18),
               Text(l.roomsRecent,
-                  style: const TextStyle(color: tokens.muted, fontSize: 12, letterSpacing: 0.6)),
+                  style: TextStyle(color: _tk(context).muted, fontSize: 12, letterSpacing: 0.6)),
               const SizedBox(height: 4),
               for (final room in rooms)
                 _RoomTile(
                   room: room,
                   current: room.secret == currentSecret,
                   nameFor: nameFor,
-                  onOpen: () => onChoose(RoomsChoice(room.secret)),
+                  onOpen: () => onChoose(RoomsChoice(room.secret, origin: room.origin, remembered: true)),
                   onForget: () => recent.forget(room.secret),
                 ),
               if (forgettable)
@@ -742,7 +1026,7 @@ class RoomsPicker extends StatelessWidget {
                 ),
             ],
             const SizedBox(height: 8),
-            Text(l.roomsNote, style: _body.copyWith(fontSize: 12, color: tokens.muted)),
+            Text(l.roomsNote, style: _body(context).copyWith(fontSize: 12, color: _tk(context).muted)),
           ],
         );
       },
@@ -757,9 +1041,10 @@ class RoomsPicker extends StatelessWidget {
 /// gesture. On iOS the system edit menu is used: its Paste is user-initiated,
 /// so iOS does not ask "Allow Paste?" as it would for a programmatic read.
 class _RoomLinkField extends StatefulWidget {
-  const _RoomLinkField({required this.onSecret});
+  const _RoomLinkField({required this.onRoom});
 
-  final void Function(String secret) onSecret;
+  /// A pasted room link: its secret and the server it names (null: configured).
+  final void Function(String secret, String? origin) onRoom;
 
   @override
   State<_RoomLinkField> createState() => _RoomLinkFieldState();
@@ -776,18 +1061,18 @@ class _RoomLinkFieldState extends State<_RoomLinkField> {
   }
 
   void _changed(String text) {
-    final secret = secretFromText(text);
-    if (secret != null) {
-      widget.onSecret(secret);
+    final room = roomFromText(text);
+    if (room != null) {
+      widget.onRoom(room.secret, room.origin);
       return;
     }
     if (_invalid) setState(() => _invalid = false);
   }
 
   void _submit(String text) {
-    final secret = secretFromText(text);
-    if (secret != null) {
-      widget.onSecret(secret);
+    final room = roomFromText(text);
+    if (room != null) {
+      widget.onRoom(room.secret, room.origin);
     } else if (text.trim().isNotEmpty) {
       setState(() => _invalid = true);
     }
@@ -798,7 +1083,7 @@ class _RoomLinkFieldState extends State<_RoomLinkField> {
     final l = L.of(context);
     return TextField(
       controller: _controller,
-      style: const TextStyle(color: tokens.mist),
+      style: TextStyle(color: _tk(context).mist),
       keyboardType: TextInputType.url,
       autocorrect: false,
       textInputAction: TextInputAction.go,
@@ -808,9 +1093,9 @@ class _RoomLinkFieldState extends State<_RoomLinkField> {
           ? SystemContextMenu.editableText(editableTextState: state)
           : AdaptiveTextSelectionToolbar.editableText(editableTextState: state),
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.link, color: tokens.muted),
+        prefixIcon: Icon(Icons.link, color: _tk(context).muted),
         hintText: l.roomsLinkHint,
-        hintStyle: const TextStyle(color: tokens.muted),
+        hintStyle: TextStyle(color: _tk(context).muted),
         errorText: _invalid ? l.roomsLinkInvalid : null,
       ),
     );
@@ -841,28 +1126,35 @@ class _RoomTile extends StatelessWidget {
       contentPadding: current ? const EdgeInsets.only(left: 12, right: 8) : EdgeInsets.zero,
       onTap: onOpen,
       leading: Icon(current ? Icons.place : Icons.history,
-          color: current ? _honey : tokens.muted),
+          color: current ? _tk(context).beacon : _tk(context).muted),
       title: Text(title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-              color: tokens.mist,
+              color: _tk(context).mist,
               fontSize: 15,
               fontWeight: current ? FontWeight.w600 : FontWeight.normal)),
-      subtitle: Text(when, style: const TextStyle(color: tokens.muted, fontSize: 12)),
+      // A room on another server says which, so it is never mistaken for one
+      // on the official server.
+      subtitle: Text(
+          AppConfig.isOfficial(room.origin) ? when : '$when · ${AppConfig.hostOf(room.origin)}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+              color: AppConfig.isOfficial(room.origin) ? _tk(context).muted : _tk(context).signal, fontSize: 12)),
       // The open room cannot be forgotten from here, so it carries a badge
       // where the others have their close button.
       trailing: current
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: _honey, borderRadius: BorderRadius.circular(999)),
+              decoration: BoxDecoration(color: _tk(context).beacon, borderRadius: BorderRadius.circular(999)),
               child: Text(l.roomsCurrent,
-                  style: const TextStyle(
-                      color: _sheetBg, fontSize: 11, fontWeight: FontWeight.w700)),
+                  style: TextStyle(
+                      color: _tk(context).sheetBg, fontSize: 11, fontWeight: FontWeight.w700)),
             )
           : IconButton(
               tooltip: l.roomsForget,
-              icon: const Icon(Icons.close, color: tokens.muted, size: 20),
+              icon: Icon(Icons.close, color: _tk(context).muted, size: 20),
               onPressed: onForget,
             ),
     );
@@ -870,8 +1162,8 @@ class _RoomTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: _honey.withValues(alpha: 0.12),
-        border: Border.all(color: _honey.withValues(alpha: 0.6)),
+        color: _tk(context).beacon.withValues(alpha: 0.12),
+        border: Border.all(color: _tk(context).beacon.withValues(alpha: 0.6)),
         borderRadius: BorderRadius.circular(12),
       ),
       clipBehavior: Clip.antiAlias,
@@ -880,7 +1172,7 @@ class _RoomTile extends StatelessWidget {
   }
 }
 
-const Color _honey = tokens.beacon;
+
 
 /// "just now" up to "n days ago", in the app's own words. Placeholders are
 /// strings on purpose, matching the web (see scripts/i18n-to-arb.ts).
@@ -905,21 +1197,21 @@ Future<void> showParticipantsSheet(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l.participantsTitle, style: _h2),
+            Text(l.participantsTitle, style: _h2(context)),
             const SizedBox(height: 4),
             Text(
               controller.offlineSharers > 0
                   ? l.hereActiveOffline('${controller.presence}', '${controller.offlineSharers}')
                   : l.here('${controller.presence}'),
-              style: _body,
+              style: _body(context),
             ),
             const SizedBox(height: 8),
             if (roster.isEmpty)
-              Text(l.noSharers, style: _body)
+              Text(l.noSharers, style: _body(context))
             else
               for (final r in roster)
                 DecoratedBox(
-                  decoration: const BoxDecoration(border: Border(top: BorderSide(color: tokens.hair))),
+                  decoration: BoxDecoration(border: Border(top: BorderSide(color: _tk(context).hair))),
                   child: InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
@@ -936,7 +1228,7 @@ Future<void> showParticipantsSheet(
                               height: 22,
                               decoration: BoxDecoration(
                                 color: r.offline
-                                    ? Color.lerp(colorFromHue(r.identity.hue), tokens.muted, 0.85)
+                                    ? Color.lerp(colorFromHue(r.identity.hue), _tk(context).muted, 0.85)
                                     : colorFromHue(r.identity.hue),
                                 shape: BoxShape.circle,
                               ),
@@ -950,7 +1242,7 @@ Future<void> showParticipantsSheet(
                                 Text(
                                   r.identity.name,
                                   style: TextStyle(
-                                    color: r.offline ? tokens.muted : tokens.mist,
+                                    color: r.offline ? _tk(context).muted : _tk(context).mist,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -962,7 +1254,7 @@ Future<void> showParticipantsSheet(
                                       '💬 ${r.entry.message}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: tokens.muted, fontSize: 12.5),
+                                      style: TextStyle(color: _tk(context).muted, fontSize: 12.5),
                                     ),
                                   ),
                               ],
@@ -971,8 +1263,8 @@ Future<void> showParticipantsSheet(
                           if (r.offline)
                             Text(
                               l.offlineStatus.toUpperCase(),
-                              style: const TextStyle(
-                                color: tokens.signal,
+                              style: TextStyle(
+                                color: _tk(context).signal,
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.35,
@@ -986,7 +1278,7 @@ Future<void> showParticipantsSheet(
             if (controller.watchers > 0) ...[
               const SizedBox(height: 12),
               Text(l.watchingLine('${controller.watchers}'),
-                  style: const TextStyle(color: tokens.muted, fontSize: 13)),
+                  style: TextStyle(color: _tk(context).muted, fontSize: 13)),
             ],
           ],
         );

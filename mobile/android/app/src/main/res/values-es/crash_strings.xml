@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crash_dialog_title">HereBee se ha cerrado inesperadamente</string>
+    <string name="crash_dialog_text">¿Quieres enviar un informe de error para que se pueda corregir?\n\nSe envía al servidor de HereBee que usa esta app (%1$s), que lo reenvía por correo al operador. Contiene la versión de la app, la versión de Android, la marca y el modelo del dispositivo, el registro técnico del error y tu comentario, si escribes uno.\n\nNo contiene ubicación, nombres ni datos de salas. No se envía nada si no pulsas Enviar.</string>
+    <string name="crash_dialog_comment">Opcional: ¿qué estabas haciendo? (No introduzcas datos personales.)</string>
+    <string name="crash_dialog_send">Enviar</string>
+    <string name="crash_dialog_dont_send">No enviar</string>
+</resources>
