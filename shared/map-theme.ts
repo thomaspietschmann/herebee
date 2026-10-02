@@ -81,19 +81,21 @@ function night(): Flavor {
 }
 
 /**
- * Synthwave ("Grid Toxic"): a near-black ground with a glowing neon-green
- * street wireframe, hot-pink arteries and teal-black water. Labels are pale
- * tints on near-black halos so they stay legible over the bright lines.
+ * Synthwave ("Grid Toxic"): a near-black ground with a hot-pink street
+ * wireframe, neon-green motorways, clearly green parks and woods, and teal
+ * water. Labels are pale tints on near-black halos so they stay legible over
+ * the bright lines.
  */
 function synthwave(): Flavor {
   const base = namedFlavor("dark");
   const ground = "#010403";
   const earth = "#020705";
   const buildings = "#08140f";
-  const park = "#03110a";
-  const park2 = "#04180e";
-  const minor = "#2fd85a";
-  const pink = "#ff2bd6";
+  const park = "#0b4a1f";
+  const park2 = "#0f5f28";
+  const minor = "#ff3ad9";
+  const pink = "#ff6be6";
+  const neon = "#39ff14";
   const tunnel = "#0c3f24";
   const label = "#eefff2";
   const label2 = "#8fd8a6";
@@ -117,11 +119,11 @@ function synthwave(): Flavor {
     military: earth,
     industrial: buildings,
     aerodrome: buildings,
-    runway: minor,
+    runway: neon,
     pier: minor,
     sand: earth,
     beach: earth,
-    water: "#03262a",
+    water: "#05414a",
     railway: "#3a1a4a",
     boundaries: pink,
     tunnel_other_casing: ground,
@@ -134,7 +136,7 @@ function synthwave(): Flavor {
     tunnel_link: tunnel,
     tunnel_major: tunnel,
     tunnel_highway: tunnel,
-    ...roads(ground, minor, pink, "#ff4fe0"),
+    ...roads(ground, minor, pink, neon),
     roads_label_minor: roadLabel,
     roads_label_minor_halo: ground,
     roads_label_major: roadLabel,
