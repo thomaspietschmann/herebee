@@ -160,7 +160,15 @@ class _RoomHostState extends State<_RoomHost> {
     } catch (_) {
       // No link, or the platform has none to give.
     }
-    _linkSub = _appLinks.uriLinkStream.listen(_onLink);
+    var skipInitial = initial != null;
+    _linkSub = _appLinks.uriLinkStream.listen((uri) {
+      if (skipInitial && uri == initial) {
+        skipInitial = false;
+        return;
+      }
+      skipInitial = false;
+      _onLink(uri);
+    });
 
     if (_secretOverride.isNotEmpty) {
       _openRoom(_secretOverride, widget.storage.serverOrigin);

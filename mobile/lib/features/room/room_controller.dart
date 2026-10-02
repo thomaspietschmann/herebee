@@ -243,11 +243,11 @@ class RoomController extends ChangeNotifier {
       // A hand-edited or truncated link. Say so instead of joining a room nobody
       // else can reach.
       _invalidLink = true;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
       return;
     }
     _selfSeed = await storage.roomSeed(_keys!.roomId);
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   /// Nothing touches the network until the user actively enters: becoming
