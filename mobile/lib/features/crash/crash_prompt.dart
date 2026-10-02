@@ -134,8 +134,22 @@ class _CrashDialogState extends State<_CrashDialog> {
           style: TextStyle(color: t.mist, fontSize: 19, fontWeight: FontWeight.w700)),
       content: SingleChildScrollView(
         child: done
-            ? Text(_phase == _Phase.sent ? l.crashSent : l.crashSendFailed,
-                key: const ValueKey('crash-result'), style: body.copyWith(color: t.mist))
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _phase == _Phase.sent ? Icons.check_circle_rounded : Icons.error_rounded,
+                    key: ValueKey(_phase == _Phase.sent ? 'crash-sent-icon' : 'crash-failed-icon'),
+                    color: _phase == _Phase.sent ? t.beacon : t.signal,
+                    size: 56,
+                  ),
+                  const SizedBox(height: 14),
+                  Text(_phase == _Phase.sent ? l.crashSent : l.crashSendFailed,
+                      key: const ValueKey('crash-result'),
+                      textAlign: TextAlign.center,
+                      style: body.copyWith(color: t.mist)),
+                ],
+              )
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
