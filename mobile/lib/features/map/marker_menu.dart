@@ -158,6 +158,7 @@ class _MarkerMenuState extends State<MarkerMenu> with TickerProviderStateMixin {
 
     return LayoutBuilder(builder: (context, constraints) {
       final screen = Offset.zero & constraints.biggest;
+      final outer = MediaQuery.paddingOf(context).deflateRect(screen).deflate(8);
       if (widget.data != null && !screen.contains(anchor)) {
         WidgetsBinding.instance.addPostFrameCallback((_) => widget.onClose());
       }
@@ -178,6 +179,7 @@ class _MarkerMenuState extends State<MarkerMenu> with TickerProviderStateMixin {
               delegate: _MenuDelegate(
                 anchor: anchor,
                 bounds: widget.bounds,
+                outer: outer,
                 springs: _springs,
                 previous: _choice,
                 instant: instant,
@@ -223,6 +225,7 @@ class _MenuDelegate extends MultiChildLayoutDelegate {
   _MenuDelegate({
     required this.anchor,
     required this.bounds,
+    required this.outer,
     required this.springs,
     required this.previous,
     required this.instant,
@@ -233,6 +236,7 @@ class _MenuDelegate extends MultiChildLayoutDelegate {
   final int count;
   final Offset anchor;
   final Rect bounds;
+  final Rect outer;
   final List<Spring> springs;
   final MenuChoice? previous;
   final bool instant;
@@ -252,6 +256,7 @@ class _MenuDelegate extends MultiChildLayoutDelegate {
       box: box,
       previous: previous,
       count: count,
+      outer: outer,
     );
     onLayout(layout);
     final live = springs.length == count + 1;
@@ -266,6 +271,7 @@ class _MenuDelegate extends MultiChildLayoutDelegate {
   bool shouldRelayout(_MenuDelegate old) =>
       old.anchor != anchor ||
       old.bounds != bounds ||
+      old.outer != outer ||
       old.springs != springs ||
       old.instant != instant ||
       old.count != count;

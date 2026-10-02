@@ -5,8 +5,14 @@ const double _spread = 50;
 const double _gap = 10;
 const double _bubbleMargin = 4;
 const double _hysteresis = 12;
-const List<double> _arcDirections = [-90, -45, -135, 0, 180, 45, 135, 90];
-const List<double> _boxTurns = [180, 135, -135, 90, -90];
+const double _arcStep = 15;
+final List<double> _arcDirections = [
+  -90,
+  for (var k = 1; k <= 12; k++)
+    if (k == 12) 90 else ...[-90 + _arcStep * k, -90 - _arcStep * k],
+];
+const List<double> _sides = [-90, 90, 180, 0];
+const int _slides = 3;
 
 class MenuChoice {
   const MenuChoice(this.dir, this.turn, this.dist);
@@ -44,23 +50,12 @@ bool _overlaps(Rect a, Rect b, double margin) =>
     (a.center.dx - b.center.dx).abs() < (a.width + b.width) / 2 + margin &&
     (a.center.dy - b.center.dy).abs() < (a.height + b.height) / 2 + margin;
 
-List<Rect> _shiftInside(List<Rect> rects, Rect bounds) {
-  final left = rects.map((r) => r.left).reduce(math.min);
-  final right = rects.map((r) => r.right).reduce(math.max);
-  final top = rects.map((r) => r.top).reduce(math.min);
-  final bottom = rects.map((r) => r.bottom).reduce(math.max);
-  final dx = left < bounds.left
-      ? bounds.left - left
-      : right > bounds.right
-          ? math.max(bounds.right - right, bounds.left - left)
-          : 0.0;
-  final dy = top < bounds.top
-      ? bounds.top - top
-      : bottom > bounds.bottom
-          ? math.max(bounds.bottom - bottom, bounds.top - top)
-          : 0.0;
-  return [for (final r in rects) r.shift(Offset(dx, dy))];
+double _angleGap(double a, double b) {
+  final d = ((((a - b) % 360) + 360) % 360).abs();
+  return math.min(d, 360 - d);
 }
+
+double _clamp(double v, double lo, double hi) => math.min(math.max(v, lo), hi);
 
 MenuLayout layoutMenu({
   required Offset anchor,
@@ -70,11 +65,11 @@ MenuLayout layoutMenu({
   required Size box,
   MenuChoice? previous,
   int count = 3,
+  Rect? outer,
 }) {
   final ring = beeRadius + _gap + bubble / 2;
   final step = math.max(_spread, _deg(2 * math.asin(math.min(1.0, (bubble + _bubbleMargin) / (2 * ring)))));
   final boxDistances = [beeRadius + _gap, beeRadius + _gap + bubble + _gap];
-  final strict = bounds.deflate(_hysteresis);
 
   List<Rect> bubblesAt(double dir) => [
         for (var i = 0; i < count; i++)
@@ -88,13 +83,19 @@ MenuLayout layoutMenu({
           ),
       ];
 
-  Rect boxAt(double dir, double dist) {
-    final ux = math.cos(_rad(dir));
-    final uy = math.sin(_rad(dir));
+  Rect boxAt(double side, double dist, int slide, Rect region) {
+    final vertical = side == -90 || side == 90;
+    final ux = math.cos(_rad(side)).round();
+    final uy = math.sin(_rad(side)).round();
+    final limit = math.max(0.0, (vertical ? box.width : box.height) / 2 - beeRadius);
+    final lo = vertical ? region.left + box.width / 2 - anchor.dx : region.top + box.height / 2 - anchor.dy;
+    final hi = vertical ? region.right - box.width / 2 - anchor.dx : region.bottom - box.height / 2 - anchor.dy;
+    final fit = _clamp(lo > hi ? lo : _clamp(0, lo, hi), -limit, limit);
+    final s = slide == 0 ? fit : slide == 1 ? -limit : limit;
     return Rect.fromCenter(
       center: Offset(
-        anchor.dx + ux * dist + ux * box.width / 2,
-        anchor.dy + uy * dist + uy * box.height / 2,
+        anchor.dx + ux * (dist + box.width / 2) + (vertical ? s : 0),
+        anchor.dy + uy * (dist + box.height / 2) + (vertical ? 0 : s),
       ),
       width: box.width,
       height: box.height,
@@ -104,34 +105,46 @@ MenuLayout layoutMenu({
   double total(List<Rect> bubbles, Rect b, Rect within) =>
       bubbles.fold(0.0, (s, x) => s + _overflow(x, within)) + _overflow(b, within);
 
-  var passedPrevious = previous == null;
+  final regions = outer == null ? [bounds] : [bounds, outer];
+  final last = regions.last;
   List<Rect>? bestBubbles;
   Rect? bestBox;
   MenuChoice? bestChoice;
   var bestOverflow = double.infinity;
-  for (var d = 0; d < _arcDirections.length; d++) {
-    final dir = _arcDirections[d];
-    final bubbles = bubblesAt(dir);
-    for (var t = 0; t < _boxTurns.length; t++) {
-      for (var k = 0; k < boxDistances.length; k++) {
-        final b = boxAt(dir + _boxTurns[t], boxDistances[k]);
-        final choice = MenuChoice(d, t, k);
-        if (choice == previous) passedPrevious = true;
-        if (bubbles.any((x) => _overlaps(x, b, 4))) continue;
-        final within = passedPrevious ? bounds : strict;
-        if (total(bubbles, b, within) == 0) return _result(anchor, bubbles, b, choice);
-        final over = total(bubbles, b, bounds);
-        if (over < bestOverflow) {
-          bestOverflow = over;
-          bestBubbles = bubbles;
-          bestBox = b;
-          bestChoice = choice;
+  for (var r = 0; r < regions.length; r++) {
+    final region = regions[r];
+    final strict = region.deflate(_hysteresis);
+    var passedPrevious = previous == null;
+    for (var d = 0; d < _arcDirections.length; d++) {
+      final dir = _arcDirections[d];
+      final bubbles = bubblesAt(dir);
+      final sides = [for (var i = 0; i < _sides.length; i++) i]
+        ..sort((a, b) {
+          final byGap = _angleGap(_sides[a], dir + 180).compareTo(_angleGap(_sides[b], dir + 180));
+          return byGap != 0 ? byGap : a.compareTo(b);
+        });
+      for (final i in sides) {
+        for (var k = 0; k < boxDistances.length; k++) {
+          for (var v = 0; v < _slides; v++) {
+            final choice = MenuChoice(r * _arcDirections.length + d, i * _slides + v, k);
+            if (choice == previous) passedPrevious = true;
+            final within = passedPrevious ? region : strict;
+            final b = boxAt(_sides[i], boxDistances[k], v, within);
+            if (bubbles.any((x) => _overlaps(x, b, 4))) continue;
+            if (total(bubbles, b, within) == 0) return _result(anchor, bubbles, b, choice);
+            final over = total(bubbles, b, last);
+            if (over < bestOverflow) {
+              bestOverflow = over;
+              bestBubbles = bubbles;
+              bestBox = b;
+              bestChoice = choice;
+            }
+          }
         }
       }
     }
   }
-  final shifted = _shiftInside([...bestBubbles!, bestBox!], bounds);
-  return _result(anchor, shifted.sublist(0, count), shifted[count], bestChoice!);
+  return _result(anchor, bestBubbles!, bestBox!, bestChoice!);
 }
 
 MenuLayout _result(Offset anchor, List<Rect> bubbles, Rect box, MenuChoice choice) => MenuLayout(

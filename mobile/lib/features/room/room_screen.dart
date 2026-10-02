@@ -401,6 +401,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                 initStyle: _style!,
                 initCenter: _mapCenter,
                 initZoom: _mapZoom,
+                androidMode: AndroidPlatformViewMode.hc,
                 // Location comes from peers, not from the camera; keep the
                 // canvas gesture-friendly and upright, like the web client.
                 gestures: const MapGestures(pan: true, zoom: true, rotate: false, pitch: false),

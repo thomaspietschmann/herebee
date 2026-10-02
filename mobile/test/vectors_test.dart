@@ -181,6 +181,13 @@ void main() {
           box: Size((input['box']['w'] as num).toDouble(), (input['box']['h'] as num).toDouble()),
           previous: choiceOf(input['previous']),
           count: (input['count'] as int?) ?? 3,
+          outer: input['outer'] == null
+              ? null
+              : Rect.fromLTRB(
+                  (input['outer']['left'] as num).toDouble(),
+                  (input['outer']['top'] as num).toDouble(),
+                  (input['outer']['right'] as num).toDouble(),
+                  (input['outer']['bottom'] as num).toDouble()),
         );
         final want = v['output'];
         final wantBubbles = [for (final p in want['bubbles'] as List<dynamic>) pt(p)];

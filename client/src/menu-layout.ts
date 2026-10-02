@@ -24,6 +24,7 @@ export interface MenuLayoutInput {
   box: { w: number; h: number };
   previous?: MenuChoice | null;
   count?: number;
+  outer?: Bounds | null;
 }
 
 export interface MenuLayout {
@@ -36,8 +37,10 @@ const SPREAD = 50;
 const GAP = 10;
 const BUBBLE_MARGIN = 4;
 const HYSTERESIS = 12;
-const ARC_DIRECTIONS = [-90, -45, -135, 0, 180, 45, 135, 90];
-const BOX_TURNS = [180, 135, -135, 90, -90];
+const ARC_STEP = 15;
+const ARC_DIRECTIONS = [-90, ...Array.from({ length: 12 }, (_, i) => i + 1).flatMap((k) => (k === 12 ? [90] : [-90 + ARC_STEP * k, -90 - ARC_STEP * k]))];
+const SIDES = [-90, 90, 180, 0];
+const SLIDES = 3;
 
 interface Box {
   x: number;
@@ -62,38 +65,27 @@ function overlaps(a: Box, b: Box, margin: number): boolean {
   return Math.abs(a.x - b.x) < (a.w + b.w) / 2 + margin && Math.abs(a.y - b.y) < (a.h + b.h) / 2 + margin;
 }
 
-function shiftInside(boxes: Box[], bounds: Bounds): Box[] {
-  const left = Math.min(...boxes.map((b) => b.x - b.w / 2));
-  const right = Math.max(...boxes.map((b) => b.x + b.w / 2));
-  const top = Math.min(...boxes.map((b) => b.y - b.h / 2));
-  const bottom = Math.max(...boxes.map((b) => b.y + b.h / 2));
-  const dx =
-    left < bounds.left
-      ? bounds.left - left
-      : right > bounds.right
-        ? Math.max(bounds.right - right, bounds.left - left)
-        : 0;
-  const dy =
-    top < bounds.top
-      ? bounds.top - top
-      : bottom > bounds.bottom
-        ? Math.max(bounds.bottom - bottom, bounds.top - top)
-        : 0;
-  return boxes.map((b) => ({ ...b, x: b.x + dx, y: b.y + dy }));
-}
-
 function deflate(bounds: Bounds, by: number): Bounds {
   return { left: bounds.left + by, top: bounds.top + by, right: bounds.right - by, bottom: bounds.bottom - by };
+}
+
+function angleGap(a: number, b: number): number {
+  const d = Math.abs((((a - b) % 360) + 360) % 360);
+  return Math.min(d, 360 - d);
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.min(Math.max(v, lo), hi);
 }
 
 export function layoutMenu(input: MenuLayoutInput): MenuLayout {
   const { anchor, bounds, beeRadius, bubble, box } = input;
   const previous = input.previous ?? null;
   const count = input.count ?? 3;
+  const outer = input.outer ?? null;
   const ring = beeRadius + GAP + bubble / 2;
   const step = Math.max(SPREAD, deg(2 * Math.asin(Math.min(1, (bubble + BUBBLE_MARGIN) / (2 * ring)))));
   const boxDistances = [beeRadius + GAP, beeRadius + GAP + bubble + GAP];
-  const strict = deflate(bounds, HYSTERESIS);
 
   const bubblesAt = (dir: number): Box[] =>
     Array.from({ length: count }, (_, i) => dir + (i - (count - 1) / 2) * step).map((a) => ({
@@ -103,12 +95,18 @@ export function layoutMenu(input: MenuLayoutInput): MenuLayout {
       h: bubble,
     }));
 
-  const boxAt = (dir: number, dist: number): Box => {
-    const ux = Math.cos(rad(dir));
-    const uy = Math.sin(rad(dir));
+  const boxAt = (side: number, dist: number, slide: number, region: Bounds): Box => {
+    const vertical = side === -90 || side === 90;
+    const ux = Math.round(Math.cos(rad(side)));
+    const uy = Math.round(Math.sin(rad(side)));
+    const limit = Math.max(0, (vertical ? box.w : box.h) / 2 - beeRadius);
+    const lo = vertical ? region.left + box.w / 2 - anchor.x : region.top + box.h / 2 - anchor.y;
+    const hi = vertical ? region.right - box.w / 2 - anchor.x : region.bottom - box.h / 2 - anchor.y;
+    const fit = clamp(lo > hi ? lo : clamp(0, lo, hi), -limit, limit);
+    const s = slide === 0 ? fit : slide === 1 ? -limit : limit;
     return {
-      x: anchor.x + ux * dist + (ux * box.w) / 2,
-      y: anchor.y + uy * dist + (uy * box.h) / 2,
+      x: anchor.x + ux * (dist + box.w / 2) + (vertical ? s : 0),
+      y: anchor.y + uy * (dist + box.h / 2) + (vertical ? 0 : s),
       w: box.w,
       h: box.h,
     };
@@ -117,32 +115,42 @@ export function layoutMenu(input: MenuLayoutInput): MenuLayout {
   const total = (bubbles: Box[], b: Box, within: Bounds): number =>
     bubbles.reduce((s, x) => s + overflow(x, within), 0) + overflow(b, within);
 
-  let passedPrevious = previous === null;
+  const regions = outer ? [bounds, outer] : [bounds];
+  const last = regions[regions.length - 1];
   let best: { bubbles: Box[]; box: Box; choice: MenuChoice } | null = null;
   let bestOverflow = Infinity;
-  for (let d = 0; d < ARC_DIRECTIONS.length; d++) {
-    const dir = ARC_DIRECTIONS[d];
-    const bubbles = bubblesAt(dir);
-    for (let t = 0; t < BOX_TURNS.length; t++) {
-      for (let k = 0; k < boxDistances.length; k++) {
-        const b = boxAt(dir + BOX_TURNS[t], boxDistances[k]);
-        const choice = { dir: d, turn: t, dist: k };
-        if (previous !== null && previous.dir === d && previous.turn === t && previous.dist === k) {
-          passedPrevious = true;
-        }
-        if (bubbles.some((x) => overlaps(x, b, 4))) continue;
-        const within = passedPrevious ? bounds : strict;
-        if (total(bubbles, b, within) === 0) return result(anchor, bubbles, b, choice);
-        const over = total(bubbles, b, bounds);
-        if (over < bestOverflow) {
-          bestOverflow = over;
-          best = { bubbles, box: b, choice };
+  for (let r = 0; r < regions.length; r++) {
+    const region = regions[r];
+    const strict = deflate(region, HYSTERESIS);
+    let passedPrevious = previous === null;
+    for (let d = 0; d < ARC_DIRECTIONS.length; d++) {
+      const dir = ARC_DIRECTIONS[d];
+      const bubbles = bubblesAt(dir);
+      const sides = SIDES.map((side, i) => ({ side, i })).sort(
+        (a, b) => angleGap(a.side, dir + 180) - angleGap(b.side, dir + 180) || a.i - b.i
+      );
+      for (const { side, i } of sides) {
+        for (let k = 0; k < boxDistances.length; k++) {
+          for (let v = 0; v < SLIDES; v++) {
+            const choice = { dir: r * ARC_DIRECTIONS.length + d, turn: i * SLIDES + v, dist: k };
+            if (previous !== null && previous.dir === choice.dir && previous.turn === choice.turn && previous.dist === k) {
+              passedPrevious = true;
+            }
+            const within = passedPrevious ? region : strict;
+            const b = boxAt(side, boxDistances[k], v, within);
+            if (bubbles.some((x) => overlaps(x, b, 4))) continue;
+            if (total(bubbles, b, within) === 0) return result(anchor, bubbles, b, choice);
+            const over = total(bubbles, b, last);
+            if (over < bestOverflow) {
+              bestOverflow = over;
+              best = { bubbles, box: b, choice };
+            }
+          }
         }
       }
     }
   }
-  const shifted = shiftInside([...best!.bubbles, best!.box], bounds);
-  return result(anchor, shifted.slice(0, count), shifted[count], best!.choice);
+  return result(anchor, best!.bubbles, best!.box, best!.choice);
 }
 
 function result(anchor: Point, bubbles: Box[], box: Box, choice: MenuChoice): MenuLayout {

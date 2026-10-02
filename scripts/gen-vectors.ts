@@ -65,6 +65,12 @@ for (const count of [3, 4]) {
   const wideTurned = layoutMenu({ ...WIDE, anchor: { x: 195, y: 160 }, count }).choice;
   MENU_CASES.push({ ...WIDE, anchor: { x: 195, y: 190 }, previous: wideTurned, count });
 }
+const OUTER = { left: 8, top: 55, right: 382, bottom: 810 };
+for (const count of [3, 4]) {
+  for (const [x, y] of [[195, 60], [40, 140], [350, 140], [195, 720], [15, 420], [375, 650]]) {
+    MENU_CASES.push({ ...WIDE, anchor: { x, y }, count, outer: OUTER });
+  }
+}
 const menuLayout = MENU_CASES.map((input) => ({ input, output: layoutMenu(input) }));
 
 const ROOM_SEED_CASES = [

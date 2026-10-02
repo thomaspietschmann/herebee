@@ -378,6 +378,7 @@ export class MarkerManager {
       box: { w: box.offsetWidth, h: box.offsetHeight },
       previous: this.menuChoice,
       count: el.querySelectorAll(".mk-bubble").length,
+      outer: { left: rect.left + 8, top: rect.top + 8, right: rect.right - 8, bottom: rect.bottom - 8 },
     });
     this.menuChoice = layout.choice;
     this.menuMotion?.aim([...layout.bubbles, layout.box]);
