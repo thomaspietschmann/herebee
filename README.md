@@ -109,8 +109,8 @@ and clones the Protomaps fonts and sprites into `server/assets/basemaps/`.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BBOX` | `-180,-85,180,85` (whole world; was `5.5,45.5,17.2,55.1` / DACH) | `minLon,minLat,maxLon,maxLat` of the extract |
-| `MAXZOOM` | `12` (was `14`) | Maximum zoom level in the extract |
+| `BBOX` | `-180,-85,180,85` (whole world) | `minLon,minLat,maxLon,maxLat` of the extract |
+| `MAXZOOM` | `12` | Maximum zoom level in the extract |
 | `OUT` | `server/assets/tiles/basemap.pmtiles` | Output path |
 | `PLANET` | latest build | Explicit planet URL |
 
@@ -166,7 +166,7 @@ app). The apps can use any other server that runs this web app:
   to new rooms. Rooms already remembered keep their server.
 - **Room links name their server.** `https://other.example/r/#<secret>` (pasted)
   or `herebee://r?server=https%3A%2F%2Fother.example#<secret>` open the room on
-  that server, again only after the warning. The web page on another server
+  that server, again only after the warning. On iOS the web page on another server
   builds that `herebee://` link for its "open in the app" button.
 - Every room on such a server repeats the warning in its entry gate. The web
   app shows the same warning in its entry gate and settings whenever it is not
@@ -174,7 +174,8 @@ app). The apps can use any other server that runs this web app:
 
 For the apps to work against your server, it must be HTTPS (release builds
 refuse cleartext) and, if `ALLOWED_ORIGINS` is set, it must include
-`app://herebee`.
+`app://herebee`. See [Running your own server](#running-your-own-server) for
+setting one up with your own map.
 
 The payloads stay end-to-end encrypted on any server. The warning exists
 because the operator sees IPs, room timing and, through the tiles, roughly which
@@ -183,9 +184,10 @@ area people look at. In a browser it also serves the code that handles the key.
 ### House numbers
 
 The Protomaps basemap carries house numbers only from zoom 15, and the extract
-stops at 14. House numbers therefore come from a separate, much smaller archive,
-`server/assets/tiles/addresses.pmtiles` (Europe: 104 million numbers in 1.1 GB),
-shown from zoom 15 on top of the basemap.
+stops at 12 or 14. House numbers therefore come from a separate, much smaller
+archive, `server/assets/tiles/addresses.pmtiles` (Europe, North, Central and
+South America: about 1.8 GB), shown from zoom 15 on top of the basemap. Without
+it the map works as before, only without house numbers.
 
 It is built from OpenStreetMap with Planetiler, osmium and Geofabrik country
 extracts by `scripts/addresses/build.sh`, which filters each country to objects
@@ -196,8 +198,13 @@ overlap at borders) and builds one PMTiles layer `addresses` at zoom 14:
 SNAPSHOT=260929 WORK=/some/scratch/dir scripts/addresses/build.sh
 ```
 
-The result is published as a GitHub release asset (`addresses-europe-YYYYMMDD`)
-under the ODbL, like the OSM data it comes from. In production the container
+`REGIONS` selects the Geofabrik regions (default
+`europe north-america north-america/us central-america south-america`).
+
+`.github/workflows/addresses.yml` runs this every two months (and on demand),
+publishes the result as a GitHub release asset (`addresses-YYYYMMDD`) under the
+ODbL, like the OSM data it comes from, and opens a PR that pins the new URL and
+checksum. In production the container
 entrypoint downloads it into the tiles volume and checks its SHA-256; the pinned
 URL and checksum live in `scripts/entrypoint.sh` and can be overridden with
 `ADDRESSES_URL` / `ADDRESSES_SHA256` (an empty `ADDRESSES_URL` disables it). For
@@ -258,9 +265,12 @@ WebSocket upgrade.
 | `ALLOWED_ORIGINS` | unset | Comma list of browser origins allowed to open the WebSocket. When set, a browser `Origin` is required. Add `app://herebee` to admit the native apps. |
 | `PUBLIC_ORIGIN` | derived per request | Absolute origin written into `/style/{lang}.json`. Set it in production. |
 | `TRUSTED_PROXY_HOPS` | `0` | Number of reverse proxies in front of the process. `1` behind a single proxy, so the per-IP cap uses the real client IP. |
-| `BBOX` | `-180,-85,180,85` | Region of the tile extract (was `5.5,45.5,17.2,55.1`) |
-| `MAXZOOM` | `12` | Maximum zoom of the tile extract (was `14`) |
+| `BBOX` | `-180,-85,180,85` | Region of the tile extract |
+| `MAXZOOM` | `12` | Maximum zoom of the tile extract |
 | `PLANET_URL` | latest build | Explicit Protomaps planet URL for the extract |
+| `ADDRESSES_URL` | pinned release | House-number archive to download. Empty disables house numbers. |
+| `ADDRESSES_SHA256` | pinned checksum | SHA-256 the download must match |
+| `ASSETS_DIR` | `/app/server/assets` | Root of `tiles/`, `basemaps/fonts/` and `basemaps/sprites/` |
 | `APPLE_APP_IDS` | unset | Comma list of `TEAMID.bundleId` for `apple-app-site-association` |
 | `ANDROID_PACKAGE` | unset | Android application id for `assetlinks.json` |
 | `ANDROID_CERT_SHA256` | unset | Comma list of signing certificate SHA-256 fingerprints for `assetlinks.json` |
@@ -315,6 +325,125 @@ is set. `/.well-known/assetlinks.json` is served only when both
 `ANDROID_PACKAGE` and `ANDROID_CERT_SHA256` are set. Everything else under
 `/.well-known/` returns 404 rather than the web app's HTML, so a verifier
 never receives a page instead of JSON.
+
+## Running your own server
+
+A complete HereBee server is the Docker image plus one volume for the map
+archives. No database, no other service. A minimal run:
+
+```bash
+docker build -t herebee .
+docker volume create herebee-tiles
+docker run -d --name herebee -p 3000:3000 \
+  -v herebee-tiles:/app/server/assets/tiles \
+  -e PUBLIC_ORIGIN=https://map.example.org \
+  -e ALLOWED_ORIGINS=https://map.example.org,app://herebee \
+  -e TRUSTED_PROXY_HOPS=1 \
+  -e BBOX=5.5,45.5,17.2,55.1 -e MAXZOOM=14 \
+  herebee
+```
+
+Put an HTTPS reverse proxy in front of it (Caddy, nginx, Traefik). It must
+forward the WebSocket upgrade on `/ws` and pass `Range` and `If-Range` through
+unchanged; MapLibre reads the archives in byte ranges and breaks on a proxy
+that strips them or recompresses `.pmtiles`. `TRUSTED_PROXY_HOPS` is the number
+of proxies in front of the container, so the per-IP limits see the real client.
+`/healthz` answers as soon as the process is up, before any map is there.
+
+The apps can then use it via Settings → Server (see [Other servers](#other-servers)).
+It must be reachable over HTTPS with a valid certificate.
+
+### Choosing the map
+
+The style expects an archive in the Protomaps basemap schema (the layers that
+`@protomaps/basemaps` v5 styles). There are three ways to get one onto the
+volume:
+
+1. **Automatic extract (default).** On start the entrypoint cuts
+   `basemap.pmtiles` out of the latest Protomaps planet build with
+   `pmtiles extract`, in the background. Only the tiles inside `BBOX` up to
+   `MAXZOOM` are downloaded, never the whole planet. Plan the volume for the
+   extract plus its temporary copy (`basemap.pmtiles.tmp`).
+
+   | Extract | Size |
+   |---|---|
+   | World, zoom 6 | 45 MB |
+   | World, zoom 8 | 557 MB |
+   | World, zoom 10 | 3.8 GB |
+   | World, zoom 11 | 8 GB |
+   | World, zoom 12 (default) | 18 GB |
+   | World, zoom 13 | 36 GB |
+   | World, zoom 14 | 68 GB |
+   | World, zoom 15 (full planet) | 138 GB |
+   | Europe (`-25,34,45,72`), zoom 14 | 25 GB |
+   | Germany (`5.87,47.27,15.04,55.06`), zoom 14 | 3.4 GB |
+
+   Measured on the build of 2026-10-02 with `pmtiles extract … --dry-run`, in
+   decimal GB. From zoom 12 on, each level roughly doubles the size. To size
+   your own region, run the same dry run; it reads only the archive's
+   directories, not the tiles:
+
+   ```bash
+   pmtiles extract https://build.protomaps.com/20261002.pmtiles /tmp/x.pmtiles \
+     --bbox=5.87,47.27,15.04,55.06 --maxzoom=14 --dry-run
+   ```
+2. **A pinned or mirrored planet.** `PLANET_URL` points the extract at a
+   specific Protomaps build or at your own copy of one. Any HTTPS URL that
+   supports range requests works, including object storage. Use this when the
+   map must not change between restarts.
+3. **Your own archive.** Copy a finished `basemap.pmtiles` onto the volume, for
+   example a full build from [maps.protomaps.com/builds](https://maps.protomaps.com/builds/)
+   or one you built yourself with the Planetiler profile in
+   [protomaps/basemaps](https://github.com/protomaps/basemaps) (`tiles/`). Then write
+   `.params` next to it with the same `BBOX@MAXZOOM` the container runs with,
+   otherwise the entrypoint treats the file as stale and replaces it:
+
+   ```bash
+   printf '%s' '5.5,45.5,17.2,55.1@14' > /path/to/volume/.params
+   ```
+
+The entrypoint re-extracts only when `basemap.pmtiles` is missing or
+`BBOX`/`MAXZOOM` changed. It deletes the old file first, so the map is gone
+until the new extract finishes. The style URL carries a version token derived
+from the file's size and mtime, so clients drop cached tiles of a replaced
+archive on their own.
+
+### House numbers on your server
+
+By default the entrypoint downloads the pinned Europe-and-Americas archive from
+this repository's releases. Alternatives:
+
+- `ADDRESSES_URL=` (empty) disables house numbers.
+- Build your own region with `REGIONS="asia" SNAPSHOT=... WORK=... scripts/addresses/build.sh`,
+  host the result anywhere over HTTPS and set `ADDRESSES_URL` and
+  `ADDRESSES_SHA256` to it. A mismatched checksum keeps the previous file.
+- Or put an `addresses.pmtiles` on the volume yourself and set
+  `ADDRESSES_URL=` so the entrypoint leaves it alone.
+
+### Fonts and sprites
+
+Glyphs and sprites are baked into the image from a pinned commit of
+[protomaps/basemaps-assets](https://github.com/protomaps/basemaps-assets)
+(`BASEMAPS_ASSETS_COMMIT` build argument) and served from `/basemaps/`. Nothing
+on the volume is needed for them.
+
+### What else to set
+
+- `PUBLIC_ORIGIN` to your HTTPS origin, so the app styles point at the right host.
+- `ALLOWED_ORIGINS` with your web origin and `app://herebee`, or leave it unset.
+- `SMTP_URL` and **`CRASH_MAIL_TO`** if you want crash reports. The default
+  recipient is the HereBee maintainer; without `SMTP_URL` nothing is sent.
+- `APPLE_APP_IDS` / `ANDROID_PACKAGE` / `ANDROID_CERT_SHA256` only if you ship
+  your own app build that claims your domain. The official apps claim links
+  for `herebee.app` only, so a link to your server opens in the browser. On
+  iOS its entry gate offers "open in the app" (a `herebee://r?server=…` link);
+  on Android the link can be pasted into the app.
+
+### Licences and attribution
+
+The map data is © OpenStreetMap contributors under the ODbL, the basemap build
+is from Protomaps. The attribution is part of the style and must stay visible.
+If you build and publish your own archives, they are ODbL derivatives too.
 
 ## Releases
 
