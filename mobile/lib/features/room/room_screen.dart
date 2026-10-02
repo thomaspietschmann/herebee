@@ -79,6 +79,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
 
   RoomController get c => widget.controller;
 
+  void _moveCamera(Future<void> move) => unawaited(move.catchError((Object _) {}));
+
   @override
   void initState() {
     super.initState();
@@ -263,7 +265,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final entry = c.peers[seed];
     final map = _map;
     if (entry == null || map == null) return;
-    unawaited(map.animateCamera(
+    _moveCamera(map.animateCamera(
       center: Geographic(lon: entry.position.lng, lat: entry.position.lat),
       nativeDuration: const Duration(milliseconds: 500),
     ));
@@ -274,7 +276,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final map = _map;
     if (entry == null || map == null) return;
     final zoom = (map.camera?.zoom ?? _initialZoom).clamp(16.0, 22.0);
-    unawaited(map.animateCamera(
+    _moveCamera(map.animateCamera(
       center: Geographic(lon: entry.position.lng, lat: entry.position.lat),
       zoom: zoom,
       nativeDuration: const Duration(milliseconds: 700),
@@ -324,7 +326,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       minLng = mid - _minSpan / 2;
       maxLng = mid + _minSpan / 2;
     }
-    unawaited(map.fitBounds(
+    _moveCamera(map.fitBounds(
       bounds: LngLatBounds(
         longitudeWest: minLng,
         latitudeSouth: minLat,
