@@ -575,6 +575,67 @@ body {
     border-radius: 18px;
   }
 }
+.seg-neon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.seg-neon-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seg-caret {
+  flex: none;
+  font-size: 9px;
+  opacity: 0.8;
+}
+.seg-neon[aria-expanded="true"] .seg-caret {
+  transform: rotate(180deg);
+}
+.neon-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: -10px 0 18px;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  background: var(--ink);
+}
+.neon-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  color: var(--mist);
+  font: 600 13px/1.1 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+.neon-opt:hover {
+  background: var(--ink-2);
+}
+.neon-opt.is-active {
+  border-color: var(--beacon);
+  background: var(--ink-2);
+}
+.neon-swatch {
+  flex: none;
+  width: 28px;
+  height: 20px;
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, transparent 38%, var(--sw-b) 38% 50%, transparent 50% 70%, var(--sw-c) 70% 80%, transparent 80%),
+    var(--sw-a);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
 .linkbox {
   display: flex;
   gap: 8px;
@@ -1092,46 +1153,155 @@ body {
 }
 
 /* ============================================================
-   Synthwave map style ("Grid Toxic"), html[data-map-theme="synthwave"].
-   Recolours the chrome: near-black glass, green outlines and accents,
-   pink primary with a green ring and a faint floor grid. Shapes and type
-   stay the standard ones.
+   Neon map styles, html[data-neon] plus html[data-map-theme="<style>"].
+   Recolours the chrome: dark glass, coloured outlines and accents, a bright
+   primary and a faint floor grid. Shapes and type stay the standard ones.
+   Each style only sets tokens; the rules below are shared.
    Extra tokens: --primary-bg / --primary-ink / --primary-ring (primary
-   button), --glow-a (pink) / --glow-b (green), --grid-* (outlines, grid).
-   Keep in step with mobile/lib/ui/tokens.dart (HereBeeTokens.synthwave).
+   button), --glow-a / --glow-b, --grid-* (outlines, grid), --panel (sheet).
+   Keep in step with shared/map-theme.ts and mobile/lib/ui/tokens.dart.
    ============================================================ */
 :root[data-map-theme="synthwave"] {
-  --ink: #010403;
-  --ink-2: #06100b;
-  --ink-glass: rgba(1, 6, 4, 0.84);
-  --hair: rgba(57, 255, 20, 0.4);
-  --mist: #eefff2;
-  --muted: #8fd0a2;
-  --signal: #ff2bd6;
-  --beacon: #39ff14;
-  --primary-bg: #ff2bd6;
+  --ink: #030507;
+  --ink-2: #0a110e;
+  --ink-glass: rgba(6, 12, 10, 0.88);
+  --hair: rgba(98, 224, 74, 0.28);
+  --mist: #f0fff4;
+  --muted: #8fbf9c;
+  --signal: #e255c2;
+  --beacon: #62e04a;
+  --primary-bg: #e255c2;
   --primary-ink: #1a0016;
-  --primary-ring: #39ff14;
-  --glow-a: rgba(255, 43, 214, 0.6);
-  --glow-b: rgba(57, 255, 20, 0.42);
-  --grid-outline: rgba(57, 255, 20, 0.75);
-  --grid-outline-panel: rgba(57, 255, 20, 0.6);
-  --grid-line: rgba(255, 43, 214, 0.3);
-  --grid-wash: rgba(255, 43, 214, 0.14);
-  --grid-panel-line: rgba(57, 255, 20, 0.05);
+  --primary-ring: transparent;
+  --glow-a: rgba(226, 85, 194, 0.4);
+  --glow-b: rgba(98, 224, 74, 0.22);
+  --grid-outline: rgba(98, 224, 74, 0.5);
+  --grid-outline-panel: rgba(98, 224, 74, 0.4);
+  --grid-line: rgba(226, 85, 194, 0.2);
+  --grid-wash: rgba(226, 85, 194, 0.08);
+  --grid-panel-line: rgba(98, 224, 74, 0.03);
+  --grid-height: 35%;
+  --panel: #060c09;
+}
+:root[data-map-theme="outrun"] {
+  --ink: #0f0620;
+  --ink-2: #1a0b33;
+  --ink-glass: rgba(22, 9, 44, 0.86);
+  --hair: rgba(255, 79, 154, 0.35);
+  --mist: #fff1fa;
+  --muted: #c79ad8;
+  --signal: #ff4f9a;
+  --beacon: #ffb03b;
+  --primary-bg: linear-gradient(90deg, #ff4f9a, #ffb03b);
+  --primary-ink: #1d0420;
+  --primary-ring: transparent;
+  --glow-a: rgba(255, 79, 154, 0.55);
+  --glow-b: rgba(255, 176, 59, 0.35);
+  --grid-outline: rgba(255, 79, 154, 0.7);
+  --grid-outline-panel: rgba(255, 79, 154, 0.5);
+  --grid-line: rgba(255, 79, 154, 0.35);
+  --grid-wash: rgba(255, 120, 60, 0.18);
+  --grid-panel-line: rgba(255, 79, 154, 0.05);
+  --panel: #150a2b;
+}
+:root[data-map-theme="miami"] {
+  --ink: #071420;
+  --ink-2: #0e2132;
+  --ink-glass: rgba(9, 25, 38, 0.86);
+  --hair: rgba(46, 230, 214, 0.35);
+  --mist: #f2fbff;
+  --muted: #8fc3d4;
+  --signal: #ff7ac6;
+  --beacon: #2ee6d6;
+  --primary-bg: #ff7ac6;
+  --primary-ink: #2a0619;
+  --primary-ring: #2ee6d6;
+  --glow-a: rgba(255, 122, 198, 0.5);
+  --glow-b: rgba(46, 230, 214, 0.35);
+  --grid-outline: rgba(46, 230, 214, 0.7);
+  --grid-outline-panel: rgba(46, 230, 214, 0.5);
+  --grid-line: rgba(46, 230, 214, 0.22);
+  --grid-wash: rgba(255, 122, 198, 0.12);
+  --grid-panel-line: rgba(46, 230, 214, 0.05);
+  --panel: #0b1b2a;
+}
+:root[data-map-theme="tron"] {
+  --ink: #01050a;
+  --ink-2: #06121c;
+  --ink-glass: rgba(2, 10, 18, 0.88);
+  --hair: rgba(42, 212, 255, 0.4);
+  --mist: #e8fbff;
+  --muted: #7fb6c8;
+  --signal: #ff9a1f;
+  --beacon: #2ad4ff;
+  --primary-bg: #ff9a1f;
+  --primary-ink: #1c0d00;
+  --primary-ring: #2ad4ff;
+  --glow-a: rgba(255, 154, 31, 0.5);
+  --glow-b: rgba(42, 212, 255, 0.45);
+  --grid-outline: rgba(42, 212, 255, 0.8);
+  --grid-outline-panel: rgba(42, 212, 255, 0.6);
+  --grid-line: rgba(42, 212, 255, 0.28);
+  --grid-wash: rgba(42, 212, 255, 0.1);
+  --grid-panel-line: rgba(42, 212, 255, 0.06);
+  --panel: #030b14;
+}
+:root[data-map-theme="vapor"] {
+  --ink: #1d1736;
+  --ink-2: #2a2250;
+  --ink-glass: rgba(42, 34, 80, 0.86);
+  --hair: rgba(255, 154, 213, 0.35);
+  --mist: #fdf6ff;
+  --muted: #c2b4e8;
+  --signal: #ff9ad5;
+  --beacon: #8ef6e4;
+  --primary-bg: linear-gradient(90deg, #ff9ad5, #b9a4ff);
+  --primary-ink: #2a1340;
+  --primary-ring: transparent;
+  --glow-a: rgba(255, 154, 213, 0.35);
+  --glow-b: rgba(142, 246, 228, 0.25);
+  --grid-outline: rgba(255, 154, 213, 0.6);
+  --grid-outline-panel: rgba(255, 154, 213, 0.45);
+  --grid-line: rgba(142, 246, 228, 0.25);
+  --grid-wash: rgba(255, 154, 213, 0.14);
+  --grid-panel-line: rgba(255, 255, 255, 0.04);
+  --panel: #251d47;
+}
+:root[data-map-theme="amber"] {
+  --ink: #080604;
+  --ink-2: #15100a;
+  --ink-glass: rgba(16, 12, 8, 0.88);
+  --hair: rgba(232, 118, 42, 0.35);
+  --mist: #fff4e6;
+  --muted: #c2a283;
+  --signal: #22d3ee;
+  --beacon: #e8762a;
+  --primary-bg: #e8762a;
+  --primary-ink: #1a0a00;
+  --primary-ring: #22d3ee;
+  --glow-a: rgba(232, 118, 42, 0.5);
+  --glow-b: rgba(34, 211, 238, 0.35);
+  --grid-outline: rgba(232, 118, 42, 0.7);
+  --grid-outline-panel: rgba(232, 118, 42, 0.5);
+  --grid-line: rgba(232, 118, 42, 0.22);
+  --grid-wash: rgba(232, 118, 42, 0.1);
+  --grid-panel-line: rgba(232, 118, 42, 0.04);
+  --panel: #0f0b07;
+}
+:root[data-neon] {
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
-:root[data-map-theme="synthwave"] #map {
-  background: #010403;
+:root[data-neon] #map {
+  background: var(--ink);
 }
 /* Floor grid rising from the bottom edge, fading out towards the middle. */
-:root[data-map-theme="synthwave"] #app::after {
+:root[data-neon] #app::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 55%;
+  height: var(--grid-height, 55%);
   z-index: 5;
   pointer-events: none;
   background:
@@ -1141,84 +1311,84 @@ body {
   -webkit-mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
   mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
 }
-:root[data-map-theme="synthwave"] .wordmark b {
+:root[data-neon] .wordmark b {
   color: var(--beacon);
   text-shadow: 0 0 10px var(--beacon);
 }
-:root[data-map-theme="synthwave"] .brand,
-:root[data-map-theme="synthwave"] .roster,
-:root[data-map-theme="synthwave"] .roster-fit,
-:root[data-map-theme="synthwave"] .hint,
-:root[data-map-theme="synthwave"] .btn:not(.btn-primary) {
+:root[data-neon] .brand,
+:root[data-neon] .roster,
+:root[data-neon] .roster-fit,
+:root[data-neon] .hint,
+:root[data-neon] .btn:not(.btn-primary) {
   border-color: var(--grid-outline);
   box-shadow: 0 0 0 1px var(--hair), 0 0 16px var(--glow-b), var(--shadow);
 }
-:root[data-map-theme="synthwave"] .hint {
+:root[data-neon] .hint {
   border-color: var(--hair);
   box-shadow: none;
 }
-:root[data-map-theme="synthwave"] .btn-icon {
+:root[data-neon] .btn-icon {
   color: var(--beacon);
 }
-:root[data-map-theme="synthwave"] .btn-primary:not(.is-sharing) {
+:root[data-neon] .btn-primary:not(.is-sharing) {
   background: var(--primary-bg);
   color: var(--primary-ink);
   box-shadow: 0 0 0 2px var(--primary-ring), 0 0 22px var(--glow-a), 0 0 2px var(--glow-a), var(--shadow);
 }
-:root[data-map-theme="synthwave"] .btn-primary.is-sharing {
+:root[data-neon] .btn-primary.is-sharing {
   border-color: var(--signal);
   box-shadow: 0 0 0 1.5px var(--signal), 0 0 18px var(--glow-a), var(--shadow);
 }
-:root[data-map-theme="synthwave"] .beacon,
-:root[data-map-theme="synthwave"] .btn-primary.is-sharing::before {
-  animation-name: beat-synth;
+:root[data-neon] .beacon,
+:root[data-neon] .btn-primary.is-sharing::before {
+  animation-name: beat-neon;
 }
-@keyframes beat-synth {
+@keyframes beat-neon {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 43, 214, 0.6);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--signal) 60%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 9px rgba(255, 43, 214, 0);
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--signal) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 43, 214, 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--signal) 0%, transparent);
   }
 }
-:root[data-map-theme="synthwave"] .roster-fit:hover,
-:root[data-map-theme="synthwave"] .party:hover {
+:root[data-neon] .roster-fit:hover,
+:root[data-neon] .party:hover {
   color: var(--beacon);
 }
-:root[data-map-theme="synthwave"] .sheet-panel {
-  background-color: #030a06;
+:root[data-neon] .sheet-panel {
+  background-color: var(--panel);
   background-image:
     repeating-linear-gradient(90deg, var(--grid-panel-line) 0 1px, transparent 1px 24px),
     repeating-linear-gradient(0deg, var(--grid-panel-line) 0 1px, transparent 1px 24px);
   border-color: var(--grid-outline-panel);
   box-shadow: 0 0 0 1px var(--hair), 0 0 40px var(--glow-a), var(--shadow);
 }
-:root[data-map-theme="synthwave"] .sheet h2 {
+:root[data-neon] .sheet h2 {
   text-shadow: 0 0 12px var(--glow-a);
 }
-:root[data-map-theme="synthwave"] .segmented .seg.is-active {
+:root[data-neon] .segmented .seg.is-active {
   box-shadow: 0 0 12px var(--glow-b);
 }
-:root[data-map-theme="synthwave"] .server-warn {
-  border-color: rgba(255, 43, 214, 0.55);
-  background: rgba(255, 43, 214, 0.1);
+:root[data-neon] .server-warn {
+  border-color: color-mix(in srgb, var(--signal) 55%, transparent);
+  background: color-mix(in srgb, var(--signal) 10%, transparent);
 }
-:root[data-map-theme="synthwave"] .toast {
+:root[data-neon] .toast {
   background: var(--beacon);
   color: var(--ink);
   box-shadow: 0 0 18px var(--glow-b), var(--shadow);
 }
-:root[data-map-theme="synthwave"] .mk-disc {
+:root[data-neon] .mk-disc {
   box-shadow: 0 0 14px var(--c), 0 0 3px var(--c), 0 4px 14px rgba(0, 0, 0, 0.4);
 }
-:root[data-map-theme="synthwave"] .mk-bubble-follow.is-following {
-  box-shadow: 0 0 0 4px rgba(57, 255, 20, 0.35), var(--shadow);
+:root[data-neon] .mk-bubble-follow.is-following {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--beacon) 35%, transparent), var(--shadow);
 }
-:root[data-map-theme="synthwave"] .linkbox input:focus,
-:root[data-map-theme="synthwave"] .btn:focus-visible {
+:root[data-neon] .linkbox input:focus,
+:root[data-neon] .btn:focus-visible {
   outline: 2px solid var(--beacon);
   outline-offset: 2px;
 }

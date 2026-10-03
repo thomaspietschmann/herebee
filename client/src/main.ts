@@ -9,6 +9,7 @@ import { deriveRoomKeys, deriveRoomSeed, generateSecret, type RoomKeys } from ".
 import { NetClient } from "./net.js";
 import { createCoordinator } from "./coord.js";
 import { initMap, setMapTheme } from "./map.js";
+import { isNeon, type MapTheme } from "../../shared/map-theme.js";
 import { LINGER_MS, MSG_TTL_MS, MarkerManager, relTime, type MenuActions } from "./markers.js";
 import { identityFromSeed, hueFromIndex } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
@@ -143,7 +144,7 @@ type Bus =
 
 /** A stored map-theme preference; anything unknown (or nothing) means "auto". */
 function parseThemePref(v: string | null): MapThemePref {
-  return v === "light" || v === "dark" || v === "synthwave" ? v : "auto";
+  return v === "light" || v === "dark" || (v !== null && isNeon(v)) ? v : "auto";
 }
 
 async function main(): Promise<void> {
@@ -163,12 +164,16 @@ async function main(): Promise<void> {
   const resolvedTheme = () => (themePref === "auto" ? (darkQuery.matches ? "dark" : "light") : themePref);
   let shownTheme = resolvedTheme();
   const map = initMap(document.getElementById("map")!, shownTheme);
-  document.documentElement.dataset.mapTheme = shownTheme;
+  const markTheme = (theme: MapTheme) => {
+    document.documentElement.dataset.mapTheme = theme;
+    document.documentElement.toggleAttribute("data-neon", isNeon(theme));
+  };
+  markTheme(shownTheme);
   const applyTheme = () => {
     const next = resolvedTheme();
     if (next === shownTheme) return;
     shownTheme = next;
-    document.documentElement.dataset.mapTheme = next;
+    markTheme(next);
     setMapTheme(map, next);
   };
   darkQuery.addEventListener("change", applyTheme);

@@ -51,7 +51,7 @@ const APP_ORIGIN = "app://herebee";
 /** UI languages with a generated map style. Keep in sync with client/src/i18n.ts. */
 const STYLE_LANGS = new Set(["de", "en", "es", "it", "fr", "pt"]);
 /** Map themes besides light, served from /style/{theme}/{lang}.json. Keep in sync with shared/map-theme.ts. */
-const STYLE_THEME_DIRS = new Set(["dark", "synthwave"]);
+const STYLE_THEME_DIRS = new Set(["dark", "synthwave", "outrun", "miami", "tron", "vapor", "amber"]);
 
 /** Placeholder written by scripts/gen-style.ts, replaced per request. */
 const ORIGIN_PLACEHOLDER = "__HEREBEE_ORIGIN__";
@@ -464,7 +464,7 @@ const httpServer = createServer((req, res) => {
   }
 
   // Generated map style for the native apps: /style/{lang}.json (light) or
-  // /style/{theme}/{lang}.json (dark, synthwave). Handled here rather than as a
+  // /style/{theme}/{lang}.json (dark and the neon styles). Handled here rather than as a
   // plain static file because the origin is substituted per request (the file
   // on disk holds a placeholder).
   if (path.startsWith("/style/") && path.endsWith(".json")) {

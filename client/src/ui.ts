@@ -4,6 +4,7 @@
  */
 import { t } from "./i18n.js";
 import { OFFICIAL_ORIGIN, isOfficialOrigin } from "../../shared/server.js";
+import { NEON_NAMES, NEON_THEMES, isNeon, neonSwatch, type MapTheme, type NeonTheme } from "../../shared/map-theme.js";
 
 /** Apple devices. iPads report a Mac user agent, and the Mac shares with the same glyph. */
 const APPLE = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
@@ -25,7 +26,7 @@ export interface UIHandlers {
   onMapTheme: (pref: MapThemePref) => void;
 }
 
-export type MapThemePref = "auto" | "light" | "dark" | "synthwave";
+export type MapThemePref = "auto" | MapTheme;
 
 interface Sharer {
   seed: string;
@@ -456,19 +457,21 @@ export class UI {
 
   private openInfo(): void {
     const current = this.h.mapTheme();
-    const choice = (
-      pref: MapThemePref,
-      key: "mapThemeAuto" | "mapThemeLight" | "mapThemeDark" | "mapThemeSynthwave"
-    ) =>
+    const choice = (pref: MapThemePref, key: "mapThemeAuto" | "mapThemeLight" | "mapThemeDark") =>
       `<button type="button" class="seg${pref === current ? " is-active" : ""}" data-theme="${pref}" aria-pressed="${pref === current}">${t(key)}</button>`;
+    const neonLabel = (pref: MapThemePref) => (isNeon(pref) ? NEON_NAMES[pref] : t("mapThemeSynthwave"));
+    const neonOption = (theme: NeonTheme) => {
+      const [ground, major, highway] = neonSwatch(theme);
+      return `<li><button type="button" class="neon-opt${theme === current ? " is-active" : ""}" role="menuitemradio" aria-checked="${theme === current}" data-theme="${theme}"><span class="neon-swatch" style="--sw-a:${ground};--sw-b:${major};--sw-c:${highway}"></span>${NEON_NAMES[theme]}</button></li>`;
+    };
     this.sheetBody.innerHTML = `
       <h2>${t("mapTheme")}</h2>
       <div class="segmented segmented-4" role="group" aria-label="${t("mapTheme")}">
-        ${choice("auto", "mapThemeAuto")}${choice("light", "mapThemeLight")}${choice("dark", "mapThemeDark")}${choice(
-          "synthwave",
-          "mapThemeSynthwave"
-        )}
+        ${choice("auto", "mapThemeAuto")}${choice("light", "mapThemeLight")}${choice("dark", "mapThemeDark")}<button type="button" class="seg seg-neon${isNeon(current) ? " is-active" : ""}" id="neon-toggle" aria-haspopup="menu" aria-expanded="false" aria-controls="neon-menu"><span class="seg-neon-label">${neonLabel(current)}</span><span class="seg-caret" aria-hidden="true">▾</span></button>
       </div>
+      <ul class="neon-menu" id="neon-menu" role="menu" aria-label="${t("mapThemeSynthwave")}" hidden>
+        ${NEON_THEMES.map(neonOption).join("")}
+      </ul>
       <h2 class="sheet-section">${t("serverTitle")}</h2>
       <p class="server-line"><code>${this.esc(location.host)}</code> · ${t(
         isOfficialOrigin(location.origin) ? "serverOfficial" : "serverUnofficial"
@@ -489,16 +492,30 @@ export class UI {
       })}</p>
       <p class="sheet-foot"><button type="button" class="linklike" id="open-legal">${t("legalLink")}</button></p>`;
     this.openSheet();
-    this.sheetBody.querySelectorAll<HTMLElement>(".seg[data-theme]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const pref = el.dataset.theme as MapThemePref;
-        this.h.onMapTheme(pref);
-        this.sheetBody.querySelectorAll<HTMLElement>(".seg[data-theme]").forEach((b) => {
-          b.classList.toggle("is-active", b === el);
-          b.setAttribute("aria-pressed", String(b === el));
-        });
+    const neonToggle = document.getElementById("neon-toggle")!;
+    const neonMenu = document.getElementById("neon-menu")!;
+    const showMenu = (open: boolean) => {
+      neonMenu.hidden = !open;
+      neonToggle.setAttribute("aria-expanded", String(open));
+    };
+    const pick = (pref: MapThemePref) => {
+      this.h.onMapTheme(pref);
+      this.sheetBody.querySelectorAll<HTMLElement>(".seg[data-theme]").forEach((b) => {
+        b.classList.toggle("is-active", b.dataset.theme === pref);
+        b.setAttribute("aria-pressed", String(b.dataset.theme === pref));
       });
+      neonToggle.classList.toggle("is-active", isNeon(pref));
+      neonToggle.querySelector(".seg-neon-label")!.textContent = neonLabel(pref);
+      neonMenu.querySelectorAll<HTMLElement>(".neon-opt").forEach((b) => {
+        b.classList.toggle("is-active", b.dataset.theme === pref);
+        b.setAttribute("aria-checked", String(b.dataset.theme === pref));
+      });
+      showMenu(false);
+    };
+    this.sheetBody.querySelectorAll<HTMLElement>(".seg[data-theme], .neon-opt").forEach((el) => {
+      el.addEventListener("click", () => pick(el.dataset.theme as MapThemePref));
     });
+    neonToggle.addEventListener("click", () => showMenu(neonMenu.hidden));
     document.getElementById("open-legal")!.addEventListener("click", () => this.openLegal());
   }
 
