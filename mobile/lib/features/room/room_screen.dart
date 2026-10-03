@@ -480,7 +480,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
           setState(() => _openMenuSeed = null);
           final name = await showRenameSheet(
             context,
-            current: c.resolveName(entry.seed),
+            current: c.plainName(entry.seed),
             hasCustom: c.customName(entry.seed) != null,
           );
           if (name == null) return;

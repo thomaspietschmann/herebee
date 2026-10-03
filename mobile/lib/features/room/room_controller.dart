@@ -621,10 +621,11 @@ class RoomController extends ChangeNotifier {
       seed == _selfSeed ? storage.ownName(_keys!.roomId) : storage.customName(_keys!.roomId, seed);
 
   /// Our own name for someone always wins over what they call themselves.
+  String plainName(String seed) =>
+      customName(seed) ?? peers[seed]?.sharedName ?? nameFromSeed(seed, languageCode);
+
   String resolveName(String seed) {
-    final name = customName(seed) ??
-        peers[seed]?.sharedName ??
-        nameFromSeed(seed, languageCode);
+    final name = plainName(seed);
     return seed == _selfSeed ? '$name $youSuffix' : name;
   }
 

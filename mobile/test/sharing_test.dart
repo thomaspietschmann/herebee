@@ -257,6 +257,16 @@ void main() {
     c.dispose();
   });
 
+  test('our own name is labelled "(you)" but edited without it', () async {
+    final c = await makeController();
+    final self = c.selfSeed!;
+    await c.rename(self, 'Anna');
+
+    expect(c.resolveName(self), 'Anna (you)');
+    expect(c.plainName(self), 'Anna');
+    c.dispose();
+  });
+
   test('our own marker is never aged out of the map while sharing', () async {
     final c = await makeController();
     await start(c);
