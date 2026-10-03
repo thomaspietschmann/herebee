@@ -18,10 +18,11 @@ const List<BoxShadow> shadow = [BoxShadow(color: Color(0x80000000), blurRadius: 
 const double panelRadius = 20;
 
 /// The colours, shapes and type of the app chrome, swapped as a whole by the
-/// map style: [standard] over the light map, [dark] over the dark one and
-/// [synthwave] over the synthwave map ("Grid Toxic"). Keep [dark] and
-/// [synthwave] in step with the matching `:root[data-map-theme=...]` blocks in
-/// client/src/style.css.
+/// map style: [standard] over the light map, [dark] over the dark one and a
+/// neon set ([synthwave] is Grid Toxic, then [outrun], [miami], [tron],
+/// [vapor], [amber]) over the matching neon map. Keep them in step with the
+/// `:root[data-map-theme=...]` blocks in client/src/style.css; on the phone the
+/// primary button takes the web's --primary-bg as [signal].
 @immutable
 class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
   const HereBeeTokens({
@@ -52,6 +53,7 @@ class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
     this.uppercase = false,
     this.gridLine,
     this.gridWash,
+    this.gridHeight = 0.55,
     this.panelGridLine,
   });
 
@@ -108,38 +110,181 @@ class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
     panelBorder: Color(0x2EE8EDF2),
   );
 
-  /// Near-black glass, green outlines and accents, a pink primary with a
-  /// green ring and a faint pink floor grid over the bottom of the map. Shapes
-  /// and type stay those of [standard].
-  static const HereBeeTokens synthwave = HereBeeTokens(
-    ink: Color(0xFF010403),
-    ink2: Color(0xFF06100B),
-    inkGlass: Color(0xD6010604),
-    hair: Color(0x6639FF14),
-    mist: Color(0xFFEEFFF2),
-    muted: Color(0xFF8FD0A2),
-    signal: Color(0xFFFF2BD6),
-    onSignal: Color(0xFF1A0016),
-    beacon: Color(0xFF39FF14),
-    outline: Color(0xBF39FF14),
-    sheetBg: Color(0xFF030A06),
-    shadow: [BoxShadow(color: Color(0x99000000), blurRadius: 40, offset: Offset(0, 10))],
-    chromeGlow: [BoxShadow(color: Color(0x6B39FF14), blurRadius: 16)],
-    primaryGlow: [
-      BoxShadow(color: Color(0xFF39FF14), spreadRadius: 2),
-      BoxShadow(color: Color(0x99FF2BD6), blurRadius: 22, spreadRadius: 2),
-    ],
-    sheetGlow: [BoxShadow(color: Color(0x80FF2BD6), blurRadius: 40)],
-    pillRadius: 999,
-    panelRadius: 20,
-    toastBg: Color(0xFF39FF14),
-    toastFg: Color(0xFF010403),
-    dockIcon: Color(0xFF39FF14),
-    sharingBorder: Color(0xFFFF2BD6),
-    panelBorder: Color(0x9939FF14),
-    gridLine: Color(0x4DFF2BD6),
-    gridWash: Color(0x24FF2BD6),
-    panelGridLine: Color(0x0D39FF14),
+  static HereBeeTokens _neon({
+    required Color ink,
+    required Color ink2,
+    required Color inkGlass,
+    required Color hair,
+    required Color mist,
+    required Color muted,
+    required Color primary,
+    required Color onPrimary,
+    required Color beacon,
+    Color? ring,
+    required Color glowA,
+    required Color glowB,
+    required Color outline,
+    required Color panelBorder,
+    required Color sheetBg,
+    required Color gridLine,
+    required Color gridWash,
+    required Color panelGridLine,
+    double gridHeight = 0.55,
+  }) =>
+      HereBeeTokens(
+        ink: ink,
+        ink2: ink2,
+        inkGlass: inkGlass,
+        hair: hair,
+        mist: mist,
+        muted: muted,
+        signal: primary,
+        onSignal: onPrimary,
+        beacon: beacon,
+        outline: outline,
+        sheetBg: sheetBg,
+        shadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 40, offset: Offset(0, 10))],
+        chromeGlow: [BoxShadow(color: glowB, blurRadius: 16)],
+        primaryGlow: [
+          if (ring != null) BoxShadow(color: ring, spreadRadius: 2),
+          BoxShadow(color: glowA, blurRadius: 22, spreadRadius: 2),
+        ],
+        sheetGlow: [BoxShadow(color: glowA, blurRadius: 40)],
+        pillRadius: 999,
+        panelRadius: 20,
+        toastBg: beacon,
+        toastFg: ink,
+        dockIcon: beacon,
+        sharingBorder: primary,
+        panelBorder: panelBorder,
+        gridLine: gridLine,
+        gridWash: gridWash,
+        gridHeight: gridHeight,
+        panelGridLine: panelGridLine,
+      );
+
+  static final HereBeeTokens synthwave = _neon(
+    ink: Color(0xFF030507),
+    ink2: Color(0xFF0A110E),
+    inkGlass: Color(0xE0060C0A),
+    hair: Color(0x4762E04A),
+    mist: Color(0xFFF0FFF4),
+    muted: Color(0xFF8FBF9C),
+    primary: Color(0xFFE255C2),
+    onPrimary: Color(0xFF1A0016),
+    beacon: Color(0xFF62E04A),
+    glowA: Color(0x66E255C2),
+    glowB: Color(0x3862E04A),
+    outline: Color(0x8062E04A),
+    panelBorder: Color(0x6662E04A),
+    sheetBg: Color(0xFF060C09),
+    gridLine: Color(0x33E255C2),
+    gridWash: Color(0x14E255C2),
+    panelGridLine: Color(0x0862E04A),
+    gridHeight: 0.35,
+  );
+
+  static final HereBeeTokens outrun = _neon(
+    ink: Color(0xFF0F0620),
+    ink2: Color(0xFF1A0B33),
+    inkGlass: Color(0xDB16092C),
+    hair: Color(0x59FF4F9A),
+    mist: Color(0xFFFFF1FA),
+    muted: Color(0xFFC79AD8),
+    primary: Color(0xFFFF4F9A),
+    onPrimary: Color(0xFF1D0420),
+    beacon: Color(0xFFFFB03B),
+    glowA: Color(0x8CFF4F9A),
+    glowB: Color(0x59FFB03B),
+    outline: Color(0xB2FF4F9A),
+    panelBorder: Color(0x80FF4F9A),
+    sheetBg: Color(0xFF150A2B),
+    gridLine: Color(0x59FF4F9A),
+    gridWash: Color(0x2EFF783C),
+    panelGridLine: Color(0x0DFF4F9A),
+  );
+
+  static final HereBeeTokens miami = _neon(
+    ink: Color(0xFF071420),
+    ink2: Color(0xFF0E2132),
+    inkGlass: Color(0xDB091926),
+    hair: Color(0x592EE6D6),
+    mist: Color(0xFFF2FBFF),
+    muted: Color(0xFF8FC3D4),
+    primary: Color(0xFFFF7AC6),
+    onPrimary: Color(0xFF2A0619),
+    beacon: Color(0xFF2EE6D6),
+    ring: Color(0xFF2EE6D6),
+    glowA: Color(0x80FF7AC6),
+    glowB: Color(0x592EE6D6),
+    outline: Color(0xB22EE6D6),
+    panelBorder: Color(0x802EE6D6),
+    sheetBg: Color(0xFF0B1B2A),
+    gridLine: Color(0x382EE6D6),
+    gridWash: Color(0x1FFF7AC6),
+    panelGridLine: Color(0x0D2EE6D6),
+  );
+
+  static final HereBeeTokens tron = _neon(
+    ink: Color(0xFF01050A),
+    ink2: Color(0xFF06121C),
+    inkGlass: Color(0xE0020A12),
+    hair: Color(0x662AD4FF),
+    mist: Color(0xFFE8FBFF),
+    muted: Color(0xFF7FB6C8),
+    primary: Color(0xFFFF9A1F),
+    onPrimary: Color(0xFF1C0D00),
+    beacon: Color(0xFF2AD4FF),
+    ring: Color(0xFF2AD4FF),
+    glowA: Color(0x80FF9A1F),
+    glowB: Color(0x732AD4FF),
+    outline: Color(0xCC2AD4FF),
+    panelBorder: Color(0x992AD4FF),
+    sheetBg: Color(0xFF030B14),
+    gridLine: Color(0x472AD4FF),
+    gridWash: Color(0x1A2AD4FF),
+    panelGridLine: Color(0x0F2AD4FF),
+  );
+
+  static final HereBeeTokens vapor = _neon(
+    ink: Color(0xFF1D1736),
+    ink2: Color(0xFF2A2250),
+    inkGlass: Color(0xDB2A2250),
+    hair: Color(0x59FF9AD5),
+    mist: Color(0xFFFDF6FF),
+    muted: Color(0xFFC2B4E8),
+    primary: Color(0xFFFF9AD5),
+    onPrimary: Color(0xFF2A1340),
+    beacon: Color(0xFF8EF6E4),
+    glowA: Color(0x59FF9AD5),
+    glowB: Color(0x408EF6E4),
+    outline: Color(0x99FF9AD5),
+    panelBorder: Color(0x73FF9AD5),
+    sheetBg: Color(0xFF251D47),
+    gridLine: Color(0x408EF6E4),
+    gridWash: Color(0x24FF9AD5),
+    panelGridLine: Color(0x0AFFFFFF),
+  );
+
+  static final HereBeeTokens amber = _neon(
+    ink: Color(0xFF080604),
+    ink2: Color(0xFF15100A),
+    inkGlass: Color(0xE0100C08),
+    hair: Color(0x59E8762A),
+    mist: Color(0xFFFFF4E6),
+    muted: Color(0xFFC2A283),
+    primary: Color(0xFFE8762A),
+    onPrimary: Color(0xFF1A0A00),
+    beacon: Color(0xFFE8762A),
+    ring: Color(0xFF22D3EE),
+    glowA: Color(0x80E8762A),
+    glowB: Color(0x5922D3EE),
+    outline: Color(0xB2E8762A),
+    panelBorder: Color(0x80E8762A),
+    sheetBg: Color(0xFF0F0B07),
+    gridLine: Color(0x38E8762A),
+    gridWash: Color(0x1AE8762A),
+    panelGridLine: Color(0x0AE8762A),
   );
 
   final Color ink;
@@ -191,19 +336,21 @@ class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
   /// Floor grid over the bottom of the map; null for none.
   final Color? gridLine;
   final Color? gridWash;
+  final double gridHeight;
 
   /// Faint grid inside sheets; null for none.
   final Color? panelGridLine;
 
   static HereBeeTokens of(BuildContext context) => Theme.of(context).extension<HereBeeTokens>() ?? standard;
 
-  /// A pill-shaped control: a stadium in the standard look, a rounded
-  /// rectangle in synthwave.
+  /// A pill-shaped control: a stadium, or a rounded rectangle for a smaller
+  /// [pillRadius].
   OutlinedBorder pill([BorderSide side = BorderSide.none]) => pillRadius >= 999
       ? StadiumBorder(side: side)
       : RoundedRectangleBorder(borderRadius: BorderRadius.circular(pillRadius), side: side);
 
-  /// A round icon control: a circle, or a rounded square in synthwave.
+  /// A round icon control: a circle, or a rounded square for a smaller
+  /// [pillRadius].
   OutlinedBorder round([BorderSide side = BorderSide.none]) => pillRadius >= 999
       ? CircleBorder(side: side)
       : RoundedRectangleBorder(borderRadius: BorderRadius.circular(pillRadius), side: side);

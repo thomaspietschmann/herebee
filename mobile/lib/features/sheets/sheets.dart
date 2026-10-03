@@ -682,26 +682,49 @@ class _MapThemePicker extends StatefulWidget {
   State<_MapThemePicker> createState() => _MapThemePickerState();
 }
 
+const _neonNames = {
+  MapThemePref.synthwave: 'Grid Toxic',
+  MapThemePref.outrun: 'Outrun',
+  MapThemePref.miami: 'Miami Vice',
+  MapThemePref.tron: 'Tron',
+  MapThemePref.vapor: 'Vaporwave',
+  MapThemePref.amber: 'Blade Runner',
+};
+
+const _neonSwatches = {
+  MapThemePref.synthwave: (Color(0xFF030507), Color(0xFFC24AA8), Color(0xFF62E04A)),
+  MapThemePref.outrun: (Color(0xFF0F0620), Color(0xFFFF4F9A), Color(0xFFFFB03B)),
+  MapThemePref.miami: (Color(0xFF071420), Color(0xFFFF7AC6), Color(0xFF2EE6D6)),
+  MapThemePref.tron: (Color(0xFF01050A), Color(0xFF2AD4FF), Color(0xFFFF9A1F)),
+  MapThemePref.vapor: (Color(0xFF1D1736), Color(0xFFFF9AD5), Color(0xFF8EF6E4)),
+  MapThemePref.amber: (Color(0xFF080604), Color(0xFFE8762A), Color(0xFF22D3EE)),
+};
+
 class _MapThemePickerState extends State<_MapThemePicker> {
   late MapThemePref _pref = widget.controller.mapTheme;
+  bool _neonOpen = false;
+
+  void _pick(MapThemePref pref) {
+    setState(() {
+      _pref = pref;
+      _neonOpen = false;
+    });
+    unawaited(widget.controller.setMapTheme(pref));
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
     final t = _tk(context);
-    Widget seg(MapThemePref pref, String label) {
-      final active = pref == _pref;
+    Widget seg({required Key key, required bool active, required VoidCallback onTap, required Widget child}) {
       return Expanded(
         child: Semantics(
           button: true,
           selected: active,
           child: GestureDetector(
-            key: ValueKey('map-theme-${pref.name}'),
+            key: key,
             behavior: HitTestBehavior.opaque,
-            onTap: () {
-              setState(() => _pref = pref);
-              unawaited(widget.controller.setMapTheme(pref));
-            },
+            onTap: onTap,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 160),
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
@@ -711,46 +734,157 @@ class _MapThemePickerState extends State<_MapThemePicker> {
                 borderRadius: BorderRadius.circular(t.pillRadius),
                 boxShadow: active ? t.chromeGlow : null,
               ),
-              // Four choices share a phone-wide row; a long label ("Automatisch")
-              // shrinks rather than wrapping or clipping on a narrow screen.
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: active ? t.ink : t.muted,
-                    fontSize: t.uppercase ? 11 : 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              child: FittedBox(fit: BoxFit.scaleDown, child: child),
             ),
           ),
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: t.ink,
-        borderRadius: BorderRadius.circular(t.pillRadius),
-        border: Border.all(color: t.hair),
-      ),
+    TextStyle segText(bool active) => TextStyle(
+          color: active ? t.ink : t.muted,
+          fontSize: t.uppercase ? 11 : 12,
+          fontWeight: FontWeight.w600,
+        );
+
+    Widget plain(MapThemePref pref, String label) => seg(
+          key: ValueKey('map-theme-${pref.name}'),
+          active: pref == _pref,
+          onTap: () => _pick(pref),
+          child: Text(label, maxLines: 1, style: segText(pref == _pref)),
+        );
+
+    final neonActive = _pref.isNeon;
+    final neonSeg = seg(
+      key: const ValueKey('map-theme-neon'),
+      active: neonActive,
+      onTap: () => setState(() => _neonOpen = !_neonOpen),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          seg(MapThemePref.auto, l.mapThemeAuto),
-          const SizedBox(width: 4),
-          seg(MapThemePref.light, l.mapThemeLight),
-          const SizedBox(width: 4),
-          seg(MapThemePref.dark, l.mapThemeDark),
-          const SizedBox(width: 4),
-          seg(MapThemePref.synthwave, l.mapThemeSynthwave),
+          Text(neonActive ? _neonNames[_pref]! : l.mapThemeSynthwave, maxLines: 1, style: segText(neonActive)),
+          const SizedBox(width: 2),
+          AnimatedRotation(
+            turns: _neonOpen ? 0.5 : 0,
+            duration: const Duration(milliseconds: 160),
+            child: Icon(Icons.arrow_drop_down, size: 16, color: neonActive ? t.ink : t.muted),
+          ),
         ],
       ),
     );
+
+    Widget option(MapThemePref pref) {
+      final active = pref == _pref;
+      final (ground, major, highway) = _neonSwatches[pref]!;
+      return Semantics(
+        button: true,
+        selected: active,
+        child: GestureDetector(
+          key: ValueKey('map-theme-${pref.name}'),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _pick(pref),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: active ? t.ink2 : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: active ? t.beacon : Colors.transparent),
+            ),
+            child: Row(
+              children: [
+                _NeonSwatch(ground: ground, major: major, highway: highway),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _neonNames[pref]!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: t.mist, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final neon = MapThemePref.neon;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: t.ink,
+            borderRadius: BorderRadius.circular(t.pillRadius),
+            border: Border.all(color: t.hair),
+          ),
+          child: Row(
+            children: [
+              plain(MapThemePref.auto, l.mapThemeAuto),
+              const SizedBox(width: 4),
+              plain(MapThemePref.light, l.mapThemeLight),
+              const SizedBox(width: 4),
+              plain(MapThemePref.dark, l.mapThemeDark),
+              const SizedBox(width: 4),
+              neonSeg,
+            ],
+          ),
+        ),
+        if (_neonOpen)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: t.ink,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: t.hair),
+            ),
+            child: Column(
+              children: [
+                for (var i = 0; i < neon.length; i += 2)
+                  Padding(
+                    padding: EdgeInsets.only(top: i == 0 ? 0 : 6),
+                    child: Row(
+                      children: [
+                        Expanded(child: option(neon[i])),
+                        const SizedBox(width: 6),
+                        Expanded(child: option(neon[i + 1])),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
+}
+
+class _NeonSwatch extends StatelessWidget {
+  const _NeonSwatch({required this.ground, required this.major, required this.highway});
+
+  final Color ground;
+  final Color major;
+  final Color highway;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 28,
+        height: 20,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0x1FFFFFFF)),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [ground, ground, major, major, ground, ground, highway, highway, ground, ground],
+            stops: const [0, 0.38, 0.38, 0.5, 0.5, 0.7, 0.7, 0.8, 0.8, 1],
+          ),
+        ),
+      );
 }
 
 /// Returns the new name, an empty string to reset to the generated one, or null

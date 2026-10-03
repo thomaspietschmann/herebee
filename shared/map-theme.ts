@@ -1,12 +1,10 @@
 import { namedFlavor, type Flavor } from "@protomaps/basemaps";
 
-/** The neon map styles; each also restyles the app chrome. "synthwave" is Grid Toxic. */
 export const NEON_THEMES = ["synthwave", "outrun", "miami", "tron", "vapor", "amber"] as const;
 export type NeonTheme = (typeof NEON_THEMES)[number];
 export type MapTheme = "light" | "dark" | NeonTheme;
 export const MAP_THEMES: readonly MapTheme[] = ["light", "dark", ...NEON_THEMES];
 
-/** Display names of the neon styles. Proper names, so not translated. */
 export const NEON_NAMES: Record<NeonTheme, string> = {
   synthwave: "Grid Toxic",
   outrun: "Outrun",
@@ -115,11 +113,6 @@ type NeonPalette = {
   accent: string;
 };
 
-/**
- * The neon styles: a dark ground with a glowing street wireframe whose minor,
- * major and motorway lines each get their own colour, dark parks and water,
- * and pale labels on ground-coloured halos so they stay legible over the lines.
- */
 const NEON: Record<NeonTheme, NeonPalette> = {
   synthwave: {
     ground: "#030507",
@@ -290,7 +283,6 @@ function neon(p: NeonPalette): Flavor {
   };
 }
 
-/** Ground, major-road and motorway colour of a neon style, for a picker swatch. */
 export function neonSwatch(theme: NeonTheme): [string, string, string] {
   const p = NEON[theme];
   return [p.ground, p.major, p.highway];

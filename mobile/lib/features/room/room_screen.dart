@@ -100,10 +100,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
 
   /// The map theme to show, as named in the style URL.
   String _wantTheme() => switch (c.mapTheme) {
-        MapThemePref.light => 'light',
-        MapThemePref.dark => 'dark',
-        MapThemePref.synthwave => 'synthwave',
         MapThemePref.auto => MediaQuery.platformBrightnessOf(context) == Brightness.dark ? 'dark' : 'light',
+        final pref => pref.name,
       };
 
   void _syncStyle() {
@@ -433,7 +431,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
               left: 0,
               right: 0,
               bottom: 0,
-              height: MediaQuery.sizeOf(context).height * 0.55,
+              height: MediaQuery.sizeOf(context).height * tk.gridHeight,
               child: IgnorePointer(child: FloorGrid(line: gridLine, wash: tk.gridWash)),
             ),
           if (_styleFailed && _style == null)

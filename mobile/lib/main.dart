@@ -360,6 +360,11 @@ class _BrokenLinkScreen extends StatelessWidget {
 /// [platform] decides what the automatic choice resolves to.
 ThemeData themeFor(MapThemePref pref, {Brightness platform = Brightness.light}) => _theme(switch (pref) {
       MapThemePref.synthwave => tokens.HereBeeTokens.synthwave,
+      MapThemePref.outrun => tokens.HereBeeTokens.outrun,
+      MapThemePref.miami => tokens.HereBeeTokens.miami,
+      MapThemePref.tron => tokens.HereBeeTokens.tron,
+      MapThemePref.vapor => tokens.HereBeeTokens.vapor,
+      MapThemePref.amber => tokens.HereBeeTokens.amber,
       MapThemePref.dark => tokens.HereBeeTokens.dark,
       MapThemePref.auto when platform == Brightness.dark => tokens.HereBeeTokens.dark,
       _ => tokens.HereBeeTokens.standard,

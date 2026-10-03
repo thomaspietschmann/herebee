@@ -27,6 +27,16 @@ void main() {
     expect((await Storage.open()).mapTheme, MapThemePref.synthwave);
   });
 
+  test('every neon style survives a restart, an unknown name falls back to auto', () async {
+    for (final pref in MapThemePref.neon) {
+      SharedPreferences.setMockInitialValues({});
+      await (await Storage.open()).setMapTheme(pref);
+      expect((await Storage.open()).mapTheme, pref, reason: pref.name);
+    }
+    SharedPreferences.setMockInitialValues({'flutter.herebee.mapTheme': 'nope'});
+    expect((await Storage.open()).mapTheme, MapThemePref.auto);
+  });
+
   test('the other styles live next to the light one on the same origin', () {
     const origin = AppConfig.officialOrigin;
     expect(AppConfig.styleUrl(origin, 'de'), '$origin/style/de.json');

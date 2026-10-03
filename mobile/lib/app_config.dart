@@ -46,7 +46,7 @@ class AppConfig {
   /// Generated per UI language and map theme by scripts/gen-style.ts; the
   /// server substitutes the real origin per request, so the URLs inside are
   /// absolute and ready. [theme] is a resolved map theme ('light', 'dark',
-  /// 'synthwave'); light lives at the top level, the others in a folder.
+  /// 'synthwave', 'tron', ...); light lives at the top level, the others in a folder.
   static String styleUrl(String origin, String languageCode, {String theme = 'light'}) =>
       theme == 'light' ? '$origin/style/$languageCode.json' : '$origin/style/$theme/$languageCode.json';
 

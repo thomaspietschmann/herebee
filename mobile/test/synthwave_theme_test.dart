@@ -1,6 +1,6 @@
-/// The synthwave map style restyles the app chrome. Picking it in the settings
-/// sheet must persist the choice and switch the theme live, and the four-way
-/// picker must fit a narrow phone.
+/// The neon map styles restyle the app chrome. Picking one from the settings
+/// sheet's dropdown must persist the choice and switch the theme live, and the
+/// four-way picker and its dropdown must fit a narrow phone.
 library;
 
 import 'package:flutter/material.dart';
@@ -64,7 +64,7 @@ Color? _primaryFill(WidgetTester tester, String label) => tester
     .color;
 
 void main() {
-  testWidgets('picking synthwave persists it and restyles the chrome live', (tester) async {
+  testWidgets('picking a neon style from the dropdown persists it and restyles the chrome live', (tester) async {
     final c = await _controller();
     addTearDown(c.dispose);
     await tester.pumpWidget(_app(c));
@@ -74,20 +74,30 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('settings')));
     await tester.pumpAndSettle();
-    for (final pref in MapThemePref.values) {
-      expect(find.byKey(ValueKey('map-theme-${pref.name}')), findsOneWidget, reason: pref.name);
+    for (final key in ['auto', 'light', 'dark', 'neon']) {
+      expect(find.byKey(ValueKey('map-theme-$key')), findsOneWidget, reason: key);
     }
     expect(find.text('Synthwave'), findsOneWidget);
+    for (final pref in MapThemePref.neon) {
+      expect(find.byKey(ValueKey('map-theme-${pref.name}')), findsNothing, reason: pref.name);
+    }
 
-    await tester.tap(find.byKey(const ValueKey('map-theme-synthwave')));
+    await tester.tap(find.byKey(const ValueKey('map-theme-neon')));
     await tester.pumpAndSettle();
-    expect(c.storage.mapTheme, MapThemePref.synthwave);
-    expect((await SharedPreferences.getInstance()).getString('herebee.mapTheme'), 'synthwave');
+    for (final pref in MapThemePref.neon) {
+      expect(find.byKey(ValueKey('map-theme-${pref.name}')), findsOneWidget, reason: pref.name);
+    }
+    await tester.tap(find.byKey(const ValueKey('map-theme-tron')));
+    await tester.pumpAndSettle();
+    expect(c.storage.mapTheme, MapThemePref.tron);
+    expect((await SharedPreferences.getInstance()).getString('herebee.mapTheme'), 'tron');
+    expect(find.byKey(const ValueKey('map-theme-tron')), findsNothing);
+    expect(find.text('Tron'), findsOneWidget);
 
-    Navigator.of(tester.element(find.byKey(const ValueKey('map-theme-synthwave')))).pop();
+    Navigator.of(tester.element(find.byKey(const ValueKey('map-theme-neon')))).pop();
     await tester.pumpAndSettle();
     expect(find.text('Standort teilen'), findsOneWidget);
-    expect(_primaryFill(tester, 'Standort teilen'), HereBeeTokens.synthwave.signal);
+    expect(_primaryFill(tester, 'Standort teilen'), HereBeeTokens.tron.signal);
 
     // And back: every other choice restores the standard look.
     await tester.tap(find.byKey(const ValueKey('settings')));
@@ -106,7 +116,16 @@ void main() {
     expect(tokensOf(themeFor(MapThemePref.auto, platform: Brightness.dark)), HereBeeTokens.dark);
     expect(tokensOf(themeFor(MapThemePref.dark)), HereBeeTokens.dark);
     expect(tokensOf(themeFor(MapThemePref.synthwave)), HereBeeTokens.synthwave);
-    for (final t in [HereBeeTokens.dark, HereBeeTokens.synthwave]) {
+    final neon = [
+      HereBeeTokens.synthwave,
+      HereBeeTokens.outrun,
+      HereBeeTokens.miami,
+      HereBeeTokens.tron,
+      HereBeeTokens.vapor,
+      HereBeeTokens.amber,
+    ];
+    expect([for (final p in MapThemePref.neon) tokensOf(themeFor(p))], neon);
+    for (final t in [HereBeeTokens.dark, ...neon]) {
       expect(t.pillRadius, HereBeeTokens.standard.pillRadius);
       expect(t.panelRadius, HereBeeTokens.standard.panelRadius);
       expect(t.fontFamily, HereBeeTokens.standard.fontFamily);
@@ -114,13 +133,13 @@ void main() {
     }
   });
 
-  testWidgets('the four map styles fit a 320 px wide phone in every language', (tester) async {
+  testWidgets('the map style picker and its dropdown fit a 320 px wide phone in every language', (tester) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final c = await _controller();
     addTearDown(c.dispose);
-    for (final theme in [MapThemePref.auto, MapThemePref.synthwave]) {
+    for (final theme in [MapThemePref.auto, MapThemePref.synthwave, MapThemePref.amber]) {
       await c.storage.setMapTheme(theme);
       for (final locale in L.supportedLocales) {
         await tester.pumpWidget(_app(c, locale: locale));
@@ -128,10 +147,13 @@ void main() {
         await tester.tap(find.byKey(const ValueKey('settings')));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: '${theme.name} ${locale.languageCode}');
-        for (final pref in MapThemePref.values) {
-          final box = tester.getRect(find.byKey(ValueKey('map-theme-${pref.name}')));
-          expect(box.left, greaterThanOrEqualTo(0), reason: pref.name);
-          expect(box.right, lessThanOrEqualTo(320), reason: pref.name);
+        await tester.tap(find.byKey(const ValueKey('map-theme-neon')));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: '${theme.name} ${locale.languageCode} open');
+        for (final key in ['auto', 'light', 'dark', 'neon', ...MapThemePref.neon.map((p) => p.name)]) {
+          final box = tester.getRect(find.byKey(ValueKey('map-theme-$key')));
+          expect(box.left, greaterThanOrEqualTo(0), reason: key);
+          expect(box.right, lessThanOrEqualTo(320), reason: key);
         }
         Navigator.of(tester.element(find.byKey(const ValueKey('map-theme-auto')))).pop();
         await tester.pumpAndSettle();

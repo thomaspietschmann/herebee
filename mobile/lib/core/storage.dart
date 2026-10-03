@@ -39,8 +39,22 @@ const String serverOriginKey = 'herebee.origin';
 /// the key in step with CrashOrigin in HereBeeReportSender.kt.
 const String reportOriginKey = 'herebee.reportOrigin';
 
-/// Stored as its name ('light', 'dark', 'synthwave'); auto is the absence of a value.
-enum MapThemePref { auto, light, dark, synthwave }
+/// Stored as its name ('light', 'dark', 'synthwave', ...); auto is the absence of a value.
+enum MapThemePref {
+  auto,
+  light,
+  dark,
+  synthwave,
+  outrun,
+  miami,
+  tron,
+  vapor,
+  amber;
+
+  static const neon = [synthwave, outrun, miami, tron, vapor, amber];
+
+  bool get isNeon => neon.contains(this);
+}
 
 /// Matches the browser's token shape (see `mintToken` in client/src/main.ts).
 String mintToken() {
@@ -129,12 +143,8 @@ class Storage {
     }
   }
 
-  MapThemePref get mapTheme => switch (_prefs.getString(_mapThemeKey)) {
-        'light' => MapThemePref.light,
-        'dark' => MapThemePref.dark,
-        'synthwave' => MapThemePref.synthwave,
-        _ => MapThemePref.auto,
-      };
+  MapThemePref get mapTheme =>
+      MapThemePref.values.asNameMap()[_prefs.getString(_mapThemeKey) ?? ''] ?? MapThemePref.auto;
 
   /// [mapTheme], live: the app chrome follows it (synthwave restyles it).
   late final ValueNotifier<MapThemePref> mapThemeListenable = ValueNotifier(mapTheme);
