@@ -55,6 +55,13 @@ body {
   inset: 0;
   background: #cccccc;
 }
+:root[data-map-theme="dark"] {
+  --ink: #1c222b;
+  --ink-2: #262d38;
+  --ink-glass: rgba(38, 45, 56, 0.9);
+  --hair: rgba(232, 237, 242, 0.18);
+  --muted: #9aa4b5;
+}
 :root[data-map-theme="dark"] #map {
   background: #0b0e12;
 }
@@ -1086,9 +1093,9 @@ body {
 
 /* ============================================================
    Synthwave map style ("Grid Toxic"), html[data-map-theme="synthwave"].
-   The only map style that also restyles the chrome: near-black glass,
-   neon-green outlines and accents, hot-pink primary with a green ring,
-   uppercase monospace labels, squarer corners and a faint floor grid.
+   Recolours the chrome: near-black glass, green outlines and accents,
+   pink primary with a green ring and a faint floor grid. Shapes and type
+   stay the standard ones.
    Extra tokens: --primary-bg / --primary-ink / --primary-ring (primary
    button), --glow-a (pink) / --glow-b (green), --grid-* (outlines, grid).
    Keep in step with mobile/lib/ui/tokens.dart (HereBeeTokens.synthwave).
@@ -1112,9 +1119,6 @@ body {
   --grid-line: rgba(255, 43, 214, 0.3);
   --grid-wash: rgba(255, 43, 214, 0.14);
   --grid-panel-line: rgba(57, 255, 20, 0.05);
-  --sans: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --r-pill: 10px;
-  --r-panel: 12px;
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 :root[data-map-theme="synthwave"] #map {
@@ -1137,19 +1141,9 @@ body {
   -webkit-mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
   mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
 }
-:root[data-map-theme="synthwave"] .wordmark {
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 13px;
-}
 :root[data-map-theme="synthwave"] .wordmark b {
   color: var(--beacon);
   text-shadow: 0 0 10px var(--beacon);
-}
-:root[data-map-theme="synthwave"] .btn {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 13px;
 }
 :root[data-map-theme="synthwave"] .brand,
 :root[data-map-theme="synthwave"] .roster,
@@ -1169,7 +1163,6 @@ body {
 :root[data-map-theme="synthwave"] .btn-primary:not(.is-sharing) {
   background: var(--primary-bg);
   color: var(--primary-ink);
-  font-weight: 760;
   box-shadow: 0 0 0 2px var(--primary-ring), 0 0 22px var(--glow-a), 0 0 2px var(--glow-a), var(--shadow);
 }
 :root[data-map-theme="synthwave"] .btn-primary.is-sharing {
@@ -1208,11 +1201,6 @@ body {
 }
 :root[data-map-theme="synthwave"] .segmented .seg.is-active {
   box-shadow: 0 0 12px var(--glow-b);
-}
-/* Monospace runs wide: "Automatisch" must still fit a quarter of a phone. */
-:root[data-map-theme="synthwave"] .segmented-4 .seg {
-  font-size: 10.5px;
-  letter-spacing: -0.04em;
 }
 :root[data-map-theme="synthwave"] .server-warn {
   border-color: rgba(255, 43, 214, 0.55);

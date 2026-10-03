@@ -18,9 +18,10 @@ const List<BoxShadow> shadow = [BoxShadow(color: Color(0x80000000), blurRadius: 
 const double panelRadius = 20;
 
 /// The colours, shapes and type of the app chrome, swapped as a whole by the
-/// map style: [standard] for automatic, light and dark, [synthwave] for the
-/// synthwave map ("Grid Toxic"). Keep [synthwave] in step with the
-/// `:root[data-map-theme="synthwave"]` block in client/src/style.css.
+/// map style: [standard] over the light map, [dark] over the dark one and
+/// [synthwave] over the synthwave map ("Grid Toxic"). Keep [dark] and
+/// [synthwave] in step with the matching `:root[data-map-theme=...]` blocks in
+/// client/src/style.css.
 @immutable
 class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
   const HereBeeTokens({
@@ -54,7 +55,7 @@ class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
     this.panelGridLine,
   });
 
-  /// The app's own look; the automatic, light and dark map styles all use it.
+  /// The app's own look, over the light map.
   static const HereBeeTokens standard = HereBeeTokens(
     // Literal values (the top-level constants above) because the field names
     // shadow them inside this class.
@@ -82,9 +83,34 @@ class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
     panelBorder: Color(0x1AE8EDF2),
   );
 
-  /// Near-black glass, neon-green outlines and accents, a hot-pink primary
-  /// with a green ring, monospace uppercase labels, squarer corners and a
-  /// faint pink floor grid over the bottom of the map.
+  static const HereBeeTokens dark = HereBeeTokens(
+    ink: Color(0xFF1C222B),
+    ink2: Color(0xFF262D38),
+    inkGlass: Color(0xE6262D38),
+    hair: Color(0x2EE8EDF2),
+    mist: Color(0xFFE8EDF2),
+    muted: Color(0xFF9AA4B5),
+    signal: Color(0xFFFF5A4D),
+    onSignal: Color(0xFF1A0603),
+    beacon: Color(0xFF34E1B4),
+    outline: Color(0x40E8EDF2),
+    sheetBg: Color(0xFF262D38),
+    shadow: [BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 10))],
+    chromeGlow: [],
+    primaryGlow: [],
+    sheetGlow: [],
+    pillRadius: 999,
+    panelRadius: 20,
+    toastBg: Color(0xFFE8EDF2),
+    toastFg: Color(0xFF0E1116),
+    dockIcon: Color(0xFFE8EDF2),
+    sharingBorder: Color(0x40E8EDF2),
+    panelBorder: Color(0x2EE8EDF2),
+  );
+
+  /// Near-black glass, green outlines and accents, a pink primary with a
+  /// green ring and a faint pink floor grid over the bottom of the map. Shapes
+  /// and type stay those of [standard].
   static const HereBeeTokens synthwave = HereBeeTokens(
     ink: Color(0xFF010403),
     ink2: Color(0xFF06100B),
@@ -104,16 +130,13 @@ class HereBeeTokens extends ThemeExtension<HereBeeTokens> {
       BoxShadow(color: Color(0x99FF2BD6), blurRadius: 22, spreadRadius: 2),
     ],
     sheetGlow: [BoxShadow(color: Color(0x80FF2BD6), blurRadius: 40)],
-    pillRadius: 10,
-    panelRadius: 12,
+    pillRadius: 999,
+    panelRadius: 20,
     toastBg: Color(0xFF39FF14),
     toastFg: Color(0xFF010403),
     dockIcon: Color(0xFF39FF14),
     sharingBorder: Color(0xFFFF2BD6),
     panelBorder: Color(0x9939FF14),
-    fontFamily: 'Menlo',
-    fontFamilyFallback: ['SF Mono', 'Courier New', 'monospace', 'Roboto Mono'],
-    uppercase: true,
     gridLine: Color(0x4DFF2BD6),
     gridWash: Color(0x24FF2BD6),
     panelGridLine: Color(0x0D39FF14),

@@ -86,9 +86,8 @@ void main() {
 
     Navigator.of(tester.element(find.byKey(const ValueKey('map-theme-synthwave')))).pop();
     await tester.pumpAndSettle();
-    // Dock labels go uppercase and the primary turns hot pink.
-    expect(find.text('STANDORT TEILEN'), findsOneWidget);
-    expect(_primaryFill(tester, 'STANDORT TEILEN'), HereBeeTokens.synthwave.signal);
+    expect(find.text('Standort teilen'), findsOneWidget);
+    expect(_primaryFill(tester, 'Standort teilen'), HereBeeTokens.synthwave.signal);
 
     // And back: every other choice restores the standard look.
     await tester.tap(find.byKey(const ValueKey('settings')));
@@ -98,6 +97,21 @@ void main() {
     Navigator.of(tester.element(find.byKey(const ValueKey('map-theme-dark')))).pop();
     await tester.pumpAndSettle();
     expect(_primaryFill(tester, 'Standort teilen'), HereBeeTokens.standard.signal);
+  });
+
+  test('the chrome follows the map: lighter over the dark map, standard shapes and type everywhere', () {
+    HereBeeTokens tokensOf(ThemeData theme) => theme.extension<HereBeeTokens>()!;
+    expect(tokensOf(themeFor(MapThemePref.light)), HereBeeTokens.standard);
+    expect(tokensOf(themeFor(MapThemePref.auto)), HereBeeTokens.standard);
+    expect(tokensOf(themeFor(MapThemePref.auto, platform: Brightness.dark)), HereBeeTokens.dark);
+    expect(tokensOf(themeFor(MapThemePref.dark)), HereBeeTokens.dark);
+    expect(tokensOf(themeFor(MapThemePref.synthwave)), HereBeeTokens.synthwave);
+    for (final t in [HereBeeTokens.dark, HereBeeTokens.synthwave]) {
+      expect(t.pillRadius, HereBeeTokens.standard.pillRadius);
+      expect(t.panelRadius, HereBeeTokens.standard.panelRadius);
+      expect(t.fontFamily, HereBeeTokens.standard.fontFamily);
+      expect(t.uppercase, HereBeeTokens.standard.uppercase);
+    }
   });
 
   testWidgets('the four map styles fit a 320 px wide phone in every language', (tester) async {

@@ -82,8 +82,8 @@ class HereBeeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final crashes = this.crashes;
-    // The synthwave map style restyles the whole chrome, so the app theme
-    // follows the stored preference live.
+    // The chrome matches the map style, so the app theme follows the stored
+    // preference live.
     return ValueListenableBuilder<MapThemePref>(
       valueListenable: storage.mapThemeListenable,
       builder: (context, pref, _) => MaterialApp(
@@ -105,6 +105,7 @@ class HereBeeApp extends StatelessWidget {
         ],
         supportedLocales: L.supportedLocales,
         theme: themeFor(pref),
+        darkTheme: themeFor(pref, platform: Brightness.dark),
         home: _RoomHost(storage: storage, recent: recent),
       ),
     );
@@ -355,10 +356,14 @@ class _BrokenLinkScreen extends StatelessWidget {
   }
 }
 
-/// The app theme for a map-style preference: synthwave restyles the chrome,
-/// every other choice keeps the standard look.
-ThemeData themeFor(MapThemePref pref) =>
-    _theme(pref == MapThemePref.synthwave ? tokens.HereBeeTokens.synthwave : tokens.HereBeeTokens.standard);
+/// The app theme for a map-style preference, matching the map it floats over;
+/// [platform] decides what the automatic choice resolves to.
+ThemeData themeFor(MapThemePref pref, {Brightness platform = Brightness.light}) => _theme(switch (pref) {
+      MapThemePref.synthwave => tokens.HereBeeTokens.synthwave,
+      MapThemePref.dark => tokens.HereBeeTokens.dark,
+      MapThemePref.auto when platform == Brightness.dark => tokens.HereBeeTokens.dark,
+      _ => tokens.HereBeeTokens.standard,
+    });
 
 ThemeData _theme(tokens.HereBeeTokens t) {
   final pill = t.pill();

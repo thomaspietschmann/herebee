@@ -81,8 +81,8 @@ function night(): Flavor {
 }
 
 /**
- * Synthwave ("Grid Toxic"): a near-black ground with a hot-pink street
- * wireframe, neon-green motorways, clearly green parks and woods, and teal
+ * Synthwave ("Grid Toxic"): a near-black ground with a muted pink street
+ * wireframe, green motorways, dark green parks and woods, and teal
  * water. Labels are pale tints on near-black halos so they stay legible over
  * the bright lines.
  */
@@ -91,15 +91,17 @@ function synthwave(): Flavor {
   const ground = "#010403";
   const earth = "#020705";
   const buildings = "#08140f";
-  const park = "#0b4a1f";
-  const park2 = "#0f5f28";
-  const minor = "#ff3ad9";
-  const pink = "#ff6be6";
-  const neon = "#39ff14";
+  const park = "#0c3319";
+  const park2 = "#10401f";
+  const minor = "#8f3a84";
+  const major = "#b0559f";
+  const highway = "#4cb83a";
+  const water = "#06323a";
+  const railway = "#3a1a4a";
   const tunnel = "#0c3f24";
   const label = "#eefff2";
-  const label2 = "#8fd8a6";
-  const roadLabel = "#d2ffde";
+  const label2 = "#86b894";
+  const roadLabel = "#c4dccb";
   return {
     ...base,
     background: ground,
@@ -119,13 +121,13 @@ function synthwave(): Flavor {
     military: earth,
     industrial: buildings,
     aerodrome: buildings,
-    runway: neon,
+    runway: highway,
     pier: minor,
     sand: earth,
     beach: earth,
-    water: "#05414a",
-    railway: "#3a1a4a",
-    boundaries: pink,
+    water,
+    railway,
+    boundaries: major,
     tunnel_other_casing: ground,
     tunnel_minor_casing: ground,
     tunnel_link_casing: ground,
@@ -136,7 +138,7 @@ function synthwave(): Flavor {
     tunnel_link: tunnel,
     tunnel_major: tunnel,
     tunnel_highway: tunnel,
-    ...roads(ground, minor, pink, neon),
+    ...roads(ground, minor, major, highway),
     roads_label_minor: roadLabel,
     roads_label_minor_halo: ground,
     roads_label_major: roadLabel,
@@ -150,7 +152,7 @@ function synthwave(): Flavor {
     country_label: label2,
     address_label: label2,
     address_label_halo: ground,
-    ocean_label: "#39ff14",
+    ocean_label: highway,
     landcover: {
       grassland: park,
       barren: earth,
