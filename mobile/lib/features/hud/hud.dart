@@ -14,6 +14,11 @@ import '../room/room_controller.dart';
 import '../sheets/sheets.dart';
 import '../../ui/tokens.dart';
 
+const _fitAllSvg =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="1.9"><circle cx="12" cy="12" r="9.5"/>'
+    '<g fill="#000" stroke="none"><circle cx="9" cy="8.6" r="1.7"/><circle cx="15.6" cy="10.4" r="1.7"/>'
+    '<circle cx="10.6" cy="15.6" r="1.7"/></g></svg>';
+
 class Hud extends StatelessWidget {
   const Hud({
     required this.controller,
@@ -243,7 +248,14 @@ class _RosterButton extends StatelessWidget {
             child: SizedBox(
               width: 46,
               height: 46,
-              child: Center(child: Icon(Icons.fullscreen_rounded, color: t.mist, size: 26)),
+              child: Center(
+                child: SvgPicture.string(
+                  _fitAllSvg,
+                  width: 23,
+                  height: 23,
+                  colorFilter: ColorFilter.mode(t.mist, BlendMode.srcIn),
+                ),
+              ),
             ),
           ),
         ),

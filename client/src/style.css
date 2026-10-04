@@ -213,6 +213,10 @@ body {
   cursor: pointer;
   transition: transform 0.12s ease, filter 0.2s;
 }
+.roster-fit svg {
+  width: 20px;
+  height: 20px;
+}
 .roster-fit:active {
   transform: scale(0.92);
 }
