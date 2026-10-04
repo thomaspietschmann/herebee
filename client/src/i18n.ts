@@ -89,7 +89,7 @@ const de = {
   infoFact5:
     "Wer den vollständigen Link hat, sieht den Raum — und alle im Raum teilen denselben Schlüssel, könnten also den Marker eines anderen fälschen. Teile den Link nur mit Vertrauten.",
   mapCredits: "Karte: {pm} © {osm}-Mitwirkende",
-  legalLink: "Impressum & Datenschutz",
+  legalLink: "Datenschutz & Kontakt",
   noGeo: "Dieses Gerät kann keinen Standort teilen",
   geoDenied: "Standortfreigabe wurde abgelehnt",
   geoUnavailable: "Standort nicht verfügbar",
@@ -245,7 +245,7 @@ const en: Record<Key, string> = {
   infoFact5:
     "Anyone with the full link can see the room — and everyone in it shares the same key, so a participant could spoof another's marker. Share the link only with people you trust.",
   mapCredits: "Map: {pm} © {osm} contributors",
-  legalLink: "Legal notice & privacy",
+  legalLink: "Privacy & contact",
   noGeo: "This device can't share a location",
   geoDenied: "Location permission denied",
   geoUnavailable: "Location unavailable",
@@ -394,7 +394,7 @@ const es: Record<Key, string> = {
   infoFact5:
     "Cualquiera con el enlace completo ve la sala, y todos en ella comparten la misma clave, así que un participante podría falsificar el marcador de otro. Comparte el enlace solo con personas de confianza.",
   mapCredits: "Mapa: {pm} © colaboradores de {osm}",
-  legalLink: "Aviso legal y privacidad",
+  legalLink: "Privacidad y contacto",
   noGeo: "Este dispositivo no puede compartir la ubicación",
   geoDenied: "Se denegó el permiso de ubicación",
   geoUnavailable: "Ubicación no disponible",
@@ -543,7 +543,7 @@ const it: Record<Key, string> = {
   infoFact5:
     "Chiunque abbia il link completo vede la stanza, e tutti al suo interno condividono la stessa chiave, quindi un partecipante potrebbe falsificare il segnaposto di un altro. Condividi il link solo con persone fidate.",
   mapCredits: "Mappa: {pm} © contributori di {osm}",
-  legalLink: "Note legali e privacy",
+  legalLink: "Privacy e contatti",
   noGeo: "Questo dispositivo non può condividere la posizione",
   geoDenied: "Autorizzazione alla posizione negata",
   geoUnavailable: "Posizione non disponibile",
@@ -694,7 +694,7 @@ const fr: Record<Key, string> = {
   infoFact5:
     "Quiconque possède le lien complet voit le salon — et tout le monde y partage la même clé, donc un participant pourrait falsifier le marqueur d'un autre. Ne partage le lien qu'avec des personnes de confiance.",
   mapCredits: "Carte : {pm} © contributeurs d'{osm}",
-  legalLink: "Mentions légales & confidentialité",
+  legalLink: "Confidentialité & contact",
   noGeo: "Cet appareil ne peut pas partager de position",
   geoDenied: "Autorisation de localisation refusée",
   geoUnavailable: "Position indisponible",
@@ -843,7 +843,7 @@ const pt: Record<Key, string> = {
   infoFact5:
     "Qualquer pessoa com o link completo vê a sala — e todos nela partilham a mesma chave, por isso um participante poderia falsificar o marcador de outro. Partilha o link apenas com pessoas de confiança.",
   mapCredits: "Mapa: {pm} © colaboradores do {osm}",
-  legalLink: "Informação legal e privacidade",
+  legalLink: "Privacidade e contacto",
   noGeo: "Este dispositivo não consegue partilhar a localização",
   geoDenied: "Permissão de localização recusada",
   geoUnavailable: "Localização indisponível",

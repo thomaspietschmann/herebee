@@ -2,7 +2,7 @@
  * View layer: HUD chrome, dock controls, share/info sheets, toasts.
  * Holds no app state beyond the DOM — main.ts drives it.
  */
-import { t } from "./i18n.js";
+import { lang, t } from "./i18n.js";
 import { OFFICIAL_ORIGIN, isOfficialOrigin } from "../../shared/server.js";
 import { NEON_NAMES, NEON_THEMES, isNeon, neonSwatch, type MapTheme, type NeonTheme } from "../../shared/map-theme.js";
 
@@ -519,97 +519,188 @@ export class UI {
     document.getElementById("open-legal")!.addEventListener("click", () => this.openLegal());
   }
 
-  /**
-   * Impressum (§5 DDG) + Datenschutzerklärung (Art. 13 DSGVO), German-only as is
-   * conventional for a German-operated service. Deliberately kept in sync with the
-   * app's real data handling. While the app is not publicly operated, the Impressum
-   * carries a development notice instead of an address; the `.ph` placeholders mark
-   * exactly what must be filled in before any public launch (name, ladungsfähige
-   * Anschrift, contact e-mail, hosting provider). "In Entwicklung" is NOT a legal
-   * exemption once the service is publicly reachable — the address must go in then.
-   */
   private openLegal(): void {
-    const ph = (s: string) => `<span class="ph">${this.esc(s)}</span>`;
+    const de = lang === "de";
+    const body = de
+      ? `
+      <h2>Datenschutz</h2>
+      <p class="legal-dev"><strong>Kurz gesagt:</strong> Keine Konten, keine Datenbank, keine Cookies,
+      kein Tracking. Standort, Name und Nachrichten werden in deinem Browser verschlüsselt. Der Server
+      leitet sie nur weiter und kann sie nicht lesen.</p>
+
+      <p><strong>Was wir verarbeiten</strong></p>
+      <ul class="facts">
+        <li>Deine <strong>IP-Adresse</strong>, solange du verbunden bist. Ohne sie erreicht dich der
+        Server nicht; außerdem begrenzt er damit die Verbindungen pro Adresse, um Missbrauch zu
+        verhindern.</li>
+        <li><strong>Verschlüsselte Datenpakete</strong> deines Raums (Standort, Name, Nachricht). Der
+        Server reicht sie an die anderen im Raum weiter, ohne sie lesen zu können.</li>
+        <li>Die <strong>Kartenkacheln</strong>, die dein Browser lädt. Daran ließe sich grob ablesen,
+        welche Gegend du gerade ansiehst.</li>
+      </ul>
+
+      <p class="sheet-gap-12"><strong>Was wir nicht erheben</strong></p>
+      <ul class="facts">
+        <li>Keine Konten, keine E-Mail-Adresse, keine Telefonnummer, keine Kontakte.</li>
+        <li>Keine lesbaren Koordinaten, Namen oder Nachrichten und niemals den Raum-Schlüssel.</li>
+        <li>Keine Standorthistorie, keine Datenbank, keine Zugriffs-Logs der Anwendung.</li>
+        <li>Keine Cookies, keine Analyse, keine Werbung, keine fremden Tracking-Dienste oder CDNs.</li>
+      </ul>
+
+      <p class="sheet-gap-12"><strong>So funktioniert das Standortteilen</strong></p>
+      <p>Jeder Raum hat einen 256-Bit-Schlüssel, der nur im Link hinter <code>#</code> steht und nie an
+      den Server geht. Dein Browser leitet daraus die Raum-Kennung und einen AES-256-GCM-Schlüssel ab und
+      verschlüsselt damit Standort, Anzeigenamen und Nachrichten, bevor etwas das Gerät verlässt. Der
+      Server sieht weder Koordinaten noch Namen noch den Schlüssel.</p>
+      <p>Alles ist flüchtig: Ein Raum existiert nur im Arbeitsspeicher des Servers und verschwindet,
+      sobald der letzte Teilnehmer geht. Dein Standort wird nur übertragen, solange du teilst; eine
+      Nachricht ist zehn Minuten lang sichtbar. Nichts davon wird gespeichert.</p>
+      <p>Der Browser fragt vor dem ersten Zugriff auf deinen Standort um Erlaubnis. Du kannst das Teilen
+      jederzeit stoppen und die Erlaubnis in den Browser-Einstellungen entziehen. Wer den vollständigen
+      Link hat, sieht den Raum – teile ihn nur mit Leuten, denen du vertraust.</p>
+      <p>Deine Biene ist in jedem Raum eine andere: Ihre Kennung wird aus einem geheimen Geräteschlüssel
+      und dem Raum abgeleitet, und Namen gelten nur in dem Raum, in dem sie vergeben wurden.
+      Wiedererkennbar bist du über Räume hinweg nur an deinem Standort oder an einem Namen, den du selbst
+      in mehreren Räumen verwendest.</p>
+
+      <p><strong>Server und IP-Adressen</strong></p>
+      <p>Der Server steht in Deutschland. Die HereBee-Software protokolliert und speichert weder
+      IP-Adressen noch Inhalte; deine IP liegt nur während der Verbindung im Arbeitsspeicher. Die
+      Infrastruktur davor (Hosting-Anbieter, Proxy) kann eigene technische Logs mit IP-Adressen führen,
+      die nach deren Fristen gelöscht werden.</p>
+
+      <p><strong>Fehlerberichte</strong></p>
+      <p>Die Web-Version sendet keine Fehlerberichte.</p>
+
+      <p><strong>Karten</strong></p>
+      <p>Karten, Schriften und Symbole kommen vom HereBee-Server selbst (Kartendaten © OpenStreetMap-Mitwirkende,
+      Format von Protomaps). Kartendienste Dritter wie Google Maps werden nicht
+      aufgerufen.</p>
+
+      <p><strong>In deinem Browser gespeichert</strong></p>
+      <p>Im localStorage: der geheime Geräteschlüssel, pro Raum die Namen, die du anderen gegeben hast,
+      dein eigener Name und ob du ihn teilst, sowie deine Einstellungen für Sprechblasen und Kartenstil.
+      Nur für den offenen Tab (sessionStorage): ein zufälliges Token für die Wiederverbindung, ob du
+      gerade teilst, und deine aktuelle Nachricht bis zu ihrem Ablauf. Das ist für die Funktion nötig und
+      lässt sich über die Website-Daten des Browsers jederzeit löschen.</p>
+
+      <p><strong>Dritte</strong></p>
+      <p>Wir geben keine Daten weiter und verkaufen nichts. Einziger Dienstleister ist der
+      Hosting-Anbieter, der den Server für uns betreibt.</p>
+
+      <p><strong>Kinder</strong></p>
+      <p>HereBee ist nicht speziell für Kinder gemacht. Da es keine Konten gibt, fragen wir kein Alter ab
+      und erheben wissentlich keine Daten von Kindern. Lässt du ein Kind seinen Standort teilen, gib den
+      Link nur an Menschen, denen du vertraust.</p>
+
+      <p><strong>Deine Rechte</strong></p>
+      <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch sowie das Recht, dich bei
+      einer Datenschutzbehörde zu beschweren. Da HereBee über die laufende Verbindung hinaus nichts über
+      dich speichert, gibt es in der Regel nichts herauszugeben oder zu löschen.</p>
+
+      <p><strong>Änderungen</strong></p>
+      <p>Ändert sich HereBee, passen wir diese Seite an. Es gilt die hier veröffentlichte Fassung; das
+      Datum unten zeigt den Stand.</p>
+
+      <p><strong>Kontakt</strong></p>
+      <p>Fragen zum Datenschutz oder zu HereBee erreichen uns über die Kontaktangaben im App Store bzw.
+      bei Google Play.</p>
+
+      <h2 class="sheet-section">Über HereBee</h2>
+      <p><strong>Betreiber:</strong> HereBee</p>
+      <p>Für alle Anliegen zu HereBee – auch rechtliche – nutze die Kontaktangaben im App Store bzw. bei
+      Google Play.</p>
+      <p class="legal-updated">Stand: 3. Oktober 2026</p>`
+      : `
+      <h2>Privacy</h2>
+      <p class="legal-dev"><strong>In short:</strong> No accounts, no database, no cookies, no tracking.
+      Your location, name and messages are encrypted in your browser. The server only passes them on and
+      cannot read them.</p>
+
+      <p><strong>What we process</strong></p>
+      <ul class="facts">
+        <li>Your <strong>IP address</strong>, while you are connected. The server cannot reach you
+        without it, and it uses it to limit connections per address against abuse.</li>
+        <li><strong>Encrypted data packets</strong> of your room (location, name, message). The server
+        hands them to the others in the room without being able to read them.</li>
+        <li>The <strong>map tiles</strong> your browser loads. They could reveal roughly which area you
+        are looking at.</li>
+      </ul>
+
+      <p class="sheet-gap-12"><strong>What we don't collect</strong></p>
+      <ul class="facts">
+        <li>No accounts, no e-mail address, no phone number, no contacts.</li>
+        <li>No readable coordinates, names or messages, and never the room key.</li>
+        <li>No location history, no database, no access logs kept by the application.</li>
+        <li>No cookies, no analytics, no ads, no third-party tracking services or CDNs.</li>
+      </ul>
+
+      <p class="sheet-gap-12"><strong>How location sharing works</strong></p>
+      <p>Every room has a 256-bit key that lives only in the link after <code>#</code> and is never sent
+      to the server. Your browser derives the room ID and an AES-256-GCM key from it and encrypts your
+      location, display name and messages before anything leaves your device. The server never sees
+      coordinates, names or the key.</p>
+      <p>Everything is ephemeral: a room exists only in the server's memory and disappears when the last
+      participant leaves. Your location is sent only while you share; a message stays visible for ten
+      minutes. None of it is stored.</p>
+      <p>Your browser asks for permission before the first access to your location. You can stop sharing
+      at any time and revoke the permission in your browser settings. Anyone with the full link can see
+      the room, so only share it with people you trust.</p>
+      <p>Your bee is a different one in every room: its ID is derived from a secret device key and the
+      room, and names only apply in the room where they were given. Across rooms you can only be
+      recognised by your location or by a name you use in several rooms yourself.</p>
+
+      <p><strong>Server and IP addresses</strong></p>
+      <p>The server is located in Germany. The HereBee software neither logs nor stores IP addresses or
+      content; your IP is held in memory only while you are connected. The infrastructure in front of it
+      (hosting provider, proxy) may keep its own technical logs including IP addresses, deleted according
+      to its own retention periods.</p>
+
+      <p><strong>Crash reports</strong></p>
+      <p>The web version does not send crash reports.</p>
+
+      <p><strong>Map tiles</strong></p>
+      <p>Maps, fonts and icons are served by the HereBee server itself (map data © OpenStreetMap
+      contributors, format by Protomaps). No third-party map services such as Google Maps are
+      contacted.</p>
+
+      <p><strong>Stored in your browser</strong></p>
+      <p>In localStorage: the secret device key, per room the names you gave others, your own name and
+      whether you share it, and your speech bubble and map style settings. For the open tab only
+      (sessionStorage): a random reconnect token, whether you are sharing, and your current message until
+      it expires. This is needed for the app to work and can be deleted at any time via your browser's
+      site data.</p>
+
+      <p><strong>Third parties</strong></p>
+      <p>We don't share or sell any data. The only service provider is the hosting provider that
+      runs the server for us.</p>
+
+      <p><strong>Children</strong></p>
+      <p>HereBee is not made for children specifically. As there are no accounts, we don't ask for age
+      and don't knowingly collect data from children. If you let a child share their location, only give
+      the link to people you trust.</p>
+
+      <p><strong>Your rights</strong></p>
+      <p>You have the right to access, correct and delete your data, to object, and to complain to a data
+      protection authority. Since HereBee stores nothing about you beyond the active connection, there is
+      usually nothing to hand over or delete.</p>
+
+      <p><strong>Changes</strong></p>
+      <p>When HereBee changes, we update this page. The version published here applies; the date below
+      shows when it was last updated.</p>
+
+      <p><strong>Contact</strong></p>
+      <p>For questions about privacy or HereBee, use the contact details in the App Store or on Google
+      Play.</p>
+
+      <h2 class="sheet-section">About HereBee</h2>
+      <p><strong>Operator:</strong> HereBee</p>
+      <p>For any matter concerning HereBee, including legal ones, use the contact details in the App Store
+      or on Google Play.</p>
+      <p class="legal-updated">Last updated: October 3, 2026</p>`;
     this.sheetBody.innerHTML = `
       <button type="button" class="linklike legal-back" id="legal-back">‹ ${t("infoTitle")}</button>
-
-      <h2>Impressum</h2>
-      <p>Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz).</p>
-      <p class="legal-dev"><strong>Hinweis:</strong> HereBee befindet sich in aktiver Entwicklung und
-      wird derzeit nicht öffentlich betrieben. Solange der Dienst nicht öffentlich erreichbar ist,
-      besteht keine Impressumspflicht. Vor der öffentlichen Bereitstellung wird hier die vollständige
-      Anbieterkennzeichnung mit ladungsfähiger Anschrift ergänzt.</p>
-      <p><strong>Diensteanbieter:</strong><br />
-      ${ph("[Name – wird vor Veröffentlichung ergänzt]")}<br />
-      ${ph("[Ladungsfähige Anschrift – wird vor Veröffentlichung ergänzt]")}</p>
-      <p><strong>Kontakt:</strong><br />
-      ${ph("[E-Mail – wird vor Veröffentlichung ergänzt]")}</p>
-
-      <h2 class="sheet-section">Datenschutzerklärung</h2>
-      <p><strong>Verantwortlicher</strong> im Sinne der DSGVO ist der im Impressum genannte
-      Diensteanbieter.</p>
-      <p><strong>Grundprinzip.</strong> HereBee ist bewusst datensparsam gebaut. Ein 256-Bit-Schlüssel
-      steckt ausschließlich im Link hinter <code>#</code> und wird nie an den Server übertragen. Der
-      Browser leitet daraus die Raum-Kennung und einen AES-256-GCM-Schlüssel ab; alle Koordinaten,
-      Anzeigenamen und Nachrichten werden im Browser verschlüsselt. Der Server (Relay) leitet nur undurchsichtige,
-      verschlüsselte Datenpakete weiter und kann sie nicht entschlüsseln.</p>
-      <p><strong>Welche Daten verarbeitet werden:</strong></p>
-      <ul class="facts">
-        <li><strong>IP-Adresse</strong> – vorübergehend, um die WebSocket-Verbindung aufzubauen und die
-        Zahl gleichzeitiger Verbindungen pro IP zu begrenzen (Missbrauchsschutz). Rechtsgrundlage:
-        Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Betrieb und Schutz des Dienstes). Die
-        Anwendung selbst speichert die IP nicht. Da die Kartenkacheln vom selben Server geladen werden,
-        kann dieser anhand der angefragten Kacheln grob erkennen, welche Region du ansiehst; die
-        Koordinaten selbst bleiben Ende-zu-Ende-verschlüsselt.</li>
-        <li><strong>Verschlüsselte Standort-, Namens- und Nachrichtendaten</strong> – werden nur weitergeleitet,
-        nicht gespeichert und sind für den Betreiber nicht lesbar.</li>
-        <li><strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, sobald der
-        letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine Historie, keine Speicherung von
-        Koordinaten oder Namen.</li>
-      </ul>
-      <p class="sheet-gap-12"><strong>Standortfreigabe.</strong> Die App nutzt die
-      Geolocation-Funktion des Browsers. Der Zugriff erfolgt nur nach ausdrücklicher Erlaubnis über die
-      Abfrage des Browsers (Einwilligung, Art. 6 Abs. 1 lit. a DSGVO) und ist jederzeit in den
-      Browser-Einstellungen widerrufbar. Die Koordinaten sind Ende-zu-Ende-verschlüsselt und für den
-      Server nie sichtbar.</p>
-      <p><strong>Anzeigename.</strong> Frei wählbar (Pseudonym oder echter Name – deine Entscheidung),
-      im Browser verschlüsselt, für den Betreiber nie sichtbar.</p>
-      <p><strong>Nachrichten.</strong> Eine kurze Nachricht deiner Biene sehen alle im Raum zehn Minuten
-      lang, solange du deinen Standort teilst. Sie wird im Browser verschlüsselt, mit jeder
-      Standortmeldung erneut übertragen und bei den anderen nur im Arbeitsspeicher gehalten; niemand
-      speichert sie dauerhaft.</p>
-      <p><strong>Hosting.</strong> Die App wird auf einem Server in Deutschland betrieben. Der
-      Hosting-Anbieter ${ph("[Anbieter, Anschrift – wird vor Veröffentlichung ergänzt]")} kann im
-      Rahmen des Serverbetriebs Infrastruktur-/Server-Logs (einschließlich IP-Adresse) im Auftrag des
-      Verantwortlichen verarbeiten; hierzu besteht ein Auftragsverarbeitungsvertrag nach Art. 28 DSGVO.
-      Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</p>
-      <p><strong>Keine Cookies, kein Tracking.</strong> HereBee setzt keine Cookies, nutzt keine
-      Analyse- oder Tracking-Dienste und bindet keine fremden CDNs ein. Karten, Schriften und Symbole
-      werden selbst gehostet.</p>
-      <p><strong>Räume sind streng getrennt.</strong> Deine Biene ist in jedem Raum eine andere: Die
-      Kennung wird im Browser aus einem geheimen Geräteschlüssel und dem Raum abgeleitet und lässt sich
-      ohne diesen Schlüssel keinem anderen Raum zuordnen. Auch Namen gelten immer nur in dem Raum, in
-      dem sie vergeben wurden. Wer dich in mehreren Räumen sieht, kann dich daher nicht an einer
-      Kennung oder einem Namen wiedererkennen – wohl aber an deinem Standort, wenn du in mehreren
-      Räumen teilst, oder an einem Namen, den du selbst in mehreren Räumen teilst.</p>
-      <p><strong>Im Browser gespeichert.</strong> Im lokalen Speicher deines Browsers (localStorage)
-      liegen der geheime Geräteschlüssel sowie pro Raum die Namen, die du anderen Teilnehmern gegeben
-      hast, dein eigener Name und ob du ihn teilst, außerdem ob Sprechblasen angezeigt werden und welcher Kartenstil gewählt ist. Nur für
-      den geöffneten Tab (sessionStorage) kommen ein zufälliges Token für die Wiederverbindung, die
-      Angabe, ob du gerade teilst, und deine aktuelle Nachricht bis zu ihrem Ablauf hinzu. Das ist für die Funktion technisch erforderlich (§ 25 Abs. 2 TDDDG), verlässt den
-      Browser nur verschlüsselt an die Teilnehmer bzw. als Token an den Server und lässt sich über die
-      Website-Daten des Browsers jederzeit löschen.</p>
-      <p><strong>Speicherdauer.</strong> Auf dem Server speichert die Anwendung über die aktive Sitzung
-      hinaus nichts. Die Daten im Browser bleiben, bis du sie löschst. Für etwaige Infrastruktur-Logs
-      gilt die Aufbewahrungsfrist des Hosting-Anbieters.</p>
-      <p><strong>Deine Rechte.</strong> Du hast das Recht auf Auskunft, Berichtigung, Löschung,
-      Einschränkung, Datenübertragbarkeit und Widerspruch (Art. 15–22 DSGVO). Da über die Sitzung
-      hinaus keine personenbezogenen Daten gespeichert werden, ergibt eine Auskunft in der Regel, dass
-      keine gespeicherten Daten vorliegen. Außerdem besteht ein Beschwerderecht bei einer
-      Aufsichtsbehörde (Art. 77 DSGVO).</p>
-      <p><strong>Empfänger.</strong> Eine Weitergabe an Dritte erfolgt nicht, außer an den
-      Hosting-Anbieter als Auftragsverarbeiter. Es findet keine Datenübermittlung in Drittländer statt.</p>
-      <p class="legal-updated">Stand: ${ph("[Datum – bei Veröffentlichung ergänzen]")}</p>`;
+      ${body}`;
     this.openSheet();
     this.sheetBody.scrollTop = 0;
     document.getElementById("legal-back")!.addEventListener("click", () => this.openInfo());

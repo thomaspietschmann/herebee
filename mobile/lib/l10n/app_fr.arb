@@ -50,7 +50,7 @@
   "infoFact4": "Le serveur HereBee (relais et cartes auto-hébergées) voit ton <strong>IP</strong> pendant la durée de la connexion et peut, d'après les tuiles de carte que tu charges, deviner approximativement la zone que tu regardes. L'application ne l'enregistre pas, mais l'infrastructure en amont (proxy/hébergeur) le peut. Aucun service de cartes ou CDN tiers ; un navigateur ne peut généralement pas masquer ton IP.",
   "infoFact5": "Quiconque possède le lien complet voit le salon — et tout le monde y partage la même clé, donc un participant pourrait falsifier le marqueur d'un autre. Ne partage le lien qu'avec des personnes de confiance.",
   "mapCredits": "Carte : {pm} © contributeurs d'{osm}",
-  "legalLink": "Mentions légales & confidentialité",
+  "legalLink": "Confidentialité & contact",
   "noGeo": "Cet appareil ne peut pas partager de position",
   "geoDenied": "Autorisation de localisation refusée",
   "geoUnavailable": "Position indisponible",

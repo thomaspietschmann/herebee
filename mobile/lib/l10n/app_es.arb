@@ -50,7 +50,7 @@
   "infoFact4": "El servidor de HereBee (relay y mapas alojados por nosotros mismos) ve tu <strong>IP</strong> mientras dura la conexión y, por las teselas del mapa que cargas, puede deducir aproximadamente qué zona miras. La app no lo registra, pero la infraestructura previa (proxy/hosting) sí puede. No hay servicios de mapas o CDN de terceros; el navegador no puede ocultar tu IP en general.",
   "infoFact5": "Cualquiera con el enlace completo ve la sala, y todos en ella comparten la misma clave, así que un participante podría falsificar el marcador de otro. Comparte el enlace solo con personas de confianza.",
   "mapCredits": "Mapa: {pm} © colaboradores de {osm}",
-  "legalLink": "Aviso legal y privacidad",
+  "legalLink": "Privacidad y contacto",
   "noGeo": "Este dispositivo no puede compartir la ubicación",
   "geoDenied": "Se denegó el permiso de ubicación",
   "geoUnavailable": "Ubicación no disponible",

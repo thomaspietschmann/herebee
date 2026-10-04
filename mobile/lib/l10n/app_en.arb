@@ -50,7 +50,7 @@
   "infoFact4": "The HereBee server (relay and self-hosted maps) sees your <strong>IP</strong> for the duration of the connection and can roughly tell which area you're viewing from the map tiles you load. The app doesn't log this, but upstream infrastructure (proxy/host) may. No third-party map or CDN services; a browser generally can't hide your IP.",
   "infoFact5": "Anyone with the full link can see the room — and everyone in it shares the same key, so a participant could spoof another's marker. Share the link only with people you trust.",
   "mapCredits": "Map: {pm} © {osm} contributors",
-  "legalLink": "Legal notice & privacy",
+  "legalLink": "Privacy & contact",
   "noGeo": "This device can't share a location",
   "geoDenied": "Location permission denied",
   "geoUnavailable": "Location unavailable",

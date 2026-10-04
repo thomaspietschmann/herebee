@@ -365,22 +365,6 @@ Future<void> showInfoSheet(BuildContext context, {RoomController? controller}) =
       },
     );
 
-/// Impressum (§ 5 DDG) and Datenschutzerklärung (Art. 13 DSGVO), German-only as
-/// is conventional for a German-operated service, and kept in step with what the
-/// app actually does.
-///
-/// It deliberately differs from the web page in two ways. The app's code is
-/// bundled rather than delivered per page load, so the web's "a compromised
-/// server could ship different JavaScript" caveat does not apply here. And the
-/// location section describes what the app actually does, including background
-/// behaviour, which the browser cannot do at all.
-///
-/// Any change to how location is collected MUST be made here in the same commit.
-/// A disclosure that lags the code by even one release is a false statement.
-///
-/// The `[…]` placeholders mark exactly what has to be filled in before any
-/// public release. "In Entwicklung" stops being an exemption the moment the
-/// service is publicly reachable.
 Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
       context,
       builder: (context) {
@@ -388,140 +372,241 @@ Future<void> showLegalSheet(BuildContext context) => _sheet<void>(
               padding: const EdgeInsets.only(bottom: 10),
               child: MarkupText(markup, style: _body(context)),
             );
-        Widget ph(String text) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(text,
-                  style: TextStyle(
-                      color: _tk(context).signal, fontSize: 13, fontStyle: FontStyle.italic)),
+        Widget h(String title) => Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 6),
+              child: MarkupText('<strong>$title</strong>', style: _body(context)),
             );
+        Widget fact(String markup) => _fact(context, markup);
+        final de = L.of(context).localeName.startsWith('de');
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Impressum', style: _h2(context)),
-            const SizedBox(height: 10),
-            p('Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz).'),
-            p('<strong>Hinweis:</strong> HereBee befindet sich in aktiver Entwicklung und wird '
-                'derzeit nicht öffentlich betrieben. Solange der Dienst nicht öffentlich erreichbar '
-                'ist, besteht keine Impressumspflicht. Vor der öffentlichen Bereitstellung wird hier '
-                'die vollständige Anbieterkennzeichnung mit ladungsfähiger Anschrift ergänzt.'),
-            p('<strong>Diensteanbieter:</strong>'),
-            ph('[Name – wird vor Veröffentlichung ergänzt]'),
-            ph('[Ladungsfähige Anschrift – wird vor Veröffentlichung ergänzt]'),
-            p('<strong>Kontakt:</strong>'),
-            ph('[E-Mail – wird vor Veröffentlichung ergänzt]'),
-            const SizedBox(height: 14),
-            Text('Datenschutzerklärung', style: _h2(context)),
-            const SizedBox(height: 10),
-            p('<strong>Verantwortlicher</strong> im Sinne der DSGVO ist der im Impressum genannte '
-                'Diensteanbieter.'),
-            p('<strong>Grundprinzip.</strong> HereBee ist bewusst datensparsam gebaut. Ein '
-                '256-Bit-Schlüssel steckt ausschließlich im Link hinter <code>#</code> und wird nie '
-                'an den Server übertragen. Die App leitet daraus die Raum-Kennung und einen '
-                'AES-256-GCM-Schlüssel ab; alle Koordinaten, Anzeigenamen und Nachrichten werden auf dem Gerät '
-                'verschlüsselt. Der Server (Relay) leitet nur undurchsichtige, verschlüsselte '
-                'Datenpakete weiter und kann sie nicht entschlüsseln.'),
-            p('<strong>App statt Browser.</strong> Der Programmcode dieser App ist installiert und '
-                'wird nicht bei jedem Aufruf vom Server geladen. Der Vorbehalt der Web-Version, dass '
-                'ein kompromittierter Server künftig anderen Code ausliefern könnte, entfällt damit. '
-                'Aktualisierungen kommen ausschließlich über den jeweiligen App-Store bzw. das '
-                'signierte Installationspaket.'),
-            p('<strong>Welche Daten verarbeitet werden:</strong>'),
-            _fact(context, '<strong>IP-Adresse</strong> – vorübergehend, um die WebSocket-Verbindung '
-                'aufzubauen und die Zahl gleichzeitiger Verbindungen pro IP zu begrenzen '
-                '(Missbrauchsschutz). Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Die Anwendung '
-                'selbst speichert die IP nicht. Da die Kartenkacheln vom selben Server geladen '
-                'werden, kann dieser anhand der angefragten Kacheln grob erkennen, welche Region du '
-                'ansiehst; die Koordinaten selbst bleiben Ende-zu-Ende-verschlüsselt.'),
-            _fact(context, '<strong>Verschlüsselte Standort-, Namens- und Nachrichtendaten</strong> – werden nur '
-                'weitergeleitet, nicht gespeichert und sind für den Betreiber nicht lesbar.'),
-            _fact(context, '<strong>Raumzustand</strong> – ausschließlich im Arbeitsspeicher; wird gelöscht, '
-                'sobald der letzte Teilnehmer die Verbindung trennt. Keine Datenbank, keine '
-                'Historie, keine Speicherung von Koordinaten oder Namen.'),
-            p('<strong>Standortfreigabe.</strong> Die App greift auf die Ortungsdienste des '
-                'Geräts zu, <strong>nur</strong> nachdem du die Berechtigung erteilt und das Teilen '
-                'ausdrücklich eingeschaltet hast. Rechtsgrundlage ist deine Einwilligung '
-                '(Art. 6 Abs. 1 lit. a DSGVO); du kannst sie jederzeit im Betriebssystem oder über '
-                'den Stopp-Knopf widerrufen. Die Koordinaten werden auf dem Gerät verschlüsselt und '
-                'sind für den Server nie sichtbar.'),
-            p('<strong>Im Hintergrund.</strong> Das Teilen läuft weiter, wenn du das Display sperrst '
-                'oder die App in den Hintergrund legst — sonst wäre die Funktion nutzlos. Das ist '
-                'sichtbar: Android zeigt dauerhaft eine Benachrichtigung mit einem Stopp-Knopf, iOS '
-                'die blaue Standortanzeige. Beendest du die App, indem du sie wegwischst, endet auch '
-                'das Teilen. Angefordert wird ausschließlich die Berechtigung „bei App-Nutzung"; die '
-                'weitergehende Berechtigung „immer erlauben" verlangt die App nicht.'),
-            p('<strong>Ortungsquelle.</strong> Verwendet werden die Ortungsdienste des '
-                'Betriebssystems: unter Android der System-Dienst <code>LocationManager</code> '
-                '(GPS und Netzwerk), unter iOS CoreLocation. Google Play Services werden nicht '
-                'eingebunden; die App läuft daher auch auf Geräten ohne Google-Dienste. Welche Daten '
-                'das Betriebssystem selbst dabei verarbeitet, liegt außerhalb des Einflusses dieser '
-                'App und richtet sich nach den Angaben des jeweiligen Herstellers.'),
-            p('<strong>Nachrichten.</strong> Eine kurze Nachricht deiner Biene sehen alle im Raum '
-                'zehn Minuten lang, solange du deinen Standort teilst. Sie wird auf dem Gerät '
-                'verschlüsselt, mit jeder Standortmeldung erneut übertragen und bei den anderen nur '
-                'im Arbeitsspeicher gehalten; auch diese App speichert sie nicht.'),
-            p('<strong>Räume sind streng getrennt.</strong> Deine Biene ist in jedem Raum eine andere: '
-                'Die Kennung wird auf dem Gerät aus einem geheimen Geräteschlüssel und dem Raum '
-                'abgeleitet und lässt sich ohne diesen Schlüssel keinem anderen Raum zuordnen. Auch '
-                'Namen gelten immer nur in dem Raum, in dem sie vergeben wurden. Wer dich in mehreren '
-                'Räumen sieht, kann dich daher nicht an einer Kennung oder einem Namen wiedererkennen – '
-                'wohl aber an deinem Standort, wenn du in mehreren Räumen teilst, oder an einem Namen, '
-                'den du selbst in mehreren Räumen teilst.'),
-            p('<strong>Auf dem Gerät gespeichert.</strong> Der geheime Geräteschlüssel in der sicheren '
-                'Ablage des Geräts (Keychain bzw. Keystore) sowie pro Raum die Namen, die du anderen '
-                'Teilnehmern gegeben hast, dein eigener Name und ob du ihn teilst, sowie ob Sprechblasen '
-                'angezeigt werden und welcher Kartenstil gewählt ist. Außerdem die letzten fünf Räume, '
-                'die du betreten hast, samt Schlüssel und den Bienen, die du dort getroffen hast – '
-                'für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore); jeder '
-                'Eintrag lässt sich jederzeit löschen. Keine Standorthistorie, keine Protokolle.'),
-            p('<strong>Was das Gerät verlässt.</strong> Die Bienen-Kennung des jeweiligen Raums und – nur '
-                'wenn du es erlaubst – dein Name sowie deine Nachricht gehen Ende-zu-Ende-verschlüsselt an die anderen '
-                'Teilnehmer dieses Raums. '
-                'An den Server geht zusätzlich ein zufälliges Token für die Wiederverbindung, das '
-                'nur im Arbeitsspeicher liegt und bei jedem App-Start neu erzeugt wird. Unter '
-                'Android sind Sicherungen der App-Daten abgeschaltet; unter iOS können die '
-                'Einstellungen der App (ohne Geräte- und Raum-Schlüssel) Teil einer Geräte- oder '
-                'iCloud-Sicherung sein. Beim Löschen der App werden alle Daten entfernt.'),
-            p('<strong>Hosting.</strong> Die App wird auf einem Server in Deutschland betrieben. Der '
-                'Hosting-Anbieter'),
-            ph('[Anbieter, Anschrift – wird vor Veröffentlichung ergänzt]'),
-            p('kann im Rahmen des Serverbetriebs Infrastruktur-/Server-Logs (einschließlich '
-                'IP-Adresse) im Auftrag des Verantwortlichen verarbeiten; hierzu besteht ein '
-                'Auftragsverarbeitungsvertrag nach Art. 28 DSGVO. Rechtsgrundlage: Art. 6 Abs. 1 '
-                'lit. f DSGVO.'),
-            p('<strong>Andere Server.</strong> Die App kann statt des offiziellen Servers '
-                '(herebee.app) jeden anderen Server nutzen, auf dem HereBee läuft, wenn du ihn '
-                'einstellst oder einen Raum-Link eines anderen Servers öffnest. Die App warnt '
-                'vorher. Für einen solchen Server ist allein dessen Betreiber verantwortlich; diese '
-                'Erklärung gilt dann nicht. Standorte, Namen und Nachrichten bleiben auch dort '
-                'Ende-zu-Ende-verschlüsselt, aber der Betreiber sieht deine IP-Adresse, wann du in '
-                'welchem Raum bist und über die geladenen Kartenkacheln grob deine Region.'),
-            p('<strong>Absturzberichte (Android).</strong> Stürzt die App ab, fragt sie, ob ein '
-                'Bericht gesendet werden soll. Nur wenn du zustimmst, geht er an den Server, den '
-                'die App gerade nutzt, und von dort per E-Mail an dessen Betreiber. Er enthält '
-                'App- und Android-Version, Gerätemodell, den technischen Fehlerverlauf und einen '
-                'optionalen Kommentar, aber keine Standorte, Namen, Nachrichten oder '
-                'Raum-Schlüssel. Rechtsgrundlage: Einwilligung, Art. 6 Abs. 1 lit. a DSGVO.'),
-            p('<strong>Keine Cookies, kein Tracking.</strong> HereBee setzt keine Cookies, nutzt '
-                'keine Analyse- oder Tracking-Dienste und keine fremden Absturzberichts-Dienste '
-                'und bindet keine fremden CDNs ein. Karten, Schriften und Symbole werden selbst '
-                'gehostet. Die App enthält keine Bibliotheken von Google Play Services oder '
-                'vergleichbaren Drittanbietern.'),
-            p('<strong>Speicherdauer.</strong> Auf dem Server speichert die Anwendung über die aktive '
-                'Sitzung hinaus nichts. Die Daten auf deinem Gerät bleiben, bis du sie löschst; '
-                'gemerkte Räume verfallen nach drei Tagen von selbst. Für etwaige Infrastruktur-Logs '
-                'gilt die Aufbewahrungsfrist des Hosting-Anbieters.'),
-            p('<strong>Deine Rechte.</strong> Du hast das Recht auf Auskunft, Berichtigung, Löschung, '
-                'Einschränkung, Datenübertragbarkeit und Widerspruch (Art. 15–22 DSGVO). Da über die '
-                'Sitzung hinaus keine personenbezogenen Daten gespeichert werden, ergibt eine '
-                'Auskunft in der Regel, dass keine gespeicherten Daten vorliegen. Außerdem besteht '
-                'ein Beschwerderecht bei einer Aufsichtsbehörde (Art. 77 DSGVO).'),
-            p('<strong>Empfänger.</strong> Eine Weitergabe an Dritte erfolgt nicht, außer an den '
-                'Hosting-Anbieter als Auftragsverarbeiter. Es findet keine Datenübermittlung in '
-                'Drittländer statt.'),
-            ph('Stand: [Datum – bei Veröffentlichung ergänzen]'),
-          ],
+          children: de
+              ? [
+                  Text('Datenschutz', style: _h2(context)),
+                  const SizedBox(height: 10),
+                  p('<strong>Kurz gesagt:</strong> Keine Konten, keine Datenbank, keine Cookies, kein '
+                      'Tracking. Standort, Name und Nachrichten werden auf deinem Gerät verschlüsselt. '
+                      'Der Server leitet sie nur weiter und kann sie nicht lesen.'),
+                  h('Was wir verarbeiten'),
+                  fact('Deine <strong>IP-Adresse</strong>, solange du verbunden bist. Ohne sie erreicht '
+                      'dich der Server nicht; außerdem begrenzt er damit die Verbindungen pro Adresse, '
+                      'um Missbrauch zu verhindern.'),
+                  fact('<strong>Verschlüsselte Datenpakete</strong> deines Raums (Standort, Name, '
+                      'Nachricht). Der Server reicht sie an die anderen im Raum weiter, ohne sie lesen '
+                      'zu können.'),
+                  fact('Die <strong>Kartenkacheln</strong>, die die App lädt. Daran ließe sich grob '
+                      'ablesen, welche Gegend du gerade ansiehst.'),
+                  fact('<strong>Fehlerberichte</strong>, aber nur, wenn du ausdrücklich zustimmst '
+                      '(siehe unten).'),
+                  const SizedBox(height: 8),
+                  h('Was wir nicht erheben'),
+                  fact('Keine Konten, keine E-Mail-Adresse, keine Telefonnummer, keine Kontakte.'),
+                  fact('Keine lesbaren Koordinaten, Namen oder Nachrichten und niemals den '
+                      'Raum-Schlüssel.'),
+                  fact('Keine Standorthistorie, keine Datenbank, keine Zugriffs-Logs der Anwendung.'),
+                  fact('Keine Cookies, keine Analyse, keine Werbung, keine Tracking- oder '
+                      'Absturzdienste Dritter, keine Google Play Services.'),
+                  const SizedBox(height: 8),
+                  h('So funktioniert das Standortteilen'),
+                  p('Jeder Raum hat einen 256-Bit-Schlüssel, der nur im Link hinter <code>#</code> '
+                      'steht und nie an den Server geht. Die App leitet daraus die Raum-Kennung und '
+                      'einen AES-256-GCM-Schlüssel ab und verschlüsselt damit Standort, Anzeigenamen '
+                      'und Nachrichten, bevor etwas das Gerät verlässt. Der Server sieht weder '
+                      'Koordinaten noch Namen noch den Schlüssel.'),
+                  p('Alles ist flüchtig: Ein Raum existiert nur im Arbeitsspeicher des Servers und '
+                      'verschwindet, sobald der letzte Teilnehmer geht. Dein Standort wird nur '
+                      'übertragen, solange du teilst; eine Nachricht ist zehn Minuten lang sichtbar. '
+                      'Nichts davon wird gespeichert.'),
+                  p('Die App nutzt die Ortungsdienste des Geräts erst, wenn du die Berechtigung '
+                      'erteilt und das Teilen eingeschaltet hast. Angefordert wird nur „bei '
+                      'App-Nutzung“, nie „immer erlauben“. Du kannst jederzeit mit dem Stopp-Knopf '
+                      'aufhören oder die Berechtigung im Betriebssystem entziehen. Verwendet werden die '
+                      'Ortungsdienste des Betriebssystems (Android: <code>LocationManager</code>, iOS: '
+                      'CoreLocation); was diese selbst verarbeiten, regeln Google bzw. Apple.'),
+                  p('Das Teilen läuft weiter, wenn du das Display sperrst oder die App in den '
+                      'Hintergrund legst. Das ist sichtbar: Android zeigt eine Benachrichtigung mit '
+                      'Stopp-Knopf, iOS die blaue Standortanzeige. Wenn du die App wegwischst, endet das '
+                      'Teilen.'),
+                  p('Wer den vollständigen Link hat, sieht den Raum – teile ihn nur mit Leuten, denen '
+                      'du vertraust. Deine Biene ist in jedem Raum eine andere: Ihre Kennung wird aus '
+                      'einem geheimen Geräteschlüssel und dem Raum abgeleitet, und Namen gelten nur in '
+                      'dem Raum, in dem sie vergeben wurden. Wiedererkennbar bist du über Räume hinweg '
+                      'nur an deinem Standort oder an einem Namen, den du selbst in mehreren Räumen '
+                      'verwendest.'),
+                  h('Server und IP-Adressen'),
+                  p('Der offizielle Server (herebee.app) steht in Deutschland. Die HereBee-Software '
+                      'protokolliert und speichert weder IP-Adressen noch Inhalte; deine IP liegt nur '
+                      'kurzzeitig im Arbeitsspeicher, um Missbrauch zu begrenzen. Die Infrastruktur davor '
+                      '(Hosting-Anbieter, Proxy) kann eigene technische Logs mit IP-Adressen führen, '
+                      'die nach deren Fristen gelöscht werden.'),
+                  p('Du kannst in der App einen anderen HereBee-Server einstellen oder einen Raum-Link '
+                      'eines anderen Servers öffnen; die App warnt vorher. Für diesen Server ist allein '
+                      'sein Betreiber verantwortlich, und diese Erklärung gilt dort nicht. Inhalte '
+                      'bleiben auch dann Ende-zu-Ende-verschlüsselt, aber er sieht deine IP-Adresse, '
+                      'wann du in welchem Raum bist und über die Kartenkacheln grob deine Region.'),
+                  h('Fehlerberichte'),
+                  p('Stürzt die App ab oder tritt ein unerwarteter Fehler auf, fragt sie dich, ob sie '
+                      'einen Bericht senden darf. Nur wenn du auf „Senden“ tippst, geht er an den '
+                      'Server, den die App gerade nutzt, und von dort per E-Mail an dessen Betreiber. '
+                      'Der Server speichert und protokolliert ihn nicht.'),
+                  p('Ein Bericht enthält App-Version, Betriebssystem-Version, den technischen '
+                      'Fehlerverlauf, den Zeitpunkt und deinen optionalen Kommentar; bei Abstürzen '
+                      'unter Android zusätzlich Gerätehersteller und -modell, Paketname und eine '
+                      'zufällige Berichts-ID. Raum-Schlüssel, Raum-Links und alles, was wie eine '
+                      'Koordinate aussieht, werden vorher entfernt. Standorte, Namen und Nachrichten '
+                      'sind nie enthalten.'),
+                  h('Karten'),
+                  p('Karten, Schriften und Symbole kommen vom HereBee-Server selbst (Kartendaten © '
+                      'OpenStreetMap-Mitwirkende, Format von Protomaps). Kartendienste Dritter wie '
+                      'Google Maps werden nicht aufgerufen.'),
+                  h('Auf deinem Gerät gespeichert'),
+                  p('Der geheime Geräteschlüssel (in Keychain bzw. Keystore), pro Raum die Namen, die du '
+                      'anderen gegeben hast, dein eigener Name und ob du ihn teilst, sowie deine '
+                      'Einstellungen. Außerdem die letzten fünf Räume samt Schlüssel und den Bienen, '
+                      'die du dort getroffen hast, für drei Tage in Keychain bzw. Keystore; jeder '
+                      'Eintrag lässt sich löschen. An den Server geht zusätzlich nur ein zufälliges '
+                      'Token für die Wiederverbindung, das bei jedem App-Start neu entsteht.'),
+                  p('Unter Android sind Sicherungen der App-Daten abgeschaltet; unter iOS können die '
+                      'Einstellungen (ohne Geräte- und Raum-Schlüssel) Teil einer Geräte- oder '
+                      'iCloud-Sicherung sein. Beim Löschen der App werden alle Daten entfernt. Die App '
+                      'selbst wird nur über den App-Store bzw. das signierte Installationspaket '
+                      'aktualisiert, nicht vom Server nachgeladen.'),
+                  h('Dritte'),
+                  p('Wir geben keine Daten weiter und verkaufen nichts. Dienstleister sind nur der '
+                      'Hosting-Anbieter, der den Server für uns betreibt, und der E-Mail-Anbieter, '
+                      'über den Fehlerberichte zugestellt werden, denen du zugestimmt hast.'),
+                  h('Kinder'),
+                  p('HereBee ist nicht speziell für Kinder gemacht. Da es keine Konten gibt, fragen wir '
+                      'kein Alter ab und erheben wissentlich keine Daten von Kindern. Lässt du ein Kind '
+                      'seinen Standort teilen, gib den Link nur an Menschen, denen du vertraust.'),
+                  h('Deine Rechte'),
+                  p('Du hast das Recht auf Auskunft, Berichtigung, Löschung und Widerspruch sowie das '
+                      'Recht, dich bei einer Datenschutzbehörde zu beschweren. Da HereBee über die '
+                      'laufende Verbindung hinaus nichts über dich speichert, gibt es in der Regel '
+                      'nichts herauszugeben oder zu löschen.'),
+                  h('Änderungen'),
+                  p('Ändert sich HereBee, passen wir diese Seite an. Es gilt die hier veröffentlichte '
+                      'Fassung; das Datum unten zeigt den Stand.'),
+                  h('Kontakt'),
+                  p('Fragen zum Datenschutz oder zu HereBee erreichen uns über die Kontaktangaben im '
+                      'App Store bzw. bei Google Play.'),
+                  const SizedBox(height: 14),
+                  Text('Über HereBee', style: _h2(context)),
+                  const SizedBox(height: 10),
+                  p('<strong>Betreiber:</strong> HereBee'),
+                  p('Für alle Anliegen zu HereBee – auch rechtliche – nutze die Kontaktangaben im '
+                      'App Store bzw. bei Google Play.'),
+                  p('Stand: 3. Oktober 2026'),
+                ]
+              : [
+                  Text('Privacy', style: _h2(context)),
+                  const SizedBox(height: 10),
+                  p('<strong>In short:</strong> No accounts, no database, no cookies, no tracking. Your '
+                      'location, name and messages are encrypted on your device. The server only passes '
+                      'them on and cannot read them.'),
+                  h('What we process'),
+                  fact('Your <strong>IP address</strong>, while you are connected. The server cannot '
+                      'reach you without it, and it uses it to limit connections per address against '
+                      'abuse.'),
+                  fact('<strong>Encrypted data packets</strong> of your room (location, name, message). '
+                      'The server hands them to the others in the room without being able to read '
+                      'them.'),
+                  fact('The <strong>map tiles</strong> the app loads. They could reveal roughly which '
+                      'area you are looking at.'),
+                  fact('<strong>Crash reports</strong>, but only if you explicitly agree (see below).'),
+                  const SizedBox(height: 8),
+                  h('What we don\'t collect'),
+                  fact('No accounts, no e-mail address, no phone number, no contacts.'),
+                  fact('No readable coordinates, names or messages, and never the room key.'),
+                  fact('No location history, no database, no access logs kept by the application.'),
+                  fact('No cookies, no analytics, no ads, no third-party tracking or crash services, no '
+                      'Google Play Services.'),
+                  const SizedBox(height: 8),
+                  h('How location sharing works'),
+                  p('Every room has a 256-bit key that lives only in the link after <code>#</code> and '
+                      'is never sent to the server. The app derives the room ID and an AES-256-GCM key '
+                      'from it and encrypts your location, display name and messages before anything '
+                      'leaves your device. The server never sees coordinates, names or the key.'),
+                  p('Everything is ephemeral: a room exists only in the server\'s memory and disappears '
+                      'when the last participant leaves. Your location is sent only while you share; a '
+                      'message stays visible for ten minutes. None of it is stored.'),
+                  p('The app uses your device\'s location services only after you granted permission '
+                      'and turned sharing on. It only asks for "while using the app", never "always". '
+                      'You can stop at any time with the stop button or revoke the permission in your '
+                      'system settings. It uses the operating system\'s location services (Android: '
+                      '<code>LocationManager</code>, iOS: CoreLocation); what those process themselves '
+                      'is governed by Google or Apple.'),
+                  p('Sharing continues when you lock the screen or put the app in the background. This '
+                      'is visible: Android shows a notification with a stop button, iOS the blue '
+                      'location indicator. Swiping the app away ends sharing.'),
+                  p('Anyone with the full link can see the room, so only share it with people you '
+                      'trust. Your bee is a different one in every room: its ID is derived from a '
+                      'secret device key and the room, and names only apply in the room where they were '
+                      'given. Across rooms you can only be recognised by your location or by a name you '
+                      'use in several rooms yourself.'),
+                  h('Server and IP addresses'),
+                  p('The official server (herebee.app) is located in Germany. The HereBee software '
+                      'neither logs nor stores IP addresses or content; your IP is held in memory only '
+                      'briefly, to limit abuse. The infrastructure in front of it (hosting provider, '
+                      'proxy) may keep its own technical logs including IP addresses, deleted according '
+                      'to its own retention periods.'),
+                  p('You can set a different HereBee server in the app or open a room link from another '
+                      'server; the app warns you first. That server\'s operator alone is responsible '
+                      'for it, and this policy does not apply there. Content stays end-to-end encrypted, '
+                      'but that operator sees your IP address, when you are in which room, and roughly '
+                      'your area from the map tiles.'),
+                  h('Crash reports'),
+                  p('If the app crashes or hits an unexpected error, it asks whether it may send a '
+                      'report. Only if you tap "Send" does it go to the server the app is using, which '
+                      'e-mails it to its operator. The server neither stores nor logs it.'),
+                  p('A report contains the app version, OS version, the technical error trace, the time '
+                      'and your optional comment; for Android crashes also the device brand and model, '
+                      'package name and a random report ID. Room keys, room links and anything that '
+                      'looks like a coordinate are removed first. Locations, names and messages are '
+                      'never included.'),
+                  h('Map tiles'),
+                  p('Maps, fonts and icons are served by the HereBee server itself (map data © '
+                      'OpenStreetMap contributors, format by Protomaps). No third-party map services '
+                      'such as Google Maps are contacted.'),
+                  h('Stored on your device'),
+                  p('The secret device key (in Keychain or Keystore), per room the names you gave '
+                      'others, your own name and whether you share it, and your settings. Also your last '
+                      'five rooms, with their keys and the bees you met there, for three days in '
+                      'Keychain or Keystore; each entry can be deleted. The only other thing sent to the '
+                      'server is a random reconnect token, created anew on every app start.'),
+                  p('On Android, backups of app data are turned off; on iOS, the app\'s settings '
+                      '(without device or room keys) may be part of a device or iCloud backup. '
+                      'Uninstalling the app removes all data. The app itself is only updated through '
+                      'the app store or the signed installation package, never loaded from the '
+                      'server.'),
+                  h('Third parties'),
+                  p('We don\'t share or sell any data. The only service providers are the hosting '
+                      'provider that runs the server for us and the e-mail provider that delivers crash '
+                      'reports you agreed to send.'),
+                  h('Children'),
+                  p('HereBee is not made for children specifically. As there are no accounts, we don\'t '
+                      'ask for age and don\'t knowingly collect data from children. If you let a child '
+                      'share their location, only give the link to people you trust.'),
+                  h('Your rights'),
+                  p('You have the right to access, correct and delete your data, to object, and to '
+                      'complain to a data protection authority. Since HereBee stores nothing about you '
+                      'beyond the active connection, there is usually nothing to hand over or delete.'),
+                  h('Changes'),
+                  p('When HereBee changes, we update this page. The version published here applies; the '
+                      'date below shows when it was last updated.'),
+                  h('Contact'),
+                  p('For questions about privacy or HereBee, use the contact details in the App Store '
+                      'or on Google Play.'),
+                  const SizedBox(height: 14),
+                  Text('About HereBee', style: _h2(context)),
+                  const SizedBox(height: 10),
+                  p('<strong>Operator:</strong> HereBee'),
+                  p('For any matter concerning HereBee, including legal ones, use the contact details '
+                      'in the App Store or on Google Play.'),
+                  p('Last updated: October 3, 2026'),
+                ],
         );
       },
     );

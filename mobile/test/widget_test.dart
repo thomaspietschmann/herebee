@@ -133,9 +133,28 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Impressum'), findsOneWidget);
-    // These must stay visible until someone fills them in before release.
-    expect(find.textContaining('wird vor Veröffentlichung ergänzt'), findsWidgets);
+    expect(find.text('Datenschutz'), findsOneWidget);
+    expect(find.text('Über HereBee'), findsOneWidget);
+    expect(find.textContaining('[', findRichText: true), findsNothing);
+    expect(find.text('Impressum'), findsNothing);
+  });
+
+  testWidgets('the legal sheet is English outside German locales', (tester) async {
+    await tester.pumpWidget(harness(
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => showLegalSheet(context),
+          child: const Text('open'),
+        ),
+      ),
+      locale: const Locale('fr'),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Privacy'), findsOneWidget);
+    expect(find.text('About HereBee'), findsOneWidget);
+    expect(find.textContaining('[', findRichText: true), findsNothing);
   });
 
   testWidgets('the privacy sheet describes background location, not the old watcher build',
@@ -156,7 +175,7 @@ void main() {
     expect(find.textContaining('teilt keinen eigenen Standort'), findsNothing,
         reason: 'the watcher-only wording must not outlive the watcher-only build');
     expect(find.textContaining('Ortungsdienste'), findsWidgets);
-    expect(find.textContaining('Im Hintergrund'), findsWidgets,
+    expect(find.textContaining('Hintergrund'), findsWidgets,
         reason: 'background behaviour is the part users cannot infer');
     expect(find.textContaining('wegwischst'), findsWidgets,
         reason: 'the swipe-away limit is a real behaviour people rely on');
