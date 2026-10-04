@@ -38,6 +38,7 @@ class LocationForegroundService : Service(), LocationListener {
     companion object {
         const val ACTION_START = "app.herebee.location.START"
         const val ACTION_STOP = "app.herebee.location.STOP"
+        private const val ACTION_REPOST = "app.herebee.location.REPOST"
         const val EXTRA_TITLE = "title"
         const val EXTRA_BODY = "body"
         const val EXTRA_STOP_LABEL = "stopLabel"
@@ -68,6 +69,7 @@ class LocationForegroundService : Service(), LocationListener {
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var locationManager: LocationManager? = null
+    private var notification: Notification? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -79,6 +81,16 @@ class LocationForegroundService : Service(), LocationListener {
             return START_NOT_STICKY
         }
 
+        if (intent?.action == ACTION_REPOST) {
+            val posted = notification
+            if (isRunning && posted != null) {
+                (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, posted)
+            } else if (!isRunning) {
+                stopSelf()
+            }
+            return START_NOT_STICKY
+        }
+
         val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Sharing your location"
         val body = intent?.getStringExtra(EXTRA_BODY) ?: ""
         val stopLabel = intent?.getStringExtra(EXTRA_STOP_LABEL) ?: "Stop"
@@ -87,7 +99,9 @@ class LocationForegroundService : Service(), LocationListener {
         val lowPower = intent?.getBooleanExtra(EXTRA_LOW_POWER, false) ?: false
 
         try {
-            startForegroundCompat(buildNotification(title, body, stopLabel))
+            val built = buildNotification(title, body, stopLabel)
+            startForegroundCompat(built)
+            notification = built
         } catch (e: Exception) {
             // The platform can still refuse (a revoked permission, or a
             // background-start restriction). Letting it propagate out of
@@ -194,6 +208,12 @@ class LocationForegroundService : Service(), LocationListener {
             Intent(this, LocationForegroundService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        val repostIntent = PendingIntent.getService(
+            this,
+            2,
+            Intent(this, LocationForegroundService::class.java).setAction(ACTION_REPOST),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val openIntent = packageManager.getLaunchIntentForPackage(packageName)?.let {
             PendingIntent.getActivity(this, 1, it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         }
@@ -204,6 +224,12 @@ class LocationForegroundService : Service(), LocationListener {
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
+            .setDeleteIntent(repostIntent)
+            .also {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    it.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+                }
+            }
             .also { if (openIntent != null) it.setContentIntent(openIntent) }
             .addAction(Notification.Action.Builder(null, stopLabel, stopIntent).build())
             .build()
@@ -240,6 +266,7 @@ class LocationForegroundService : Service(), LocationListener {
         }
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
+        notification = null
         super.onDestroy()
     }
 
