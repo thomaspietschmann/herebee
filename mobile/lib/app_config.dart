@@ -30,7 +30,7 @@ class AppConfig {
   );
 
   /// Sent as X-HereBee-Client on the WebSocket upgrade. Carries no identity.
-  static const String clientVersion = '0.0.23';
+  static const String clientVersion = '0.0.24';
 
   static bool isOfficial(String origin) => origin == officialOrigin;
 
