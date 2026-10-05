@@ -109,6 +109,8 @@
   "hoursAgo": "{n} h fa",
   "daysAgo": "{n} giorni fa",
   "infoFactRecent": "L'app conserva le ultime cinque stanze, chiavi comprese, per tre giorni nell'archivio sicuro del dispositivo (Keychain o Keystore), così puoi rientrarci. Ogni voce si può cancellare in qualsiasi momento: tocca HereBee in alto a sinistra.",
+  "powerSaveTitle": "Risparmio energetico",
+  "powerSaveHint": "In background la tua posizione viene rilevata e inviata meno spesso. Così risparmi batteria; per gli altri la tua ape si sposta a scatti più ampi.",
   "serverTitle": "Server",
   "serverOfficial": "server ufficiale",
   "serverUnofficial": "non è il server ufficiale",

@@ -109,6 +109,8 @@
   "hoursAgo": "{n} h ago",
   "daysAgo": "{n} days ago",
   "infoFactRecent": "The app keeps the last five rooms, including their keys, for three days in the device's secure storage (Keychain or Keystore) so you can re-enter them. Any entry can be deleted at any time: tap HereBee at the top left.",
+  "powerSaveTitle": "Battery saver",
+  "powerSaveHint": "In the background, your location is checked and sent less often. This saves battery; for the others your bee moves in bigger jumps.",
   "serverTitle": "Server",
   "serverOfficial": "official server",
   "serverUnofficial": "not the official server",

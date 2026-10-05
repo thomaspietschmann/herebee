@@ -1,6 +1,7 @@
 /// What this app persists in plain preferences: any names the user typed,
 /// whether their own name is shared, whether speech bubbles are shown, which
-/// map style was picked, and which server new rooms use.
+/// map style was picked, whether battery saver is on, and which server new
+/// rooms use.
 /// The user's own name and its sharing choice are kept per room, so a new room
 /// never knows what they called themselves elsewhere.
 ///
@@ -29,6 +30,7 @@ const String _shareNamePrefix = 'herebee.shareName.';
 const String _legacyShareNameKey = 'herebee.shareName';
 const String _bubblesKey = 'herebee.bubbles';
 const String _mapThemeKey = 'herebee.mapTheme';
+const String _powerSaveKey = 'herebee.powerSave';
 
 /// The server new rooms use, when the user chose one.
 const String serverOriginKey = 'herebee.origin';
@@ -156,6 +158,16 @@ class Storage {
       await _prefs.setString(_mapThemeKey, pref.name);
     }
     mapThemeListenable.value = pref;
+  }
+
+  bool get powerSave => _prefs.getBool(_powerSaveKey) ?? false;
+
+  Future<void> setPowerSave(bool on) async {
+    if (on) {
+      await _prefs.setBool(_powerSaveKey, true);
+    } else {
+      await _prefs.remove(_powerSaveKey);
+    }
   }
 
   /// The server new rooms open on: the user's choice, or the default.

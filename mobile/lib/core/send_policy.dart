@@ -85,6 +85,19 @@ class SendPolicy {
     heartbeat: Duration(seconds: 30),
     lowPower: true,
   );
+  static const SendProfile powerSaveMoving = SendProfile(
+    distanceFilterMeters: 30,
+    intervalMs: 40000,
+    minSend: Duration(seconds: 40),
+    heartbeat: Duration(seconds: 40),
+  );
+  static const SendProfile powerSaveStill = SendProfile(
+    distanceFilterMeters: 50,
+    intervalMs: 40000,
+    minSend: Duration(seconds: 40),
+    heartbeat: Duration(seconds: 40),
+    lowPower: true,
+  );
 
   static const double stillRadius = 10; // metres
   static const double walkingSpeed = 1.5; // m/s
@@ -92,6 +105,7 @@ class SendPolicy {
 
   final DateTime Function() _clock;
   bool _foreground = true;
+  bool powerSave = false;
   double? _anchorLat, _anchorLng;
   DateTime? _anchorSince;
 
@@ -105,6 +119,7 @@ class SendPolicy {
 
   SendProfile get profile {
     if (_foreground) return foregroundProfile;
+    if (powerSave) return stationary ? powerSaveStill : powerSaveMoving;
     return stationary ? backgroundStill : backgroundMoving;
   }
 

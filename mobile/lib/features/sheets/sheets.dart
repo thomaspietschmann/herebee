@@ -336,6 +336,10 @@ Future<void> showInfoSheet(BuildContext context, {RoomController? controller}) =
               const SizedBox(height: 10),
               _ServerSetting(controller: controller),
               const SizedBox(height: 20),
+              if (Theme.of(context).platform == TargetPlatform.android) ...[
+                _PowerSaveSetting(controller: controller),
+                const SizedBox(height: 20),
+              ],
             ],
             Text(l.infoTitle, style: _h2(context)),
             const SizedBox(height: 10),
@@ -729,6 +733,52 @@ class _ServerSettingState extends State<_ServerSetting> {
           const SizedBox(height: 10),
           _serverWarningBox(context, roomOrigin),
         ],
+      ],
+    );
+  }
+}
+
+class _PowerSaveSetting extends StatefulWidget {
+  const _PowerSaveSetting({required this.controller});
+
+  final RoomController controller;
+
+  @override
+  State<_PowerSaveSetting> createState() => _PowerSaveSettingState();
+}
+
+class _PowerSaveSettingState extends State<_PowerSaveSetting> {
+  late bool _on = widget.controller.powerSave;
+
+  void _set(bool on) {
+    setState(() => _on = on);
+    unawaited(widget.controller.setPowerSave(on));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final t = _tk(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l.powerSaveTitle, style: _h2(context)),
+              const SizedBox(height: 6),
+              Text(l.powerSaveHint, style: _body(context)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Switch(
+          key: const ValueKey('power-save'),
+          value: _on,
+          onChanged: _set,
+          activeThumbColor: t.beacon,
+        ),
       ],
     );
   }

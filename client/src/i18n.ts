@@ -155,6 +155,8 @@ const de = {
   daysAgo: "vor {n} Tagen",
   infoFactRecent: "Die App merkt sich die letzten fünf Räume samt Schlüssel für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore), damit du sie wieder betreten kannst. Jeder Eintrag lässt sich jederzeit löschen — tippe dafür oben links auf HereBee.",
   // Server choice and the warning for a server other than the official one.
+  powerSaveTitle: "Stromsparen",
+  powerSaveHint: "Im Hintergrund wird dein Standort seltener abgefragt und gesendet. Das schont den Akku; für die anderen bewegt sich deine Biene dann sprunghafter.",
   serverTitle: "Server",
   serverOfficial: "offizieller Server",
   serverUnofficial: "nicht der offizielle Server",
@@ -306,6 +308,8 @@ const en: Record<Key, string> = {
   daysAgo: "{n} days ago",
   infoFactRecent: "The app keeps the last five rooms, including their keys, for three days in the device's secure storage (Keychain or Keystore) so you can re-enter them. Any entry can be deleted at any time: tap HereBee at the top left.",
   // Server choice and the warning for a server other than the official one.
+  powerSaveTitle: "Battery saver",
+  powerSaveHint: "In the background, your location is checked and sent less often. This saves battery; for the others your bee moves in bigger jumps.",
   serverTitle: "Server",
   serverOfficial: "official server",
   serverUnofficial: "not the official server",
@@ -455,6 +459,8 @@ const es: Record<Key, string> = {
   daysAgo: "hace {n} días",
   infoFactRecent: "La app conserva las últimas cinco salas, con sus claves, durante tres días en el almacenamiento seguro del dispositivo (Keychain o Keystore) para que puedas volver a entrar. Cualquier entrada se puede borrar en cualquier momento: toca HereBee arriba a la izquierda.",
   // Server choice and the warning for a server other than the official one.
+  powerSaveTitle: "Ahorro de batería",
+  powerSaveHint: "En segundo plano, tu ubicación se consulta y se envía con menos frecuencia. Ahorra batería; para los demás tu abeja se mueve a saltos más grandes.",
   serverTitle: "Servidor",
   serverOfficial: "servidor oficial",
   serverUnofficial: "no es el servidor oficial",
@@ -604,6 +610,8 @@ const it: Record<Key, string> = {
   daysAgo: "{n} giorni fa",
   infoFactRecent: "L'app conserva le ultime cinque stanze, chiavi comprese, per tre giorni nell'archivio sicuro del dispositivo (Keychain o Keystore), così puoi rientrarci. Ogni voce si può cancellare in qualsiasi momento: tocca HereBee in alto a sinistra.",
   // Server choice and the warning for a server other than the official one.
+  powerSaveTitle: "Risparmio energetico",
+  powerSaveHint: "In background la tua posizione viene rilevata e inviata meno spesso. Così risparmi batteria; per gli altri la tua ape si sposta a scatti più ampi.",
   serverTitle: "Server",
   serverOfficial: "server ufficiale",
   serverUnofficial: "non è il server ufficiale",
@@ -755,6 +763,8 @@ const fr: Record<Key, string> = {
   daysAgo: "il y a {n} jours",
   infoFactRecent: "L'application conserve les cinq derniers salons, clés comprises, pendant trois jours dans le stockage sécurisé de l'appareil (Keychain ou Keystore) pour que vous puissiez y revenir. Chaque entrée peut être supprimée à tout moment : touchez HereBee en haut à gauche.",
   // Server choice and the warning for a server other than the official one.
+  powerSaveTitle: "Économie de batterie",
+  powerSaveHint: "En arrière-plan, ta position est relevée et envoyée moins souvent. Cela ménage la batterie ; pour les autres, ton abeille avance par sauts plus grands.",
   serverTitle: "Serveur",
   serverOfficial: "serveur officiel",
   serverUnofficial: "pas le serveur officiel",
@@ -904,6 +914,8 @@ const pt: Record<Key, string> = {
   daysAgo: "há {n} dias",
   infoFactRecent: "A app guarda as últimas cinco salas, incluindo as chaves, durante três dias no armazenamento seguro do dispositivo (Keychain ou Keystore) para poderes voltar a entrar. Qualquer entrada pode ser apagada a qualquer momento: toca em HereBee no canto superior esquerdo.",
   // Server choice and the warning for a server other than the official one.
+  powerSaveTitle: "Economia de bateria",
+  powerSaveHint: "Em segundo plano, a tua localização é obtida e enviada com menos frequência. Poupa bateria; para os outros, a tua abelha move-se aos saltos maiores.",
   serverTitle: "Servidor",
   serverOfficial: "servidor oficial",
   serverUnofficial: "não é o servidor oficial",

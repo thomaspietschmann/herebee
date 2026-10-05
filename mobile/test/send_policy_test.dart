@@ -113,4 +113,19 @@ void main() {
     p.onFix(lat: 52.5215, lng: 13.405, accuracy: 80);
     expect(p.profile, SendPolicy.backgroundMoving, reason: '~165 m is further than the fix is vague');
   });
+
+  test('power save slows only the background and keeps peers live', () {
+    p.powerSave = true;
+    p.onFix(lat: 52.52, lng: 13.405);
+    expect(p.profile, SendPolicy.foregroundProfile);
+    p.setForeground(false);
+    expect(p.profile, SendPolicy.powerSaveMoving);
+    tick(const Duration(seconds: 30));
+    expect(p.profile, SendPolicy.powerSaveStill);
+    for (final profile in [SendPolicy.powerSaveMoving, SendPolicy.powerSaveStill]) {
+      expect(profile.heartbeat, lessThan(const Duration(seconds: 45)));
+    }
+    p.powerSave = false;
+    expect(p.profile, SendPolicy.backgroundStill);
+  });
 }

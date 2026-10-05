@@ -109,6 +109,8 @@
   "hoursAgo": "hace {n} h",
   "daysAgo": "hace {n} días",
   "infoFactRecent": "La app conserva las últimas cinco salas, con sus claves, durante tres días en el almacenamiento seguro del dispositivo (Keychain o Keystore) para que puedas volver a entrar. Cualquier entrada se puede borrar en cualquier momento: toca HereBee arriba a la izquierda.",
+  "powerSaveTitle": "Ahorro de batería",
+  "powerSaveHint": "En segundo plano, tu ubicación se consulta y se envía con menos frecuencia. Ahorra batería; para los demás tu abeja se mueve a saltos más grandes.",
   "serverTitle": "Servidor",
   "serverOfficial": "servidor oficial",
   "serverUnofficial": "no es el servidor oficial",

@@ -256,6 +256,8 @@
     }
   },
   "infoFactRecent": "Die App merkt sich die letzten fünf Räume samt Schlüssel für drei Tage in der sicheren Ablage des Geräts (Keychain bzw. Keystore), damit du sie wieder betreten kannst. Jeder Eintrag lässt sich jederzeit löschen — tippe dafür oben links auf HereBee.",
+  "powerSaveTitle": "Stromsparen",
+  "powerSaveHint": "Im Hintergrund wird dein Standort seltener abgefragt und gesendet. Das schont den Akku; für die anderen bewegt sich deine Biene dann sprunghafter.",
   "serverTitle": "Server",
   "serverOfficial": "offizieller Server",
   "serverUnofficial": "nicht der offizielle Server",

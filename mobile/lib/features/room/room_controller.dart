@@ -67,7 +67,7 @@ class RoomController extends ChangeNotifier {
     NetClientFactory? netClientFactory,
     DateTime Function()? clock,
   })  : _newNetClient = netClientFactory ?? _defaultNetClient,
-        _policy = SendPolicy(clock: clock);
+        _policy = SendPolicy(clock: clock)..powerSave = storage.powerSave;
 
   /// Fired once, when the user actually enters the room. That, not merely
   /// opening a link, is what makes a room worth remembering.
@@ -225,6 +225,16 @@ class RoomController extends ChangeNotifier {
   Future<void> setMapTheme(MapThemePref pref) async {
     await storage.setMapTheme(pref);
     if (!_disposed) notifyListeners();
+  }
+
+  bool get powerSave => storage.powerSave;
+
+  Future<void> setPowerSave(bool on) async {
+    await storage.setPowerSave(on);
+    if (_disposed) return;
+    _policy.powerSave = on;
+    _applyPolicy();
+    notifyListeners();
   }
 
   Future<void> setBubblesVisible(bool visible) async {
