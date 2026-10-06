@@ -23,6 +23,7 @@ import '../../l10n/app_localizations.dart';
 import '../hud/hud.dart';
 import '../map/auto_fit.dart';
 import '../map/bee_marker.dart';
+import '../map/follow_drag.dart';
 import '../map/marker_menu.dart';
 import '../sheets/sheets.dart';
 import '../../ui/floor_grid.dart';
@@ -73,6 +74,12 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
 
   final AutoFit _autoFit = AutoFit();
 
+  final ValueNotifier<double> _followStretch = ValueNotifier(0);
+  bool _holding = false;
+  bool _freeDrag = false;
+  String? _burstSeed;
+  Timer? _burstTimer;
+
   final GlobalKey _brandKey = GlobalKey();
   final GlobalKey _hintKey = GlobalKey();
   final GlobalKey _controlsKey = GlobalKey();
@@ -88,6 +95,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     _panSub = c.panRequests.listen(_panTo);
     _messageSub = c.messageEvents.listen(_onMessage);
     c.addListener(_onControllerChange);
+    _followStretch.addListener(_closeMenuOnStretch);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenGate());
   }
 
@@ -160,6 +168,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     unawaited(_messageSub?.cancel());
     c.removeListener(_onControllerChange);
     _styleRetry?.cancel();
+    _burstTimer?.cancel();
+    _followStretch.dispose();
     super.dispose();
   }
 
@@ -167,7 +177,10 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Standby can leave the socket frozen; rebuilding it is cheap and the only
     // reliable way to notice.
-    if (state == AppLifecycleState.resumed) c.resume();
+    if (state == AppLifecycleState.resumed) {
+      c.resume();
+      c.recenterFollow();
+    }
     // Sending slows down off screen (see SendPolicy). "inactive" is transient
     // (control centre, an incoming call) and does not count as leaving.
     switch (state) {
@@ -260,6 +273,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   }
 
   void _panTo(String seed) {
+    if (_holding) return;
     final entry = c.peers[seed];
     final map = _map;
     if (entry == null || map == null) return;
@@ -267,6 +281,41 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       center: Geographic(lon: entry.position.lng, lat: entry.position.lat),
       nativeDuration: const Duration(milliseconds: 500),
     ));
+  }
+
+  void _closeMenuOnStretch() {
+    if (_followStretch.value > 0 && _openMenuSeed != null && mounted) {
+      setState(() => _openMenuSeed = null);
+    }
+  }
+
+  void _snapBackToFollowed() {
+    final seed = c.followSeed;
+    final entry = seed == null ? null : c.peers[seed];
+    final map = _map;
+    if (entry == null || map == null) return;
+    _moveCamera(map.animateCamera(
+      center: Geographic(lon: entry.position.lng, lat: entry.position.lat),
+      nativeDuration: const Duration(milliseconds: 260),
+    ));
+  }
+
+  void _burstFollow() {
+    unawaited(HapticFeedback.mediumImpact());
+    setState(() => _freeDrag = true);
+    _autoFit.cameraTaken();
+    _popFollow();
+  }
+
+  void _popFollow() {
+    final seed = c.followSeed;
+    if (seed == null) return;
+    _burstTimer?.cancel();
+    setState(() => _burstSeed = seed);
+    _burstTimer = Timer(const Duration(milliseconds: 560), () {
+      if (mounted) setState(() => _burstSeed = null);
+    });
+    c.dropFollow();
   }
 
   void _goTo(String seed) {
@@ -345,8 +394,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         if (_openMenuSeed != null) setState(() => _openMenuSeed = null);
       case MapEventStartMoveCamera(:final reason):
         // Only a real gesture means "the user took the camera over".
-        if (reason == CameraChangeReason.apiGesture) {
-          c.dropFollow();
+        if (reason == CameraChangeReason.apiGesture && c.followSeed == null && !_freeDrag) {
           _autoFit.cameraTaken();
         }
       default:
@@ -358,6 +406,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     final now = DateTime.now();
     return c.peers.entries.map((entry) {
       final identity = c.identityFor(entry.seed);
+      final pinned = entry.seed == c.followSeed || entry.seed == _burstSeed;
       return Marker(
         point: Geographic(lon: entry.position.lng, lat: entry.position.lat),
         size: beeMarkerSize,
@@ -369,6 +418,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
           isSelf: entry.isSelf,
           menuOpen: entry.seed == _openMenuSeed,
           bubblesVisible: c.bubblesVisible,
+          followStretch: pinned ? _followStretch : null,
+          pinBursting: entry.seed == _burstSeed,
           onTap: () => setState(
             () => _openMenuSeed = _openMenuSeed == entry.seed ? null : entry.seed,
           ),
@@ -399,7 +450,6 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                 initStyle: _style!,
                 initCenter: _mapCenter,
                 initZoom: _mapZoom,
-                androidMode: AndroidPlatformViewMode.hc,
                 // Location comes from peers, not from the camera; keep the
                 // canvas gesture-friendly and upright, like the web client.
                 gestures: const MapGestures(pan: true, zoom: true, rotate: false, pitch: false),
@@ -408,11 +458,26 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
                 _map = controller;
                 // Peers may have arrived before the native view existed.
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) _maybeAutoFit();
+                  if (!mounted) return;
+                  _maybeAutoFit();
+                  c.recenterFollow();
                 });
               },
               onEvent: _onMapEvent,
               children: [
+                if (c.followSeed != null || _freeDrag)
+                  FollowDragLayer(
+                    stretch: _followStretch,
+                    onActive: (active) => _holding = active,
+                    onBurst: _burstFollow,
+                    onSnapBack: _snapBackToFollowed,
+                    onTap: () {
+                      if (_openMenuSeed != null) setState(() => _openMenuSeed = null);
+                    },
+                    onDone: () {
+                      if (mounted) setState(() => _freeDrag = false);
+                    },
+                  ),
                 WidgetLayer(markers: _markers(context), allowInteraction: true),
                 MarkerMenu(
                   data: openEntry == null ? null : _menuData(openEntry),
@@ -444,8 +509,14 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
             ),
           Hud(
             controller: c,
-            onFitAll: _fitAll,
-            onGoTo: _goTo,
+            onFitAll: () {
+              _popFollow();
+              _fitAll();
+            },
+            onGoTo: (seed) {
+              if (c.followSeed != null && c.followSeed != seed) _popFollow();
+              _goTo(seed);
+            },
             onShareLink: () => shareRoomLink(context, c.roomLink),
             onToggleShare: _toggleShare,
             onInfo: () => showInfoSheet(context, controller: c),

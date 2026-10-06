@@ -25,6 +25,19 @@ void main() {
     expect(storage.customName('roomB', 'peer'), isNull);
   });
 
+  test('the followed bee survives a restart, per room', () async {
+    SharedPreferences.setMockInitialValues({});
+    final device = MemorySecretStore();
+    final storage = await Storage.open(device: device);
+    await storage.setFollowSeed('roomA', 'peer');
+
+    final reopened = await Storage.open(device: device);
+    expect(reopened.followSeed('roomA'), 'peer');
+    expect(reopened.followSeed('roomB'), isNull);
+    await reopened.setFollowSeed('roomA', null);
+    expect(reopened.followSeed('roomA'), isNull);
+  });
+
   test('our bee is a different one in every room, and stable within one', () async {
     SharedPreferences.setMockInitialValues({});
     final device = MemorySecretStore();

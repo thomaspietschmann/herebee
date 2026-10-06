@@ -7,6 +7,7 @@
 /// glance at the map tells you who is live without reading every label.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -15,6 +16,7 @@ import '../../core/peer_state.dart';
 import '../../l10n/app_localizations.dart';
 import '../../util/format.dart';
 import '../../ui/tokens.dart';
+import 'follow_drag.dart';
 
 const double _sayReserve = 64;
 
@@ -25,6 +27,8 @@ const double _discSize = 42;
 const double _center = 38;
 
 const double beeDiscRadius = _discSize / 2;
+
+const double _pinLift = 22;
 
 const Alignment beeMarkerAlignment = Alignment(0, (_sayReserve + _center) / (174 / 2) - 1);
 
@@ -58,6 +62,8 @@ class BeeMarker extends StatelessWidget {
     this.isSelf = false,
     this.menuOpen = false,
     this.bubblesVisible = true,
+    this.followStretch,
+    this.pinBursting = false,
     super.key,
   });
 
@@ -70,6 +76,10 @@ class BeeMarker extends StatelessWidget {
   final bool menuOpen;
 
   final bool bubblesVisible;
+
+  final ValueListenable<double>? followStretch;
+
+  final bool pinBursting;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +95,8 @@ class BeeMarker extends StatelessWidget {
     final t = HereBeeTokens.of(context);
     final suffix = statusSuffix(entry, now, l);
     final label = suffix == null ? identity.name : '${identity.name} · $suffix';
+    final stretch = followStretch;
+    final pinLift = stretch == null ? 0.0 : _pinLift;
 
     final disc = Container(
       width: _discSize,
@@ -142,7 +154,7 @@ class BeeMarker extends StatelessWidget {
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom: beeMarkerSize.height - _sayReserve - _center + beeDiscRadius + 4,
+                  bottom: beeMarkerSize.height - _sayReserve - _center + beeDiscRadius + 4 + pinLift,
                   child: Center(
                     child: IgnorePointer(
                       child: AnimatedOpacity(
@@ -172,7 +184,10 @@ class BeeMarker extends StatelessWidget {
                         angle: entry.position.hdg! * 3.141592653589793 / 180,
                         child: _HeadingArrow(color: color),
                       ),
-                    GestureDetector(onTap: onTap, child: disc),
+                    if (stretch == null)
+                      GestureDetector(onTap: onTap, child: disc)
+                    else
+                      FollowSwell(stretch: stretch, child: GestureDetector(onTap: onTap, child: disc)),
                     if (message != null && !bubblesVisible)
                       Positioned(
                         top: _center - beeDiscRadius - 2,
@@ -192,6 +207,14 @@ class BeeMarker extends StatelessWidget {
                   ],
                 ),
               ),
+              if (stretch != null)
+                Positioned(
+                  left: beeMarkerSize.width / 2 - 48,
+                  top: _sayReserve + _center - beeDiscRadius - 11 - 48,
+                  child: IgnorePointer(
+                    child: FollowPin(stretch: stretch, bursting: pinBursting),
+                  ),
+                ),
               Positioned(
                 top: _sayReserve + _center + 25,
                 left: 0,

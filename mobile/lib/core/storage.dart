@@ -26,6 +26,7 @@ const String _legacySeedKey = 'herebee.seed';
 const String _legacyCidKey = 'herebee.cid';
 const String _namePrefix = 'herebee.name.';
 const String _ownNamePrefix = 'herebee.ownName.';
+const String _followPrefix = 'herebee.follow.';
 const String _shareNamePrefix = 'herebee.shareName.';
 const String _legacyShareNameKey = 'herebee.shareName';
 const String _bubblesKey = 'herebee.bubbles';
@@ -116,6 +117,10 @@ class Storage {
 
   Future<void> setCustomName(String roomId, String seed, String? name) =>
       _setOrRemove('$_namePrefix$roomId.$seed', name);
+
+  String? followSeed(String roomId) => _prefs.getString('$_followPrefix$roomId');
+
+  Future<void> setFollowSeed(String roomId, String? seed) => _setOrRemove('$_followPrefix$roomId', seed);
 
   /// The name the user gave themselves in one room. Goes out, encrypted, only
   /// while [sharesName] is on for that room.

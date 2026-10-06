@@ -257,6 +257,7 @@ class RoomController extends ChangeNotifier {
       return;
     }
     _selfSeed = await storage.roomSeed(_keys!.roomId);
+    _followSeed = storage.followSeed(_keys!.roomId);
     if (!_disposed) notifyListeners();
   }
 
@@ -317,7 +318,7 @@ class RoomController extends ChangeNotifier {
         _touchSelf();
       }
       final removed = peers.tick(DateTime.now());
-      if (removed.contains(_followSeed)) _followSeed = null;
+      if (removed.contains(_followSeed)) _setFollow(null);
       notifyListeners(); // also refreshes "last seen" in an open info box
     });
   }
@@ -330,7 +331,7 @@ class RoomController extends ChangeNotifier {
     _connSeed[id] = update.seed;
     final known = peers[update.seed] != null;
     if (peers.upsert(update) && known) _messageEvents.add(update.seed);
-    if (update is StopUpdate && _followSeed == update.seed) _followSeed = null;
+    if (update is StopUpdate && _followSeed == update.seed) _setFollow(null);
     if (_followSeed == update.seed) _panRequests.add(update.seed);
     notifyListeners();
   }
@@ -684,15 +685,26 @@ class RoomController extends ChangeNotifier {
   }
 
   void toggleFollow(String seed) {
-    _followSeed = _followSeed == seed ? null : seed;
+    _setFollow(_followSeed == seed ? null : seed);
     if (_followSeed != null) _panRequests.add(seed);
     notifyListeners();
+  }
+
+  void _setFollow(String? seed) {
+    _followSeed = seed;
+    final roomId = _keys?.roomId;
+    if (roomId != null) unawaited(storage.setFollowSeed(roomId, seed));
+  }
+
+  void recenterFollow() {
+    final seed = _followSeed;
+    if (seed != null && peers[seed] != null) _panRequests.add(seed);
   }
 
   /// The user took the camera over; stop following.
   void dropFollow() {
     if (_followSeed == null) return;
-    _followSeed = null;
+    _setFollow(null);
     notifyListeners();
   }
 
