@@ -28,6 +28,22 @@ export interface UIHandlers {
 
 export type MapThemePref = "auto" | MapTheme;
 
+export interface RoomsView {
+  enabled: boolean;
+  current: string;
+  rooms: Array<{ secret: string; title: string; current: boolean }>;
+}
+
+export interface RoomsHandlers {
+  view: () => RoomsView;
+  onNew: () => void;
+  onOpen: (secret: string) => void;
+  onLink: (url: string) => boolean;
+  onToggle: (on: boolean) => void;
+  onForget: (secret: string) => void;
+  onForgetAll: () => void;
+}
+
 interface Sharer {
   seed: string;
   color: string;
@@ -166,6 +182,83 @@ export class UI {
         this.closeSheet();
         this.h.onGoTo(el.dataset.seed!);
       });
+    });
+  }
+
+  bindRooms(h: RoomsHandlers): void {
+    this.connChip.setAttribute("role", "button");
+    this.connChip.setAttribute("tabindex", "0");
+    this.connChip.setAttribute("aria-haspopup", "dialog");
+    this.connChip.title = t("roomsTitle");
+    this.connChip.classList.add("is-button");
+    this.connChip.addEventListener("click", () => this.openRooms(h));
+    this.connChip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        this.openRooms(h);
+      }
+    });
+  }
+
+  private openRooms(h: RoomsHandlers): void {
+    if (this.gated) return;
+    const v = h.view();
+    const list = v.rooms.length
+      ? `<p class="rooms-label">${t("roomsRecent")}</p>
+        <ul class="party-list">${v.rooms
+          .map(
+            (r) =>
+              `<li class="room-row"><button type="button" class="party room-open" data-secret="${r.secret}"${r.current ? " disabled" : ""}><span class="party-text"><span class="party-name">${this.esc(r.title)}</span>${r.current ? `<span class="party-say">${t("roomsCurrent")}</span>` : ""}</span></button>${r.current ? "" : `<button type="button" class="room-forget" data-secret="${r.secret}" aria-label="${t("roomsForget")}" title="${t("roomsForget")}">✕</button>`}</li>`
+          )
+          .join("")}</ul>
+        ${v.rooms.some((r) => !r.current) ? `<p class="rooms-forget-all"><button type="button" class="linklike" id="rooms-forget-all">${t("roomsForgetAll")}</button></p>` : ""}`
+      : "";
+    this.sheetBody.innerHTML = `
+      <h2>${t("roomsTitle")}</h2>
+      <button type="button" class="btn btn-primary btn-fill" id="rooms-new">＋ ${t("roomsNew")}</button>
+      <div class="linkbox linkbox-gap-16">
+        <input id="rooms-link" inputmode="url" autocomplete="off" placeholder="${t("roomsLinkHint")}" />
+      </div>
+      <p class="rooms-invalid" id="rooms-invalid" hidden>${t("roomsLinkInvalid")}</p>
+      <label class="rooms-switch">
+        <input type="checkbox" id="rooms-remember"${v.enabled ? " checked" : ""} />
+        <span class="rooms-switch-track" aria-hidden="true"></span>
+        <span>${t("roomsRemember")}</span>
+      </label>
+      <p class="rooms-note">${t(v.enabled ? "roomsRememberOn" : "roomsRememberOff")}</p>
+      ${list}`;
+    this.openSheet();
+    document.getElementById("rooms-new")!.addEventListener("click", () => h.onNew());
+    const link = document.getElementById("rooms-link") as HTMLInputElement;
+    const invalid = document.getElementById("rooms-invalid")!;
+    const tryLink = () => {
+      const text = link.value.trim();
+      if (!text) {
+        invalid.hidden = true;
+        return;
+      }
+      invalid.hidden = h.onLink(text);
+    };
+    link.addEventListener("input", tryLink);
+    link.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") tryLink();
+    });
+    document.getElementById("rooms-remember")!.addEventListener("change", (e) => {
+      h.onToggle((e.target as HTMLInputElement).checked);
+      this.openRooms(h);
+    });
+    this.sheetBody.querySelectorAll<HTMLElement>(".room-open:not([disabled])").forEach((el) =>
+      el.addEventListener("click", () => h.onOpen(el.dataset.secret!))
+    );
+    this.sheetBody.querySelectorAll<HTMLElement>(".room-forget").forEach((el) =>
+      el.addEventListener("click", () => {
+        h.onForget(el.dataset.secret!);
+        this.openRooms(h);
+      })
+    );
+    document.getElementById("rooms-forget-all")?.addEventListener("click", () => {
+      h.onForgetAll();
+      this.openRooms(h);
     });
   }
 
@@ -462,7 +555,7 @@ export class UI {
     const neonLabel = (pref: MapThemePref) => (isNeon(pref) ? NEON_NAMES[pref] : t("mapThemeSynthwave"));
     const neonOption = (theme: NeonTheme) => {
       const [ground, major, highway] = neonSwatch(theme);
-      return `<li><button type="button" class="neon-opt${theme === current ? " is-active" : ""}" role="menuitemradio" aria-checked="${theme === current}" data-theme="${theme}"><span class="neon-swatch" style="--sw-a:${ground};--sw-b:${major};--sw-c:${highway}"></span>${NEON_NAMES[theme]}</button></li>`;
+      return `<li><button type="button" class="neon-opt${theme === current ? " is-active" : ""}" role="menuitemradio" aria-checked="${theme === current}" data-theme="${theme}"><span class="neon-swatch" data-sw="${ground}|${major}|${highway}"></span>${NEON_NAMES[theme]}</button></li>`;
     };
     this.sheetBody.innerHTML = `
       <h2>${t("mapTheme")}</h2>
@@ -492,6 +585,12 @@ export class UI {
       })}</p>
       <p class="sheet-foot"><button type="button" class="linklike" id="open-legal">${t("legalLink")}</button></p>`;
     this.openSheet();
+    this.sheetBody.querySelectorAll<HTMLElement>(".neon-swatch[data-sw]").forEach((el) => {
+      const [a, b, c] = el.dataset.sw!.split("|");
+      el.style.setProperty("--sw-a", a);
+      el.style.setProperty("--sw-b", b);
+      el.style.setProperty("--sw-c", c);
+    });
     const neonToggle = document.getElementById("neon-toggle")!;
     const neonMenu = document.getElementById("neon-menu")!;
     const showMenu = (open: boolean) => {

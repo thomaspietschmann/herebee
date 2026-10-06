@@ -9,11 +9,22 @@ import { deriveRoomKeys, deriveRoomSeed, generateSecret, type RoomKeys } from ".
 import { NetClient } from "./net.js";
 import { createCoordinator } from "./coord.js";
 import { initMap, setMapTheme } from "./map.js";
+import { attachFollowDrag } from "./follow-drag.js";
 import { isNeon, type MapTheme } from "../../shared/map-theme.js";
 import { LINGER_MS, MSG_TTL_MS, MarkerManager, relTime, type MenuActions } from "./markers.js";
 import { identityFromSeed, hueFromIndex } from "./avatar.js";
 import { nameFromSeed } from "./names.js";
 import { UI, type MapThemePref } from "./ui.js";
+import {
+  forgetAllRooms,
+  forgetRoom,
+  recentEnabled,
+  recentRooms,
+  rememberRoom,
+  rememberSeed,
+  secretFromLink,
+  setRecentEnabled,
+} from "./recent-rooms.js";
 import { t, applyStaticI18n } from "./i18n.js";
 import type { PeerUpdate, Position } from "./types.js";
 
@@ -324,8 +335,14 @@ async function main(): Promise<void> {
   const ui = new UI({
     // The leader owns sharing; a follower just asks it to flip via the bus.
     onToggleShare: () => (coord.isLeader() ? toggleShare() : coord.post({ t: "toggle-share" } satisfies Bus)),
-    onFitAll: fitAll,
-    onGoTo: goTo,
+    onFitAll: () => {
+      popFollow();
+      fitAll();
+    },
+    onGoTo: (s) => {
+      if (followSeed && followSeed !== s) popFollow();
+      goTo(s);
+    },
     onToggleBubbles: toggleBubbles,
     mapTheme: () => themePref,
     onMapTheme: setThemePref,
@@ -335,8 +352,10 @@ async function main(): Promise<void> {
   // Derive the room keys from the fragment secret. A hand-edited / malformed
   // secret can't decode — show a friendly notice instead of failing silently.
   let keys: RoomKeys;
+  let roomSecret = "";
   try {
     const secret = ensureSecret();
+    roomSecret = secret;
     if (!/^[A-Za-z0-9_-]{43}$/.test(secret)) throw new Error("invalid secret");
     keys = await deriveRoomKeys(secret);
   } catch {
@@ -345,6 +364,59 @@ async function main(): Promise<void> {
   }
   roomId = keys.roomId;
   seed = await deriveRoomSeed(deviceSecret(), roomId);
+
+  const goToRoom = (secret: string) => {
+    location.assign(`/r/#${secret}`);
+    location.reload();
+  };
+  const roomTitle = (rid: string, seeds: string[]) => {
+    const names = seeds.map((s) => {
+      try {
+        return localStorage.getItem(`herebee.name.${rid}.${s}`) ?? nameFromSeed(s);
+      } catch {
+        return nameFromSeed(s);
+      }
+    });
+    return names.length ? names.join(", ") : t("roomsUnnamed");
+  };
+  ui.bindRooms({
+    view: () => ({
+      enabled: recentEnabled(),
+      current: roomSecret,
+      rooms: recentRooms().map((r) => ({
+        secret: r.secret,
+        title: roomTitle(r.roomId, r.seeds),
+        current: r.secret === roomSecret,
+      })),
+    }),
+    onNew: () => goToRoom(generateSecret()),
+    onOpen: goToRoom,
+    onLink: (text) => {
+      const secret = secretFromLink(text);
+      if (!secret) return false;
+      try {
+        const url = new URL(text.trim());
+        if (url.origin !== location.origin) {
+          location.assign(url.href);
+          return true;
+        }
+      } catch {
+        goToRoom(secret);
+        return true;
+      }
+      goToRoom(secret);
+      return true;
+    },
+    onToggle: (on) => {
+      setRecentEnabled(on);
+      if (on && browserEntered) {
+        rememberRoom(roomSecret, roomId);
+        for (const s of roster.keys()) if (s !== seed) rememberSeed(roomId, s);
+      }
+    },
+    onForget: forgetRoom,
+    onForgetAll: () => forgetAllRooms(roomSecret),
+  });
   dropCrossRoomData();
   try {
     localStorage.removeItem("herebee.sharing." + keys.roomId);
@@ -393,7 +465,7 @@ async function main(): Promise<void> {
       roster.delete(update.seed);
       sharedNames.delete(update.seed);
       peerSays.delete(update.seed);
-      if (followSeed === update.seed) followSeed = null;
+      if (followSeed === update.seed) setFollow(null);
       refreshRoster();
       return;
     }
@@ -413,6 +485,7 @@ async function main(): Promise<void> {
     );
     applyPeerSay(update, known, peer.name);
     roster.set(update.seed, { color: peer.color, name: rosterName(update.seed) });
+    rememberSeed(roomId, update.seed);
     refreshRoster();
     maybeFollow(update.seed);
   }
@@ -461,7 +534,7 @@ async function main(): Promise<void> {
     if (!pos) {
       markers.remove(seed);
       roster.delete(seed);
-      if (followSeed === seed) followSeed = null;
+      if (followSeed === seed) setFollow(null);
       refreshRoster();
       return;
     }
@@ -529,15 +602,63 @@ async function main(): Promise<void> {
     markers.openMenu(s, buildMenuActions(s));
   }
 
+  let followHolding = false;
+
+  function setFollow(s: string | null): void {
+    followSeed = s;
+    markers.setPinned(s);
+    syncFollowGestures();
+  }
+
+  function syncFollowGestures(): void {
+    if (followSeed || followHolding) {
+      map.dragPan.disable();
+      map.touchZoomRotate.enable({ around: "center" });
+      map.scrollZoom.enable({ around: "center" });
+    } else {
+      map.dragPan.enable();
+      map.touchZoomRotate.enable();
+      map.scrollZoom.enable();
+    }
+  }
+
+  function popFollow(): void {
+    const s = followSeed;
+    if (!s) return;
+    setFollow(null);
+    markers.burstPin(s);
+    refreshOpenMenu();
+  }
+
   function toggleFollow(s: string): void {
-    followSeed = followSeed === s ? null : s;
+    setFollow(followSeed === s ? null : s);
     if (followSeed) goTo(s); // snap to it immediately; subsequent updates just pan
     refreshOpenMenu();
   }
 
+  attachFollowDrag(map, {
+    isFollowing: () => followSeed !== null,
+    onActive: (active) => {
+      followHolding = active;
+      if (!active) syncFollowGestures();
+    },
+    onStretch: (p) => {
+      if (p > 0) markers.closeMenu();
+      if (followSeed) markers.setPinStretch(followSeed, p);
+    },
+    onBurst: () => {
+      popFollow();
+      navigator.vibrate?.(15);
+    },
+    onSnapBack: () => {
+      const p = followSeed ? markers.positionOf(followSeed) : null;
+      if (p) map.easeTo({ center: p, duration: 260 });
+    },
+  });
+
   /** Pan (don't re-zoom) to keep the followed marker centered as it moves. */
   function maybeFollow(s: string): void {
-    if (followSeed !== s) return;
+    if (followSeed !== s || followHolding) return;
     const p = markers.positionOf(s);
     if (p) map.panTo(p, { duration: 500 });
   }
@@ -596,13 +717,6 @@ async function main(): Promise<void> {
   }
 
   map.on("click", () => markers.closeMenu()); // tap empty map to dismiss
-  map.on("dragstart", () => {
-    // Only fires for a user-initiated drag/pan gesture, never our own
-    // programmatic panTo/easeTo — so this is exactly "the user took over".
-    if (!followSeed) return;
-    followSeed = null;
-    refreshOpenMenu();
-  });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") markers.closeMenu();
   });
@@ -852,12 +966,14 @@ async function main(): Promise<void> {
         // Another tab entered -> the browser is present. Dismiss our own gate and,
         // if we're the (idle) leader, open the connection now.
         browserEntered = true;
+        rememberRoom(roomSecret, roomId);
         ui.dismissWelcome();
         ensureConnected();
         break;
       case "snapshot":
         if (coord.isLeader()) break; // only followers consume snapshots
         browserEntered = true;
+        rememberRoom(roomSecret, roomId);
         ui.dismissWelcome();
         ownMsg = m.ownMsg;
         for (const p of m.peers) {
@@ -946,6 +1062,7 @@ async function main(): Promise<void> {
   const doEnter = () => {
     if (browserEntered) return;
     browserEntered = true;
+    rememberRoom(roomSecret, roomId);
     coord.post({ t: "enter" } satisfies Bus); // tell siblings the browser is present
     ensureConnected(); // connects only if we're the leader; else the leader will
   };
@@ -988,7 +1105,7 @@ async function main(): Promise<void> {
       for (const [c, s] of connSeed) if (s === id) connSeed.delete(c);
       peerSays.delete(id);
       roster.delete(id);
-      if (followSeed === id) followSeed = null;
+      if (followSeed === id) setFollow(null);
     }
     refreshRoster();
     refreshOpenMenu(); // keep "last seen" / distance live while a menu is open

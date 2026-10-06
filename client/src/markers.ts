@@ -48,6 +48,7 @@ interface Entry {
   label: HTMLElement;
   arrow: HTMLElement;
   sayEl: HTMLElement;
+  pinEl: HTMLElement;
   identity: Identity;
   pos: Position;
   at: number;
@@ -167,6 +168,7 @@ export class MarkerManager {
   // bump the active one with a monotonically increasing z-index so the most
   // recently raised marker is always on top.
   private zTop = 1;
+  private pinnedSeed: string | null = null;
 
   constructor(
     private readonly map: MlMap,
@@ -190,12 +192,14 @@ export class MarkerManager {
       <div class="mk-disc">${identity.svg}</div>
       <div class="mk-say-dot" aria-hidden="true"></div>
       <div class="mk-say" aria-hidden="true"></div>
-      <div class="mk-label"></div>`;
+      <div class="mk-label"></div>
+      <div class="mk-pin" aria-hidden="true"><span class="mk-pin-glyph">📍</span></div>`;
     const label = el.querySelector<HTMLElement>(".mk-label")!;
     const arrow = el.querySelector<HTMLElement>(".mk-arrow")!;
     const sayEl = el.querySelector<HTMLElement>(".mk-say")!;
+    const pinEl = el.querySelector<HTMLElement>(".mk-pin")!;
     label.textContent = identity.name;
-    return { el, label, arrow, sayEl };
+    return { el, label, arrow, sayEl, pinEl };
   }
 
   upsert(id: string, identity: Identity, pos: Position, at: number, self = false): void {
@@ -211,6 +215,7 @@ export class MarkerManager {
         .addTo(this.map);
       e = { marker, ...parts, identity, pos, at, self, offline: false };
       this.entries.set(id, e);
+      if (this.pinnedSeed === id) e.el.classList.add("is-pinned");
     } else {
       e.pos = pos;
       e.at = at;
@@ -264,6 +269,55 @@ export class MarkerManager {
       e.el.classList.add("say-pop");
       this.raise(seed);
     }
+  }
+
+  setPinned(seed: string | null): void {
+    if (this.pinnedSeed === seed) return;
+    const old = this.pinnedSeed ? this.entries.get(this.pinnedSeed) : undefined;
+    if (old) {
+      old.el.classList.remove("is-pinned");
+      old.pinEl.style.removeProperty("--s");
+      old.el.style.removeProperty("--bs");
+    }
+    this.pinnedSeed = seed;
+    const e = seed ? this.entries.get(seed) : undefined;
+    if (e) {
+      e.el.classList.add("is-pinned");
+      this.raise(seed!);
+    }
+  }
+
+  setPinStretch(seed: string, progress: number): void {
+    const e = this.entries.get(seed);
+    if (!e) return;
+    e.el.classList.toggle("is-stretching", progress > 0);
+    e.pinEl.style.setProperty("--s", String(1 + 0.9 * Math.pow(progress, 1.3)));
+    e.el.style.setProperty("--bs", String(1 + 0.28 * Math.pow(progress, 1.2)));
+  }
+
+  burstPin(seed: string): void {
+    const e = this.entries.get(seed);
+    if (!e) return;
+    const pin = e.pinEl;
+    e.el.classList.add("is-bursting");
+    e.el.classList.remove("is-stretching");
+    pin.style.removeProperty("--s");
+    e.el.style.removeProperty("--bs");
+    const sparks: HTMLElement[] = [];
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * 2 * Math.PI + (i % 2 ? -0.08 : 0.12);
+      const r = i % 2 ? 30 : 40;
+      const spark = document.createElement("span");
+      spark.className = `mk-spark mk-spark-${i % 3}`;
+      spark.style.setProperty("--dx", `${Math.cos(a) * r}px`);
+      spark.style.setProperty("--dy", `${Math.sin(a) * r}px`);
+      pin.appendChild(spark);
+      sparks.push(spark);
+    }
+    setTimeout(() => {
+      sparks.forEach((s) => s.remove());
+      e.el.classList.remove("is-bursting");
+    }, 560);
   }
 
   isOnScreen(seed: string): boolean {
