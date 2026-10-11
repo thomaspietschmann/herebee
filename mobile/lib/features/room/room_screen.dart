@@ -29,6 +29,7 @@ import '../sheets/sheets.dart';
 import '../../ui/floor_grid.dart';
 import '../../ui/tokens.dart';
 import 'room_controller.dart';
+import 'rooms_session.dart';
 
 /// Matches the web client's initial view (see client/src/map.ts).
 const Geographic _initialCenter = Geographic(lon: 10.5, lat: 50.6);
@@ -39,11 +40,13 @@ class RoomScreen extends StatefulWidget {
     required this.controller,
     required this.recent,
     required this.onOpenRoom,
+    this.session,
     super.key,
   });
 
   final RoomController controller;
   final RecentRooms recent;
+  final RoomsSession? session;
 
   /// Switch to another room: a remembered one, a pasted link, or a new one.
   final void Function(RoomsChoice choice) onOpenRoom;
@@ -56,6 +59,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   MapController? _map;
   StreamSubscription<String>? _panSub;
   StreamSubscription<String>? _messageSub;
+  StreamSubscription<RoomMessage>? _elsewhereSub;
 
   /// The seed whose bubble menu is open, or null. Only ever one at a time.
   String? _openMenuSeed;
@@ -73,6 +77,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   Timer? _styleRetry;
 
   final AutoFit _autoFit = AutoFit();
+  bool _zoomToSelf = false;
 
   final ValueNotifier<double> _followStretch = ValueNotifier(0);
   bool _holding = false;
@@ -94,6 +99,18 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _panSub = c.panRequests.listen(_panTo);
     _messageSub = c.messageEvents.listen(_onMessage);
+    _elsewhereSub = widget.session?.messagesElsewhere.listen(_onMessageElsewhere);
+    widget.session?.addListener(_onSessionChange);
+    final camera = c.camera;
+    if (camera != null) {
+      _mapCenter = Geographic(lon: camera.lng, lat: camera.lat);
+      _mapZoom = camera.zoom;
+      _autoFit.shouldFit(
+        seeds: c.peers.entries.map((e) => e.seed).toSet(),
+        sharing: c.sharing,
+        following: c.followSeed != null,
+      );
+    }
     c.addListener(_onControllerChange);
     _followStretch.addListener(_closeMenuOnStretch);
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenGate());
@@ -161,9 +178,19 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     _syncStyle();
   }
 
+  void _onSessionChange() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    final camera = _map?.camera;
+    c.camera = camera == null
+        ? (lat: _mapCenter.lat, lng: _mapCenter.lon, zoom: _mapZoom)
+        : (lat: camera.center.lat, lng: camera.center.lon, zoom: camera.zoom);
     WidgetsBinding.instance.removeObserver(this);
+    widget.session?.removeListener(_onSessionChange);
+    unawaited(_elsewhereSub?.cancel());
     unawaited(_panSub?.cancel());
     unawaited(_messageSub?.cancel());
     c.removeListener(_onControllerChange);
@@ -178,9 +205,10 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     // Standby can leave the socket frozen; rebuilding it is cheap and the only
     // reliable way to notice.
     if (state == AppLifecycleState.resumed) {
-      c.resume();
+      if (widget.session == null) c.resume();
       c.recenterFollow();
     }
+    if (widget.session != null) return;
     // Sending slows down off screen (see SendPolicy). "inactive" is transient
     // (control centre, an incoming call) and does not count as leaving.
     switch (state) {
@@ -202,6 +230,7 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     setState(() {});
     _syncStyle();
+    _maybeZoomToSelf();
     _maybeAutoFit();
 
     // The platform ended sharing without the user asking. Going quiet here would
@@ -223,14 +252,23 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
   Future<void> _maybeOpenGate() async {
     if (_welcomeShown || !mounted) return;
     _welcomeShown = true;
+    if (c.entered) return;
     if (c.invalidLink) {
       await showInvalidLinkSheet(context);
       return;
     }
     // Nothing has touched the network yet; entering is the user's decision.
-    await showWelcomeSheet(context, origin: c.origin);
-    if (!mounted) return;
+    if (!_inAnotherRoom()) {
+      await showWelcomeSheet(context, origin: c.origin);
+      if (!mounted) return;
+    }
     await c.enter();
+  }
+
+  bool _inAnotherRoom() {
+    final session = widget.session;
+    if (session == null) return false;
+    return session.joined.any((room) => room != session.active && (session[room]?.entered ?? false));
   }
 
   Future<void> _openRooms() async {
@@ -242,9 +280,50 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
           ? c.resolveName(seed)
           : (room.roomId.isEmpty ? null : c.storage.customName(room.roomId, seed)) ??
               nameFromSeed(seed, c.languageCode),
+      joined: _joinedRooms(),
     );
     if (!mounted || choice == null) return;
     widget.onOpenRoom(choice);
+  }
+
+  List<JoinedRoom> _joinedRooms() {
+    final session = widget.session;
+    if (session == null) return const [];
+    return [
+      for (final room in session.joined)
+        if (session[room] case final other?)
+          JoinedRoom(
+            secret: room.secret,
+            origin: room.origin,
+            title: _roomTitle(other),
+            active: room == session.active,
+            sharing: other.sharing,
+            unread: session.unread(room),
+          ),
+    ];
+  }
+
+  String? _roomTitle(RoomController room) {
+    final live = room.peers.entries.where((e) => !e.isSelf).map((e) => room.plainName(e.seed)).toList();
+    if (live.isNotEmpty) return live.join(', ');
+    final remembered = widget.recent.rooms.where((r) => r.secret == room.secret).firstOrNull;
+    if (remembered == null || remembered.seeds.isEmpty || room.roomId == null) return null;
+    return remembered.seeds.map(room.plainName).join(', ');
+  }
+
+  void _onMessageElsewhere(RoomMessage event) {
+    if (!mounted) return;
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) return;
+    final other = widget.session?[event.room];
+    final message = other?.peers[event.seed]?.message;
+    if (other == null || message == null) return;
+    final l = L.of(context);
+    unawaited(HapticFeedback.lightImpact());
+    _toast(
+      '${other.identityFor(event.seed).name}: $message',
+      actionLabel: l.roomsSwitch,
+      onAction: () => widget.onOpenRoom(RoomsChoice(event.room.secret, origin: event.room.origin, remembered: true)),
+    );
   }
 
   void _onMessage(String seed) {
@@ -328,6 +407,20 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
       zoom: zoom,
       nativeDuration: const Duration(milliseconds: 700),
     ));
+  }
+
+  void _maybeZoomToSelf() {
+    if (!_zoomToSelf || _map == null) return;
+    final seed = c.selfSeed;
+    if (seed == null || c.peers[seed] == null) return;
+    _zoomToSelf = false;
+    _autoFit.shouldFit(
+      seeds: c.peers.entries.map((e) => e.seed).toSet(),
+      sharing: c.sharing,
+      following: c.followSeed != null,
+    );
+    if (c.followSeed != null && c.followSeed != seed) _popFollow();
+    _goTo(seed);
   }
 
   /// Fit everyone when a new bee appears (see AutoFit). Runs on every
@@ -521,6 +614,8 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
             onToggleShare: _toggleShare,
             onInfo: () => showInfoSheet(context, controller: c),
             onRooms: _openRooms,
+            rooms: widget.session?.joined.length ?? 1,
+            unreadElsewhere: widget.session?.unreadElsewhere ?? 0,
             brandKey: _brandKey,
             hintKey: _hintKey,
             controlsKey: _controlsKey,
@@ -645,7 +740,10 @@ class _RoomScreenState extends State<RoomScreen> with WidgetsBindingObserver {
         notificationTitle: l.notifSharingTitle,
         notificationBody: l.notifSharingBody,
         notificationStopLabel: l.notifStop,
+        notificationBodyRooms: (rooms) => l.notifSharingBodyRooms('$rooms'),
       );
+      _zoomToSelf = true;
+      _maybeZoomToSelf();
     } on LocationException catch (e) {
       if (!mounted) return;
       _toast(

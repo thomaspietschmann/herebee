@@ -71,7 +71,7 @@ void main() {
     await rooms.load();
     await rooms.touch('a');
     await rooms.touch('b');
-    await rooms.forgetAll(keep: 'b');
+    await rooms.forgetAll(keep: {'b'});
     expect(rooms.rooms.map((r) => r.secret), ['b']);
   });
 

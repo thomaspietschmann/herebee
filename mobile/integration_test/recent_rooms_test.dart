@@ -36,6 +36,11 @@ Future<bool> pumpUntil(
 
 Future<void> tapWhenOnScreen(WidgetTester tester, Finder finder) async {
   final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+  await pumpUntil(tester, () => finder.evaluate().isNotEmpty);
+  if (finder.evaluate().isNotEmpty) {
+    await tester.ensureVisible(finder.first);
+    await tester.pump(const Duration(milliseconds: 300));
+  }
   final ready = await pumpUntil(tester, () {
     if (finder.evaluate().isEmpty) return false;
     final c = tester.getCenter(finder);
@@ -109,9 +114,10 @@ void main() {
     // Optional pause with the populated sheet on screen, for a screenshot.
     await pumpUntil(tester, () => false, timeout: Duration(seconds: _holdSeconds));
     await tester.tap(find.text('Forget all'));
-    expect(await pumpUntil(tester, () => again.rooms.isEmpty), isTrue);
+    expect(await pumpUntil(tester, () => again.rooms.length == 1), isTrue);
+    expect(again.rooms.single.secret, second, reason: 'the open room is kept');
     final cleared = RecentRooms(SecureSecretStore());
     await cleared.load();
-    expect(cleared.rooms, isEmpty, reason: 'forget-all must delete the secure item');
+    expect(cleared.rooms.map((r) => r.secret), [second], reason: 'forget-all must persist to secure storage');
   });
 }

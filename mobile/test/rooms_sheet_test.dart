@@ -149,6 +149,59 @@ void main() {
     expect(find.text('Alle vergessen'), findsNothing,
         reason: 'nothing left that could be forgotten');
   });
+
+  testWidgets('joined rooms are listed apart and each can be left', (tester) async {
+    final recent = RecentRooms(MemorySecretStore());
+    await recent.load();
+    await recent.touch('current');
+    await recent.touch('other');
+    await recent.touch('old');
+    await recent.sawPeers('old', ['z']);
+    RoomsChoice? result;
+
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('de'),
+      localizationsDelegates: const [
+        L.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: L.supportedLocales,
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () async => result = await showRoomsSheet(
+              context,
+              recent: recent,
+              currentSecret: 'current',
+              nameFor: (room, seed) => 'Biene $seed',
+              joined: const [
+                JoinedRoom(secret: 'current', origin: 'https://herebee.app', title: 'Anna', active: true),
+                JoinedRoom(
+                    secret: 'other', origin: 'https://herebee.app', title: 'Ben', active: false, sharing: true, unread: 2),
+              ],
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gerade drin'), findsOneWidget);
+    expect(find.text('Anna'), findsOneWidget);
+    expect(find.text('Ben'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('Teilt Standort'), findsOneWidget);
+    expect(find.text('Biene z'), findsOneWidget, reason: 'rooms not joined stay under recent');
+
+    await tester.tap(find.byKey(const ValueKey('leave-other')));
+    await tester.pumpAndSettle();
+    expect(result?.secret, 'other');
+    expect(result?.leave, isTrue);
+  });
 }
 
 Widget startHost(RecentRooms recent, void Function(RoomsChoice) onChoose) => MaterialApp(

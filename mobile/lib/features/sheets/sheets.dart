@@ -1201,8 +1201,10 @@ Future<void> shareRoomLink(BuildContext context, String link) async {
 /// What the user picked in the rooms sheet: a remembered room's secret, or
 /// null for "open a new room".
 class RoomsChoice {
-  const RoomsChoice(this.secret, {this.origin, this.remembered = false});
+  const RoomsChoice(this.secret, {this.origin, this.remembered = false, this.leave = false});
   final String? secret;
+
+  final bool leave;
 
   /// The server the room lives on; null for the configured one.
   final String? origin;
@@ -1212,17 +1214,37 @@ class RoomsChoice {
 }
 
 /// Recent rooms and the way to a fresh one. Opened from the brand chip.
+class JoinedRoom {
+  const JoinedRoom({
+    required this.secret,
+    required this.origin,
+    required this.title,
+    required this.active,
+    this.sharing = false,
+    this.unread = 0,
+  });
+
+  final String secret;
+  final String origin;
+  final String? title;
+  final bool active;
+  final bool sharing;
+  final int unread;
+}
+
 Future<RoomsChoice?> showRoomsSheet(
   BuildContext context, {
   required RecentRooms recent,
   required String currentSecret,
   required String Function(RecentRoom room, String seed) nameFor,
+  List<JoinedRoom> joined = const [],
 }) =>
     _sheet<RoomsChoice>(
       context,
       builder: (context) => RoomsPicker(
         recent: recent,
         currentSecret: currentSecret,
+        joined: joined,
         nameFor: nameFor,
         onChoose: (choice) => Navigator.of(context).pop(choice),
       ),
@@ -1241,10 +1263,13 @@ class RoomsPicker extends StatelessWidget {
     required this.nameFor,
     required this.onChoose,
     this.currentSecret,
+    this.joined = const [],
     super.key,
   });
 
   final RecentRooms recent;
+
+  final List<JoinedRoom> joined;
   final String Function(RecentRoom room, String seed) nameFor;
   final void Function(RoomsChoice choice) onChoose;
 
@@ -1257,8 +1282,10 @@ class RoomsPicker extends StatelessWidget {
     return ListenableBuilder(
       listenable: recent,
       builder: (context, _) {
-        final rooms = recent.rooms;
-        final forgettable = rooms.any((r) => r.secret != currentSecret);
+        final joinedSecrets = {for (final j in joined) j.secret};
+        final rooms = recent.rooms.where((r) => !joinedSecrets.contains(r.secret)).toList();
+        final keep = {...joinedSecrets, ?currentSecret};
+        final forgettable = rooms.any((r) => !keep.contains(r.secret));
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -1272,6 +1299,18 @@ class RoomsPicker extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _RoomLinkField(onRoom: (secret, origin) => onChoose(RoomsChoice(secret, origin: origin))),
+            if (joined.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Text(l.roomsJoined,
+                  style: TextStyle(color: _tk(context).muted, fontSize: 12, letterSpacing: 0.6)),
+              const SizedBox(height: 4),
+              for (final room in joined)
+                _JoinedTile(
+                  room: room,
+                  onOpen: () => onChoose(RoomsChoice(room.secret, origin: room.origin, remembered: true)),
+                  onLeave: () => onChoose(RoomsChoice(room.secret, origin: room.origin, leave: true)),
+                ),
+            ],
             if (rooms.isNotEmpty) ...[
               const SizedBox(height: 18),
               Text(l.roomsRecent,
@@ -1289,7 +1328,7 @@ class RoomsPicker extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => recent.forgetAll(keep: currentSecret),
+                    onPressed: () => recent.forgetAll(keep: keep),
                     child: Text(l.roomsForgetAll),
                   ),
                 ),
@@ -1367,6 +1406,62 @@ class _RoomLinkFieldState extends State<_RoomLinkField> {
         hintStyle: TextStyle(color: _tk(context).muted),
         errorText: _invalid ? l.roomsLinkInvalid : null,
       ),
+    );
+  }
+}
+
+class _JoinedTile extends StatelessWidget {
+  const _JoinedTile({required this.room, required this.onOpen, required this.onLeave});
+
+  final JoinedRoom room;
+  final VoidCallback onOpen;
+  final VoidCallback onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final tk = _tk(context);
+    final active = room.active;
+    final status = [
+      if (active) l.roomsCurrent,
+      if (room.sharing) l.roomsSharing,
+      if (!AppConfig.isOfficial(room.origin)) AppConfig.hostOf(room.origin),
+    ].join(' · ');
+    final tile = ListTile(
+      contentPadding: const EdgeInsets.only(left: 12, right: 4),
+      onTap: onOpen,
+      leading: Badge(
+        isLabelVisible: room.unread > 0,
+        label: Text('${room.unread}'),
+        backgroundColor: tk.signal,
+        child: Icon(room.sharing ? Icons.my_location : Icons.place, color: active ? tk.beacon : tk.mist),
+      ),
+      title: Text(room.title ?? l.roomsUnnamed,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: tk.mist, fontSize: 15, fontWeight: active ? FontWeight.w600 : FontWeight.normal)),
+      subtitle: status.isEmpty
+          ? null
+          : Text(status,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: room.sharing ? tk.beacon : tk.muted, fontSize: 12)),
+      trailing: IconButton(
+        key: ValueKey('leave-${room.secret}'),
+        tooltip: l.roomsLeave,
+        icon: Icon(Icons.logout, color: tk.muted, size: 20),
+        onPressed: onLeave,
+      ),
+    );
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: active ? tk.beacon.withValues(alpha: 0.12) : null,
+        border: Border.all(color: active ? tk.beacon.withValues(alpha: 0.6) : tk.hair),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(type: MaterialType.transparency, child: tile),
     );
   }
 }

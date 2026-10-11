@@ -159,7 +159,9 @@ is not needed and should stay unbuilt.
 
 | Built | Notes |
 |---|---|
-| `features/room/room_controller.dart` | Owns the socket, the peer store, presence, follow state and locally chosen names. No multi-tab leader election: an app process cannot have the same room open twice, so `coord.ts` has no counterpart. |
+| `features/room/room_controller.dart` | Owns one room's socket, peer store, presence, follow state and locally chosen names. No multi-tab leader election: the app never opens the same room twice, so `coord.ts` has no counterpart. |
+| `features/room/rooms_session.dart` | Several rooms at once (up to 5): one controller and socket per room, switch without teardown, leave each one separately, unread counts for messages in background rooms. |
+| `core/location_hub.dart` | The one owner of the platform location session. Sharing rooms hold it by reference count; the platform gets the most demanding cadence of all of them, and the Android notification counts the rooms. |
 | `features/room/room_screen.dart` | Full-bleed map with the HUD over it. Camera follow, fit-all, tap-to-dismiss, and dropping follow on a real pan gesture only. |
 | `features/map/bee_marker.dart` | The bee: pulse ring while fresh, heading arrow above 1.5 m/s, fading through the stale and ghost tiers, name plus status suffix. |
 | `features/map/marker_menu.dart` | Rename and follow, with last-seen, distance and link state. |

@@ -18,6 +18,7 @@ import 'package:herebee_location/herebee_location.dart';
 import '../../app_config.dart';
 import '../../core/avatar.dart';
 import '../../core/crypto.dart';
+import '../../core/location_hub.dart';
 import '../../core/names.dart';
 import '../../core/net.dart';
 import '../../core/peer_state.dart';
@@ -65,8 +66,10 @@ class RoomController extends ChangeNotifier {
     this.origin = AppConfig.defaultOrigin,
     this.onEntered,
     NetClientFactory? netClientFactory,
+    LocationHub? locationHub,
     DateTime Function()? clock,
   })  : _newNetClient = netClientFactory ?? _defaultNetClient,
+        _hub = locationHub ?? LocationHub.instance,
         _policy = SendPolicy(clock: clock)..powerSave = storage.powerSave;
 
   /// Fired once, when the user actually enters the room. That, not merely
@@ -89,6 +92,9 @@ class RoomController extends ChangeNotifier {
       );
 
   final NetClientFactory _newNetClient;
+  final LocationHub _hub;
+
+  ({double lat, double lng, double zoom})? camera;
 
   final String secret;
   final Storage storage;
@@ -130,6 +136,9 @@ class RoomController extends ChangeNotifier {
 
   bool _invalidLink = false;
   bool get invalidLink => _invalidLink;
+
+  bool _ready = false;
+  bool get ready => _ready;
 
   LinkState _connection = LinkState.connecting;
   LinkState get connection => _connection;
@@ -253,11 +262,13 @@ class RoomController extends ChangeNotifier {
       // A hand-edited or truncated link. Say so instead of joining a room nobody
       // else can reach.
       _invalidLink = true;
+      _ready = true;
       if (!_disposed) notifyListeners();
       return;
     }
     _selfSeed = await storage.roomSeed(_keys!.roomId);
     _followSeed = storage.followSeed(_keys!.roomId);
+    _ready = true;
     if (!_disposed) notifyListeners();
   }
 
@@ -359,10 +370,10 @@ class RoomController extends ChangeNotifier {
   /// watch a live bee standing at a place we left. Ask the platform instead.
   Future<void> _reconcileSharing() async {
     if (!_sharing || _toggling || _disposed) return;
-    final actuallySharing = await HereBeeLocation.isSharing();
+    final actuallySharing = await _hub.isSharing();
     if (actuallySharing || !_sharing || _disposed) return;
     _stoppedReason = LocationStopReason.killedBySystem;
-    await _stopSharing(broadcastStop: true, callPlatform: false);
+    await _stopSharing(broadcastStop: true);
   }
 
   // --- sharing ------------------------------------------------------------
@@ -380,6 +391,7 @@ class RoomController extends ChangeNotifier {
     required String notificationTitle,
     required String notificationBody,
     required String notificationStopLabel,
+    String Function(int rooms)? notificationBodyRooms,
   }) async {
     if (_sharing || _toggling || _disposed || _selfSeed == null) return;
     _toggling = true;
@@ -393,22 +405,24 @@ class RoomController extends ChangeNotifier {
     await _stopSub?.cancel();
     _policy.reset();
     _applied = _policy.profile;
-    _fixSub = HereBeeLocation.updates.listen(_onFix);
-    _stopSub = HereBeeLocation.stops.listen((reason) {
+    _fixSub = _hub.fixes.listen(_onFix);
+    _stopSub = _hub.stops.listen((reason) {
       // The platform pulled the plug: permission revoked, location switched
       // off, or the service was killed. Tear down our side and say so.
       _stoppedReason = reason;
-      unawaited(_stopSharing(broadcastStop: true, callPlatform: false));
+      unawaited(_stopSharing(broadcastStop: true));
     });
 
     try {
-      await HereBeeLocation.start(
-        notificationTitle: notificationTitle,
-        notificationBody: notificationBody,
-        notificationStopLabel: notificationStopLabel,
-        distanceFilterMeters: _applied.distanceFilterMeters,
-        intervalMs: _applied.intervalMs,
-        lowPower: _applied.lowPower,
+      await _hub.acquire(
+        this,
+        _applied,
+        SharingNotice(
+          title: notificationTitle,
+          body: (rooms) =>
+              rooms > 1 && notificationBodyRooms != null ? notificationBodyRooms(rooms) : notificationBody,
+          stopLabel: notificationStopLabel,
+        ),
       );
     } catch (_) {
       // Do not leave listeners attached for a session that never began.
@@ -424,7 +438,7 @@ class RoomController extends ChangeNotifier {
     if (_disposed) {
       // Disposed mid-start. The platform session is ours to clean up; nothing
       // else here may run.
-      await HereBeeLocation.stop();
+      await _hub.release(this);
       await _fixSub?.cancel();
       await _stopSub?.cancel();
       return;
@@ -440,6 +454,17 @@ class RoomController extends ChangeNotifier {
     _sharing = true;
     _toggling = false;
     notifyListeners();
+    final last = _hub.lastFix;
+    if (last != null && _lastPos == null) {
+      _onFix(LocationFix(
+        lat: last.lat,
+        lng: last.lng,
+        acc: last.acc,
+        hdg: last.hdg,
+        spd: last.spd,
+        at: DateTime.now().millisecondsSinceEpoch,
+      ));
+    }
   }
 
   /// The heartbeat also drives the policy clock: at rest in the background the
@@ -481,9 +506,9 @@ class RoomController extends ChangeNotifier {
   }
 
   /// Stop broadcasting. Peers see us disappear immediately.
-  Future<void> stopSharing() => _stopSharing(broadcastStop: true, callPlatform: true);
+  Future<void> stopSharing() => _stopSharing(broadcastStop: true);
 
-  Future<void> _stopSharing({required bool broadcastStop, required bool callPlatform}) async {
+  Future<void> _stopSharing({required bool broadcastStop}) async {
     if (!_sharing) return;
     // Flip first: everything downstream (_onFix, _flushSend, the heartbeat)
     // checks this, so a fix still in flight from the platform cannot be
@@ -498,7 +523,7 @@ class RoomController extends ChangeNotifier {
     _heartbeat = null;
     _pendingSend?.cancel();
     _pendingSend = null;
-    if (callPlatform) await HereBeeLocation.stop();
+    await _hub.release(this);
 
     // An explicit stop is the ONLY thing that removes our marker on the other
     // side. Losing signal leaves a ghost; stopping must not.
@@ -530,11 +555,7 @@ class RoomController extends ChangeNotifier {
     if (next == _applied) return false;
     _applied = next;
     if (!_sharing) return true;
-    unawaited(HereBeeLocation.reconfigure(
-      distanceFilterMeters: next.distanceFilterMeters,
-      intervalMs: next.intervalMs,
-      lowPower: next.lowPower,
-    ));
+    unawaited(_hub.update(this, next));
     _startHeartbeat();
     if (_lastPos != null) {
       _touchSelf();
@@ -730,7 +751,7 @@ class RoomController extends ChangeNotifier {
       } else {
         unawaited(_net?.close());
       }
-      unawaited(HereBeeLocation.stop());
+      unawaited(_hub.release(this));
     } else {
       unawaited(_net?.close());
     }

@@ -70,6 +70,7 @@ class LocationForegroundService : Service(), LocationListener {
     private var wakeLock: PowerManager.WakeLock? = null
     private var locationManager: LocationManager? = null
     private var notification: Notification? = null
+    private var stopLabel: String = "Stop"
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -93,7 +94,7 @@ class LocationForegroundService : Service(), LocationListener {
 
         val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Sharing your location"
         val body = intent?.getStringExtra(EXTRA_BODY) ?: ""
-        val stopLabel = intent?.getStringExtra(EXTRA_STOP_LABEL) ?: "Stop"
+        stopLabel = intent?.getStringExtra(EXTRA_STOP_LABEL) ?: "Stop"
         val intervalMs = intent?.getLongExtra(EXTRA_INTERVAL_MS, 1000L) ?: 1000L
         val distanceFilter = intent?.getFloatExtra(EXTRA_DISTANCE_FILTER, 3f) ?: 3f
         val lowPower = intent?.getBooleanExtra(EXTRA_LOW_POWER, false) ?: false
@@ -145,6 +146,13 @@ class LocationForegroundService : Service(), LocationListener {
             onStopped?.invoke("servicesDisabled")
             stopSelf()
         }
+    }
+
+    fun updateNotification(title: String, body: String) {
+        if (!isRunning) return
+        val built = buildNotification(title, body, stopLabel)
+        notification = built
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, built)
     }
 
     private fun requestUpdates(intervalMs: Long, distanceFilter: Float, lowPower: Boolean): Boolean {

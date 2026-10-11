@@ -20,6 +20,11 @@ Future<bool> pumpUntil(WidgetTester tester, bool Function() condition,
 
 Future<void> tapWhenOnScreen(WidgetTester tester, Finder finder) async {
   final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+  await pumpUntil(tester, () => finder.evaluate().isNotEmpty);
+  if (finder.evaluate().isNotEmpty) {
+    await tester.ensureVisible(finder.first);
+    await tester.pump(const Duration(milliseconds: 300));
+  }
   final ready = await pumpUntil(tester, () {
     if (finder.evaluate().isEmpty) return false;
     final center = tester.getCenter(finder.first);
@@ -60,6 +65,7 @@ void main() {
     await pumpUntil(tester, () => false, timeout: Duration(seconds: _holdSeconds));
 
     await tapWhenOnScreen(tester, find.byKey(const ValueKey('settings')));
+    await tapWhenOnScreen(tester, find.byKey(const ValueKey('map-theme-neon')));
     await tapWhenOnScreen(tester, find.byKey(const ValueKey('map-theme-synthwave')));
     expect(storage.mapTheme, MapThemePref.synthwave);
     await tapWhenOnScreen(tester, find.byTooltip('Close'));

@@ -125,6 +125,13 @@ class HerebeeLocationPlugin :
                 )
                 result.success(null)
             }
+            "updateNotification" -> {
+                LocationForegroundService.current?.updateNotification(
+                    call.argument<String>("notificationTitle") ?: "",
+                    call.argument<String>("notificationBody") ?: "",
+                )
+                result.success(null)
+            }
             "isSharing" -> result.success(LocationForegroundService.isRunning)
             "isBatteryOptimized" -> result.success(isBatteryOptimized())
             "openBatterySettings" -> {

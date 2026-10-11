@@ -85,6 +85,8 @@ public class HerebeeLocationPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
                 manager.desiredAccuracy = lowPower ? kCLLocationAccuracyHundredMeters : kCLLocationAccuracyBest
             }
             result(nil)
+        case "updateNotification":
+            result(nil)
         case "isSharing":
             result(sharing)
         case "isBatteryOptimized":

@@ -28,6 +28,8 @@ class Hud extends StatelessWidget {
     required this.onToggleShare,
     required this.onInfo,
     required this.onRooms,
+    this.rooms = 1,
+    this.unreadElsewhere = 0,
     this.brandKey,
     this.hintKey,
     this.controlsKey,
@@ -44,6 +46,9 @@ class Hud extends StatelessWidget {
   /// Opens the rooms sheet: recent rooms and a fresh one.
   final VoidCallback onRooms;
 
+  final int rooms;
+  final int unreadElsewhere;
+
   final GlobalKey? brandKey;
   final GlobalKey? hintKey;
   final GlobalKey? controlsKey;
@@ -56,9 +61,15 @@ class Hud extends StatelessWidget {
         Positioned(
           top: math.max(14, padding.top),
           left: 14,
-          child: _ConnChip(key: brandKey, state: controller.connection, onTap: onRooms),
+          child: _ConnChip(
+            key: brandKey,
+            state: controller.connection,
+            rooms: rooms,
+            unread: unreadElsewhere,
+            onTap: onRooms,
+          ),
         ),
-        if (controller.entered && (controller.presence >= 2 || controller.peers.entries.isNotEmpty))
+        if (controller.entered)
           Positioned(
             top: math.max(14, padding.top),
             right: 14,
@@ -89,9 +100,11 @@ class Hud extends StatelessWidget {
 const double _controlHeight = 48;
 
 class _ConnChip extends StatelessWidget {
-  const _ConnChip({required this.state, required this.onTap, super.key});
+  const _ConnChip({required this.state, required this.onTap, this.rooms = 1, this.unread = 0, super.key});
   final LinkState state;
   final VoidCallback onTap;
+  final int rooms;
+  final int unread;
 
   @override
   Widget build(BuildContext context) {
@@ -178,6 +191,24 @@ class _ConnChip extends StatelessWidget {
                       letterSpacing: t.uppercase ? 1.8 : -0.3,
                     ),
                   ),
+                  if (rooms > 1)
+                    Container(
+                      key: const ValueKey('rooms-count'),
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: unread > 0 ? t.signal : t.outline,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '$rooms',
+                        style: TextStyle(
+                          color: unread > 0 ? t.ink : t.mist,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -237,6 +237,31 @@
   "roomsLinkHint": "Raum-Link hier einfügen",
   "roomsLinkInvalid": "Das ist kein vollständiger Raum-Link",
   "roomsNote": "Räume verschwinden nach 3 Tagen von selbst. Ihre Schlüssel liegen nur in der sicheren Ablage dieses Geräts.",
+  "notifSharingBodyRooms": "Du teilst in {n} Räumen. Nur wer einen Link hat, sieht dich.",
+  "@notifSharingBodyRooms": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "roomsJoined": "Gerade drin",
+  "roomsLeave": "Raum verlassen",
+  "roomsFull": "Du bist schon in {n} Räumen. Verlass zuerst einen.",
+  "@roomsFull": {
+    "placeholders": {
+      "n": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "roomsSwitch": "Wechseln",
+  "roomsSharing": "Teilt Standort",
+  "roomsRemember": "Räume in diesem Browser merken",
+  "roomsRememberOff": "Aus Datenschutzgründen ist das aus. Dein Browser merkt sich keine Räume; um zurückzukommen, brauchst du den Link.",
+  "roomsRememberOn": "Dieser Browser speichert die letzten fünf Räume samt ihrer Schlüssel für 3 Tage im lokalen Speicher. Wer Zugriff auf diesen Browser hat (andere Personen am Gerät, Erweiterungen, Profil-Sync), kann diese Räume damit betreten. Ausschalten löscht die Liste sofort.",
   "hoursAgo": "vor {n} h",
   "@hoursAgo": {
     "placeholders": {

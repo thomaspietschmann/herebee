@@ -27,6 +27,11 @@ Future<bool> pumpUntil(
 
 Future<void> tapWhenOnScreen(WidgetTester tester, Finder finder) async {
   final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+  await pumpUntil(tester, () => finder.evaluate().isNotEmpty);
+  if (finder.evaluate().isNotEmpty) {
+    await tester.ensureVisible(finder.first);
+    await tester.pump(const Duration(milliseconds: 300));
+  }
   final ready = await pumpUntil(tester, () {
     if (finder.evaluate().isEmpty) return false;
     final center = tester.getCenter(finder.first);
@@ -62,7 +67,7 @@ void main() {
     await tapWhenOnScreen(tester, find.bySemanticsLabel('Show speech bubbles'));
     expect(await pumpUntil(tester, () => find.text(_peerMessage).evaluate().isNotEmpty), isTrue);
 
-    await tapWhenOnScreen(tester, find.text('i'));
+    await tapWhenOnScreen(tester, find.byKey(const ValueKey('settings')));
     final title = find.text('How private is this?');
     expect(await pumpUntil(tester, () => title.evaluate().isNotEmpty), isTrue);
     await tester.pump(const Duration(seconds: 1));

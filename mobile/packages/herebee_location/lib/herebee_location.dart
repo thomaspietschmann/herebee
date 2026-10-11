@@ -189,6 +189,15 @@ class HereBeeLocation {
         'lowPower': lowPower,
       });
 
+  static Future<void> updateNotification({
+    required String notificationTitle,
+    required String notificationBody,
+  }) =>
+      _methods.invokeMethod<void>('updateNotification', {
+        'notificationTitle': notificationTitle,
+        'notificationBody': notificationBody,
+      });
+
   /// True while the platform is actively producing fixes.
   static Future<bool> isSharing() async =>
       await _methods.invokeMethod<bool>('isSharing') ?? false;

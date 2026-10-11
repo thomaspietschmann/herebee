@@ -31,6 +31,7 @@ import 'core/storage.dart';
 import 'features/crash/crash_prompt.dart';
 import 'features/room/room_controller.dart';
 import 'features/room/room_screen.dart';
+import 'features/room/rooms_session.dart';
 import 'features/sheets/sheets.dart';
 import 'features/start/start_screen.dart';
 import 'l10n/app_localizations.dart';
@@ -128,8 +129,7 @@ class _RoomHostState extends State<_RoomHost> {
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSub;
 
-  RoomController? _controller;
-  String? _secret;
+  late final RoomsSession _session = RoomsSession(_createRoom)..addListener(_onSession);
 
   /// A link arrived without a usable secret. Shown instead of a room.
   bool _brokenLink = false;
@@ -137,12 +137,11 @@ class _RoomHostState extends State<_RoomHost> {
   /// Plain launch with remembered rooms: ask before opening anything.
   bool _choosing = false;
 
-  /// The screen is not built until the room keys exist. Otherwise the entry
-  /// gate can be tapped before `init()` resolves, and `enter()` would find no
-  /// keys and silently do nothing — a room you can never actually join.
-  bool _ready = false;
-
   bool _started = false;
+
+  void _onSession() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void didChangeDependencies() {
@@ -183,7 +182,7 @@ class _RoomHostState extends State<_RoomHost> {
     // re-enters one on its own. Nothing connects before a room is open AND
     // its entry gate has been passed.
     await widget.recent.load();
-    if (!mounted || _secret != null) return; // a link arrived meanwhile
+    if (!mounted || !_session.isEmpty) return; // a link arrived meanwhile
     if (widget.recent.rooms.isEmpty) {
       _openRoom(generateSecret(), widget.storage.serverOrigin);
     } else {
@@ -204,20 +203,15 @@ class _RoomHostState extends State<_RoomHost> {
       return;
     }
     if (looksLikeRoomLink(uri)) {
-      // Tear the old room down first. Showing only a notice while its controller
-      // lives on would keep the socket open and, if the user was sharing, keep
-      // broadcasting a location behind a screen with no Stop button.
-      _controller?.dispose();
-      setState(() {
-        _controller = null;
-        _secret = null;
-        _ready = false;
-        _brokenLink = true;
-      });
+      if (_session.isEmpty) {
+        setState(() => _brokenLink = true);
+      } else {
+        _notice(L.of(context).roomsLinkInvalid);
+      }
       return;
     }
     // Not a room link at all (the bare site). Only mint a room if we have none.
-    if (_secret == null) _openRoom(generateSecret(), widget.storage.serverOrigin);
+    if (_session.isEmpty) _openRoom(generateSecret(), widget.storage.serverOrigin);
   }
 
   /// Opens a room someone handed over, on the server the link names (null: the
@@ -229,9 +223,12 @@ class _RoomHostState extends State<_RoomHost> {
     final origin = linkedOrigin ?? widget.storage.serverOrigin;
     // Tapping the link for the room you are already in should do nothing,
     // not throw you out and back in again.
-    if (secret == _secret && origin == _controller?.origin) return;
+    if (_session.contains((secret: secret, origin: origin))) {
+      _openRoom(secret, origin);
+      return;
+    }
     if (!await _acceptServer(origin, fromLink: true)) {
-      if (_secret == null && mounted) _openRoom(generateSecret(), widget.storage.serverOrigin);
+      if (_session.isEmpty && mounted) _openRoom(generateSecret(), widget.storage.serverOrigin);
       return;
     }
     if (mounted) _openRoom(secret, origin);
@@ -250,53 +247,78 @@ class _RoomHostState extends State<_RoomHost> {
   /// A choice from the start screen or the rooms sheet.
   Future<void> _choose(RoomsChoice choice) async {
     final secret = choice.secret;
+    if (choice.leave) {
+      if (secret != null) _leave((secret: secret, origin: choice.origin ?? widget.storage.serverOrigin));
+      return;
+    }
     if (secret == null) {
       _openRoom(generateSecret(), widget.storage.serverOrigin);
       return;
     }
     final origin = choice.origin ?? widget.storage.serverOrigin;
+    final room = (secret: secret, origin: origin);
+    if (_session.contains(room)) {
+      _openRoom(secret, origin);
+      return;
+    }
     // A remembered room was accepted when it was first entered.
     if (!choice.remembered && !await _acceptServer(origin, fromLink: true)) return;
-    if (!mounted || (secret == _secret && origin == _controller?.origin)) return;
+    if (!mounted) return;
     _openRoom(secret, origin);
   }
 
-  void _openRoom(String secret, String origin) {
-    // Switching rooms is a full teardown: the old socket, its peers and its
-    // sharing state must not bleed into the new room.
-    _controller?.dispose();
+  void _leave(RoomRef room) {
+    _session.leave(room);
+    if (_session.isEmpty && mounted) {
+      setState(() => _choosing = true);
+    }
+  }
+
+  RoomController _createRoom(RoomRef room) {
     final recent = widget.recent;
     final controller = RoomController(
-      secret: secret,
+      secret: room.secret,
       storage: widget.storage,
       languageCode: Localizations.localeOf(context).languageCode,
       youSuffix: L.of(context).youSuffix,
-      origin: origin,
-      onEntered: (roomId) => unawaited(recent.touch(secret, roomId: roomId, origin: origin)),
+      origin: room.origin,
+      onEntered: (roomId) => unawaited(recent.touch(room.secret, roomId: roomId, origin: room.origin)),
     );
     // Remember who was met here, so the rooms list can say more than a date.
     // sawPeers() is a no-op unless something is new, so a listener that fires
     // on every tick is fine.
     controller.addListener(() {
       final seeds = controller.peers.entries.where((e) => !e.isSelf).map((e) => e.seed);
-      unawaited(recent.sawPeers(secret, seeds));
+      unawaited(recent.sawPeers(room.secret, seeds));
     });
+    return controller;
+  }
+
+  void _openRoom(String secret, String origin) {
+    final room = (secret: secret, origin: origin);
+    if (!_session.contains(room) && _session.full) {
+      _notice(L.of(context).roomsFull('${_session.maxRooms}'));
+      return;
+    }
+    _session.open(room);
     setState(() {
-      _secret = secret;
-      _controller = controller;
       _brokenLink = false;
       _choosing = false;
-      _ready = false;
     });
-    controller.init().then((_) {
-      if (mounted && _controller == controller) setState(() => _ready = true);
-    });
+  }
+
+  void _notice(String message) {
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message), behavior: SnackBarBehavior.floating));
   }
 
   @override
   void dispose() {
     unawaited(_linkSub?.cancel());
-    _controller?.dispose();
+    _session
+      ..removeListener(_onSession)
+      ..dispose();
     super.dispose();
   }
 
@@ -310,15 +332,14 @@ class _RoomHostState extends State<_RoomHost> {
         onChoose: (choice) => unawaited(_choose(choice)),
       );
     }
-    final controller = _controller;
-    if (controller == null || !_ready) {
+    final controller = _session.activeController;
+    if (controller == null || !controller.ready) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    // Keyed by secret so switching rooms rebuilds the screen from scratch
-    // rather than reusing state that belongs to the previous room.
     return RoomScreen(
-      key: ValueKey(_secret),
+      key: ValueKey(_session.active),
       controller: controller,
+      session: _session,
       recent: widget.recent,
       onOpenRoom: (choice) => unawaited(_choose(choice)),
     );
