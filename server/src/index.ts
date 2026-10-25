@@ -83,11 +83,11 @@ function tilesVersion(file = "basemap.pmtiles"): string {
 const RATE_TOKENS = 10; // burst
 const RATE_PER_SEC = 3; // sustained messages / second
 const MAX_PAYLOAD = 16 * 1024; // bytes per WS frame
-const MAX_CONNS_PER_IP = 40;
+const MAX_CONNS_PER_IP = envInt("MAX_CONNS_PER_IP", 40);
 const MAX_TOTAL_CONNS = envInt("MAX_CONNS", 10_000); // global socket ceiling
 const connsPerIp = new Map<string, number>();
 const UPGRADE_WINDOW_MS = 10_000;
-const MAX_UPGRADES_PER_WINDOW = 20;
+const MAX_UPGRADES_PER_WINDOW = envInt("MAX_UPGRADES_PER_WINDOW", 20);
 const upgradesPerIp = new Map<string, { start: number; count: number }>();
 
 function takeUpgradeSlot(ip: string): boolean {
