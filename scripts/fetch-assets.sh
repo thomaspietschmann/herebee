@@ -73,8 +73,8 @@ if [ ! -d "$ASSETS/fonts" ] || [ ! -d "$ASSETS/sprites" ]; then
 fi
 
 if [ "${ADDRESSES:-0}" = "1" ]; then
-  ADDR_URL="${ADDRESSES_URL:-https://github.com/thomaspietschmann/herebee/releases/download/addresses-20260929/addresses-20260929.pmtiles}"
-  ADDR_SHA="${ADDRESSES_SHA256:-776c2470566e7dd6039bcdaa6632a63422eff64e5f1b91bc0710e6bbe5eda24b}"
+  ADDR_URL="${ADDRESSES_URL:-https://github.com/thomaspietschmann/herebee/releases/download/addresses-20261103/addresses-20261103.pmtiles}"
+  ADDR_SHA="${ADDRESSES_SHA256:-195f4f4f14f8974ac7b5eb9377a88a5128f3ef3e2febf0cfa66b7758e7730212}"
   ADDR_OUT="$ROOT/server/assets/tiles/addresses.pmtiles"
   echo "→ fetching house numbers → $ADDR_OUT"
   curl -fL -o "$ADDR_OUT.tmp" "$ADDR_URL"
